@@ -1,0 +1,23 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+all              1              1              1
+read_trim        4              1              1
+total            5              1              1
+
+Select jobs to execute...
+
+[Sun May  1 13:06:24 2022]
+rule read_trim:
+    input: test/fastq/atac2_R1.fastq.gz, test/fastq/atac2_R2.fastq.gz
+    output: test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac2_flex_2.fastq.gz
+    jobid: 2
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp, mem_mb=5000
+
+RuleException in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+NameError: The name 'outdir' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}

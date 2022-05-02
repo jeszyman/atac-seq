@@ -1,0 +1,3 @@
+SyntaxError in line 10 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+invalid syntax (atac_read_process.smk, line 10)
+  File "/home/jeszyman/repos/atac-seq/workflow/repo_test.smk", line 11, in <module>

@@ -1,0 +1,7 @@
+Building DAG of jobs...
+MissingInputException in line 6 of /home/jeszyman/repos/atac-seq/workflow/repo_test.smk:
+Missing input files for rule all:
+test/bam/atac3.bam
+test/bam/atac2.bam
+test/bam/atac1.bam
+test/bam/atac4.bam

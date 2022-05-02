@@ -1,0 +1,58 @@
+
+               ________          __              
+              / ____/ /__  _  __/ /_  ____ ______
+             / /_  / / _ \| |/ / __ \/ __ `/ ___/
+            / __/ / /  __/>  </ /_/ / /_/ / /    
+           /_/   /_/\___/_/|_/_.___/\__._/_/     
+
+Flexbar - flexible barcode and adapter removal, version 3.5.0
+Developed with SeqAn, the library for sequence analysis
+
+Available on github.com/seqan/flexbar
+
+
+Local time:            Sun May  1 13:09:35 2022
+
+Number of threads:     1
+Bundled fragments:     256
+
+Target name:           test/fastq/atac3
+File type:             fastq
+Reads file:            test/fastq/atac3_R1.fastq.gz
+Reads file 2:          test/fastq/atac3_R2.fastq.gz   (paired run)
+
+max-uncalled:          0
+min-read-length:       18
+
+
+Processing reads ...done.
+
+Elapsed time:       5 sec
+Processing speed:   30000 reads/s
+
+
+Output file statistics
+======================
+Read file:               test/fastq/atac3_1.fastq.gz
+  written reads          74868
+  short reads            0
+Read file 2:             test/fastq/atac3_2.fastq.gz
+  written reads          74868
+  short reads            0
+
+
+Filtering statistics
+====================
+Processed reads                   150000
+  skipped due to uncalled bases      264   (148 uncalled in 132 pairs)
+  finally skipped short reads          0
+  skipped paired single reads          0
+Discarded reads overall              264
+Remaining reads                   149736   (99%)
+
+Processed bases   22650000
+Remaining bases   22610136   (99% of input)
+
+
+Flexbar completed basic processing.
+

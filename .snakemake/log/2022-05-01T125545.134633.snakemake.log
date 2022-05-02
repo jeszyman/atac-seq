@@ -1,0 +1,2 @@
+SyntaxError in line 2 of /home/jeszyman/repos/atac-seq/workflow/repo_test.smk:
+Unexpected keyword expand in rule definition (repo_test.smk, line 2)

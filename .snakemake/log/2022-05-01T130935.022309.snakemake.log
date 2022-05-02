@@ -1,0 +1,66 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+all              1              1              1
+read_trim        4              1              1
+total            5              1              1
+
+Select jobs to execute...
+
+[Sun May  1 13:09:35 2022]
+rule read_trim:
+    input: test/fastq/atac2_R1.fastq.gz, test/fastq/atac2_R2.fastq.gz
+    output: test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac2_flex_2.fastq.gz
+    jobid: 2
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp, mem_mb=5000
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sun May  1 13:09:35 2022]
+rule read_trim:
+    input: test/fastq/atac3_R1.fastq.gz, test/fastq/atac3_R2.fastq.gz
+    output: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    jobid: 3
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sun May  1 13:09:35 2022]
+rule read_trim:
+    input: test/fastq/atac1_R1.fastq.gz, test/fastq/atac1_R2.fastq.gz
+    output: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz
+    jobid: 1
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+[Sun May  1 13:09:35 2022]
+rule read_trim:
+    input: test/fastq/atac4_R1.fastq.gz, test/fastq/atac4_R2.fastq.gz
+    output: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    jobid: 4
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Waiting at most 5 seconds for missing files.
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Job Missing files after 5 seconds:
+test/fastq/atac3_flex_1.fastq.gz
+test/fastq/atac3_flex_2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 3 completed successfully, but some output files are missing. 3
+Waiting at most 5 seconds for missing files.
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Job Missing files after 5 seconds:
+test/fastq/atac3_flex_1.fastq.gz
+test/fastq/atac3_flex_2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 3 completed successfully, but some output files are missing. 3
