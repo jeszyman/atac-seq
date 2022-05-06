@@ -229,12 +229,7 @@ launch_atac() {
 :LOGBOOK:
 CLOCK: [2021-12-09 Thu 13:10]--[2021-12-09 Thu 13:36] =>  0:26
 :END:
-#+begin_src bash
-singularity shell --bind /mnt:/mnt ~/sing_containers/atac.sif             
-#+end_src
-
 - Docker pull build into [[*Configurations][bash config]]. 
-- See launch function in 
 **** Write [[file:config/atac_Dockerfile]]
 
 - BiocManager::install("apeglm")
