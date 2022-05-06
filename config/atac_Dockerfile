@@ -1,0 +1,58 @@
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+###################################
+###   Dockerfile for ATAC-seq   ###
+###################################
+
+# After build, the image will be pushed to dockerhub as jeszyman/atac
+# (https://hub.docker.com/repository/docker/jeszyman/atac)
+
+FROM jeszyman/biotools
+
+# Simple bioconda installs
+RUN conda install -c bioconda macs2
+
+# Simple R installs
+##
+## Via Bioconductor
+RUN R -e 'install.packages("BiocManager"); \
+          BiocManager::install(); \
+          BiocManager::install(c("ATACseqQC", \
+                                 "ChIPpeakAnno", \
+                                 "ChIPseeker", \
+                                 "clusterProfiler", \    
+                                 "csaw"));'
+
+RUN R -e 'install.packages("BiocManager"); \
+    BiocManager::install(); \
+    BiocManager::install(c("ChIPpeakAnno", \
+                           "ChIPseeker", \
+                           "clusterProfiler", \    
+                           "csaw", \
+                           "EnsDb.Mmusculus.v79", \                           
+                           "org.Mm.eg.db", \
+                           "Rsamtools", \                           
+                           "TxDb.Mmusculus.UCSC.mm10.ensGene"));'
+
+# ATACseqQC
+##
+## Linux prerequisites
+RUN apt-get install -yq --no-install-recommends --allow-unauthenticated --fix-missing \
+    libgsl-dev \
+    libcurl4-openssl-dev 
+    #libssl-dev
+##
+## ATACseqQC 
+RUN R -e 'install.packages("BiocManager"); \
+    BiocManager::install(); \
+    BiocManager::install(c("ATACseqQC"));'
+
+# Homer
+RUN mkdir /opt/homer
+RUN cd /opt/homer
+RUN wget http://homer.ucsd.edu/homer/configureHomer.pl -O /opt/homer/configureHomer.pl
+RUN perl /opt/homer/configureHomer.pl -install
+
+ENV PATH="${PATH}:/opt/homer/bin/"
+
+RUN perl /opt/homer/.//configureHomer.pl -install mouse-p

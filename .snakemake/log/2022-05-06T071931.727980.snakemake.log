@@ -1,0 +1,3 @@
+SyntaxError in line 104 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+invalid syntax. Perhaps you forgot a comma? (atac_read_process.smk, line 104)
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 17, in <module>

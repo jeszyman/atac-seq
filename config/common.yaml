@@ -1,0 +1,12 @@
+CHROM_FILT:
+  - "open"
+  - "regfilt"
+
+JOIN:
+  - "union"
+  - "intersect"
+  - "naive"
+
+WIDTH:
+  - "broad"
+  - "narrow"
