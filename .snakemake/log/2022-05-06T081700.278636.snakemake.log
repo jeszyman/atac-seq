@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 202 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Missing input files for rule fastqc:
+test/fastq/atac1.fastq.gz

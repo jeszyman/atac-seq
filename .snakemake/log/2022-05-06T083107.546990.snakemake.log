@@ -1,0 +1,207 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                   count    min threads    max threads
+------------------  -------  -------------  -------------
+all                       1              1              1
+library_complexity        4              1              1
+total                     5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	library_complexity
+	library_complexity
+	library_complexity
+	library_complexity
+Select jobs to execute...
+Selected jobs (4):
+	library_complexity
+	library_complexity
+	library_complexity
+	library_complexity
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Fri May  6 08:31:07 2022]
+rule library_complexity:
+    input: test/bam/atac2.bam
+    output: test/qc/atac2_libcomplex.rds
+    log: test/logs/atac2_library_complexity.log
+    jobid: 38
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac2.bam         test/qc/atac2_libcomplex.rds         >& test/logs/atac2_library_complexity.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac2.bam         test/qc/atac2_libcomplex.rds         >& test/logs/atac2_library_complexity.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Fri May  6 08:31:07 2022]
+rule library_complexity:
+    input: test/bam/atac3.bam
+    output: test/qc/atac3_libcomplex.rds
+    log: test/logs/atac3_library_complexity.log
+    jobid: 39
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac3.bam         test/qc/atac3_libcomplex.rds         >& test/logs/atac3_library_complexity.log
+        
+
+[Fri May  6 08:31:07 2022]
+rule library_complexity:
+    input: test/bam/atac1.bam
+    output: test/qc/atac1_libcomplex.rds
+    log: test/logs/atac1_library_complexity.log
+    jobid: 37
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac3.bam         test/qc/atac3_libcomplex.rds         >& test/logs/atac3_library_complexity.log'
+
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac1.bam         test/qc/atac1_libcomplex.rds         >& test/logs/atac1_library_complexity.log
+        
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac1.bam         test/qc/atac1_libcomplex.rds         >& test/logs/atac1_library_complexity.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Fri May  6 08:31:07 2022]
+rule library_complexity:
+    input: test/bam/atac4.bam
+    output: test/qc/atac4_libcomplex.rds
+    log: test/logs/atac4_library_complexity.log
+    jobid: 40
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac4.bam         test/qc/atac4_libcomplex.rds         >& test/logs/atac4_library_complexity.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac4.bam         test/qc/atac4_libcomplex.rds         >& test/logs/atac4_library_complexity.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Fri May  6 08:31:30 2022]
+Error in rule library_complexity:
+    jobid: 40
+    output: test/qc/atac4_libcomplex.rds
+    log: test/logs/atac4_library_complexity.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac4.bam         test/qc/atac4_libcomplex.rds         >& test/logs/atac4_library_complexity.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 289, in __rule_library_complexity
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac4.bam         test/qc/atac4_libcomplex.rds         >& test/logs/atac4_library_complexity.log'' returned non-zero exit status 1.
+
+[Fri May  6 08:31:30 2022]
+Error in rule library_complexity:
+[Fri May  6 08:31:30 2022]
+[Fri May  6 08:31:30 2022]
+    jobid: 38
+Error in rule library_complexity:
+Error in rule library_complexity:
+    output: test/qc/atac2_libcomplex.rds
+    jobid: 37
+    log: test/logs/atac2_library_complexity.log (check log file(s) for error message)
+    jobid: 39
+    output: test/qc/atac1_libcomplex.rds
+    shell:
+        
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac2.bam         test/qc/atac2_libcomplex.rds         >& test/logs/atac2_library_complexity.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    output: test/qc/atac3_libcomplex.rds
+    log: test/logs/atac1_library_complexity.log (check log file(s) for error message)
+
+    log: test/logs/atac3_library_complexity.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac1.bam         test/qc/atac1_libcomplex.rds         >& test/logs/atac1_library_complexity.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    shell:
+        
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac3.bam         test/qc/atac3_libcomplex.rds         >& test/logs/atac3_library_complexity.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 289, in __rule_library_complexity
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac2.bam         test/qc/atac2_libcomplex.rds         >& test/logs/atac2_library_complexity.log'' returned non-zero exit status 1.
+
+
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 289, in __rule_library_complexity
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac1.bam         test/qc/atac1_libcomplex.rds         >& test/logs/atac1_library_complexity.log'' returned non-zero exit status 1.
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 289, in __rule_library_complexity
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/library_complexity.R         test/bam/atac3.bam         test/qc/atac3_libcomplex.rds         >& test/logs/atac3_library_complexity.log'' returned non-zero exit status 1.
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-06T083107.546990.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

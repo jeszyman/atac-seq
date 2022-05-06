@@ -3,3 +3,7 @@ fastq_dir: "test/fastq"
 threads: 4
 bam_dir: "test/bam"
 bowtie_prefix: "test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9"
+keep_bed: "resources/keep.bed"
+log_dir: "test/logs"
+qc_dir: "test/qc"
+atac_scripts_dir: "workflow/scripts"

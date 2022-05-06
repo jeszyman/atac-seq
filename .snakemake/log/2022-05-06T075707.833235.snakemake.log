@@ -1,0 +1,34 @@
+Building DAG of jobs...
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/workflow.py", line 763, in execute
+    dag.init()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 179, in init
+    job = self.update([job], progress=progress, create_inventory=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 801, in update
+    raise exceptions[0]
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 759, in update
+    self.update_(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 892, in update_
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 874, in update_
+    selected_job = self.update(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 799, in update
+    raise WorkflowError(*exceptions)
+snakemake.exceptions.WorkflowError: MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_dedup_R2.fastq.gz
+test/fastq/atac/bam/atac1_dedup_R1.fastq.gz
+MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_R2.fastq.gz
+test/fastq/atac/bam/atac1_R1.fastq.gz
+
+WorkflowError:
+MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_dedup_R2.fastq.gz
+test/fastq/atac/bam/atac1_dedup_R1.fastq.gz
+MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_R2.fastq.gz
+test/fastq/atac/bam/atac1_R1.fastq.gz
+unlocking
+removed all locks

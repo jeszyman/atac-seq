@@ -1,0 +1,8 @@
+Building DAG of jobs...
+WorkflowError:
+MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_R2.fastq.gz
+test/fastq/atac/bam/atac1_R1.fastq.gz
+MissingInputException: Missing input files for rule read_trim:
+test/fastq/atac/bam/atac1_dedup_R2.fastq.gz
+test/fastq/atac/bam/atac1_dedup_R1.fastq.gz

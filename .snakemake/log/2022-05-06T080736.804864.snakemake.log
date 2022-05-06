@@ -1,0 +1,192 @@
+Building DAG of jobs...
+Job stats:
+job                   count    min threads    max threads
+------------------  -------  -------------  -------------
+align_bt2                 4              1              1
+all                       1              1              1
+filter_and_dedup          4              1              1
+get_open_chrom            4              1              1
+read_trim                 4              1              1
+tn5_shift_and_open        4              1              1
+total                    21              1              1
+
+
+[Fri May  6 08:07:37 2022]
+rule read_trim:
+    input: test/fastq/atac4_R1.fastq.gz, test/fastq/atac4_R2.fastq.gz
+    output: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    jobid: 12
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4
+        
+
+[Fri May  6 08:07:37 2022]
+rule read_trim:
+    input: test/fastq/atac3_R1.fastq.gz, test/fastq/atac3_R2.fastq.gz
+    output: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    jobid: 9
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4
+        
+
+[Fri May  6 08:07:37 2022]
+rule read_trim:
+    input: test/fastq/atac1_R1.fastq.gz, test/fastq/atac1_R2.fastq.gz
+    output: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz
+    jobid: 3
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac1_R1.fastq.gz test/fastq/atac1_R2.fastq.gz test/fastq 4
+        
+
+[Fri May  6 08:07:37 2022]
+rule read_trim:
+    input: test/fastq/atac2_R1.fastq.gz, test/fastq/atac2_R2.fastq.gz
+    output: test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac2_flex_2.fastq.gz
+    jobid: 6
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac2_R1.fastq.gz test/fastq/atac2_R2.fastq.gz test/fastq 4
+        
+
+[Fri May  6 08:07:37 2022]
+rule align_bt2:
+    input: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    output: test/bam/atac3.bam
+    jobid: 8
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac3_flex_1.fastq.gz test/fastq/atac3_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac3.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule align_bt2:
+    input: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz
+    output: test/bam/atac1.bam
+    jobid: 2
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac1_flex_1.fastq.gz test/fastq/atac1_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac1.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule align_bt2:
+    input: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    output: test/bam/atac4.bam
+    jobid: 11
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac4_flex_1.fastq.gz test/fastq/atac4_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac4.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule align_bt2:
+    input: test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac2_flex_2.fastq.gz
+    output: test/bam/atac2.bam
+    jobid: 5
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac2_flex_1.fastq.gz test/fastq/atac2_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac2.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule filter_and_dedup:
+    input: test/bam/atac4.bam
+    output: test/bam/atac4_dedup.bam, test/bam/atac4_qfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac4_regfilt.bam.bai
+    jobid: 10
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac4.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac4_dedup.bam 	                                     test/bam/atac4_qfilt.bam 	                                     test/bam/atac4_regfilt.bam 
+        
+
+[Fri May  6 08:07:37 2022]
+rule filter_and_dedup:
+    input: test/bam/atac1.bam
+    output: test/bam/atac1_dedup.bam, test/bam/atac1_qfilt.bam, test/bam/atac1_regfilt.bam, test/bam/atac1_regfilt.bam.bai
+    jobid: 1
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac1.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac1_dedup.bam 	                                     test/bam/atac1_qfilt.bam 	                                     test/bam/atac1_regfilt.bam 
+        
+
+[Fri May  6 08:07:37 2022]
+rule filter_and_dedup:
+    input: test/bam/atac3.bam
+    output: test/bam/atac3_dedup.bam, test/bam/atac3_qfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac3_regfilt.bam.bai
+    jobid: 7
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac3.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac3_dedup.bam 	                                     test/bam/atac3_qfilt.bam 	                                     test/bam/atac3_regfilt.bam 
+        
+
+[Fri May  6 08:07:37 2022]
+rule filter_and_dedup:
+    input: test/bam/atac2.bam
+    output: test/bam/atac2_dedup.bam, test/bam/atac2_qfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac2_regfilt.bam.bai
+    jobid: 4
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac2.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac2_dedup.bam 	                                     test/bam/atac2_qfilt.bam 	                                     test/bam/atac2_regfilt.bam 
+        
+
+[Fri May  6 08:07:37 2022]
+rule get_open_chrom:
+    input: test/bam/atac4_regfilt.bam
+    output: test/bam/atac4_unsort_open.bam, test/bam/atac4_open.bam
+    jobid: 16
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac4_regfilt.bam                                            4                                            test/bam/atac4_unsort_open.bam                                            test/bam/atac4_open.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule get_open_chrom:
+    input: test/bam/atac2_regfilt.bam
+    output: test/bam/atac2_unsort_open.bam, test/bam/atac2_open.bam
+    jobid: 14
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac2_regfilt.bam                                            4                                            test/bam/atac2_unsort_open.bam                                            test/bam/atac2_open.bam
+        
+
+[Fri May  6 08:07:37 2022]
+rule tn5_shift_and_open:
+    input: test/bam/atac2_regfilt.bam
+    output: test/bam/atac2_regfilt_tmp.bam, test/bam/atac2_regfilt_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac2_regfilt.log
+    jobid: 18
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+RuleException in line 134 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+'InputFiles' object has no attribute 'atac_bam'

@@ -1,0 +1,123 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job               count    min threads    max threads
+--------------  -------  -------------  -------------
+all                   1              1              1
+get_open_chrom        4              1              1
+total                 5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	get_open_chrom
+	get_open_chrom
+	get_open_chrom
+	get_open_chrom
+Select jobs to execute...
+Selected jobs (4):
+	get_open_chrom
+	get_open_chrom
+	get_open_chrom
+	get_open_chrom
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Fri May  6 08:03:27 2022]
+rule get_open_chrom:
+    input: test/bam/atac1_regfilt.bam
+    output: test/bam/atac1_unsort_open.bam, test/bam/atac1_open.bam
+    jobid: 13
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac1_regfilt.bam                                            4                                            test/bam/atac1_unsort_open.bam                                            test/bam/atac1_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac1_regfilt.bam                                            4                                            test/bam/atac1_unsort_open.bam                                            test/bam/atac1_open.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Fri May  6 08:03:27 2022]
+rule get_open_chrom:
+    input: test/bam/atac3_regfilt.bam
+    output: test/bam/atac3_unsort_open.bam, test/bam/atac3_open.bam
+    jobid: 15
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac3_regfilt.bam                                            4                                            test/bam/atac3_unsort_open.bam                                            test/bam/atac3_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac3_regfilt.bam                                            4                                            test/bam/atac3_unsort_open.bam                                            test/bam/atac3_open.bam'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Fri May  6 08:03:27 2022]
+rule get_open_chrom:
+    input: test/bam/atac2_regfilt.bam
+    output: test/bam/atac2_unsort_open.bam, test/bam/atac2_open.bam
+    jobid: 14
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac2_regfilt.bam                                            4                                            test/bam/atac2_unsort_open.bam                                            test/bam/atac2_open.bam
+        
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac2_regfilt.bam                                            4                                            test/bam/atac2_unsort_open.bam                                            test/bam/atac2_open.bam'
+[Fri May  6 08:03:27 2022]
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+rule get_open_chrom:
+    input: test/bam/atac4_regfilt.bam
+    output: test/bam/atac4_unsort_open.bam, test/bam/atac4_open.bam
+    jobid: 16
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac4_regfilt.bam                                            4                                            test/bam/atac4_unsort_open.bam                                            test/bam/atac4_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac4_regfilt.bam                                            4                                            test/bam/atac4_unsort_open.bam                                            test/bam/atac4_open.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac1_unsort_open.bam.
+[Fri May  6 08:03:31 2022]
+Finished job 13.
+1 of 5 steps (20%) done
+Removing temporary output file test/bam/atac4_unsort_open.bam.
+[Fri May  6 08:03:31 2022]
+Finished job 16.
+2 of 5 steps (40%) done
+Removing temporary output file test/bam/atac3_unsort_open.bam.
+[Fri May  6 08:03:31 2022]
+Finished job 15.
+3 of 5 steps (60%) done
+Removing temporary output file test/bam/atac2_unsort_open.bam.
+[Fri May  6 08:03:31 2022]
+Finished job 14.
+4 of 5 steps (80%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Fri May  6 08:03:31 2022]
+localrule all:
+    input: test/bam/atac1_dedup.bam, test/bam/atac2_dedup.bam, test/bam/atac3_dedup.bam, test/bam/atac4_dedup.bam, test/bam/atac1_regfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac1_regfilt.bam.bai, test/bam/atac2_regfilt.bam.bai, test/bam/atac3_regfilt.bam.bai, test/bam/atac4_regfilt.bam.bai, test/bam/atac1_open.bam, test/bam/atac2_open.bam, test/bam/atac3_open.bam, test/bam/atac4_open.bam
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Fri May  6 08:03:31 2022]
+Finished job 0.
+5 of 5 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-06T080327.010705.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks
