@@ -1,35 +1,27 @@
-#!/usr/bin/env Rscript
-
 #############################################################################
-###              Script for csaw ATAC-seq local peak calling 
+###            Script for csaw ATAC-seq local peak calling                ###
 #############################################################################
 
-args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]
-bam_pattern = args[2]
-filt_libs_str = args[3]
-threads = args[4]
-background_rds = args[5]
-rse_rds = args[6]
+# Arguements for testing
+bam_dir = "~/repos/atac-seq/test/bam"
+bam_pattern = "regfilt"
+filt_libs_str = "atac1 atac2 atac4 atac4"
+threads = 4
+out_background_rds = "/tmp/background.rds"
+out_rse_rds = "/tmp/rse.rds"
 
-filt_libs = unlist(strsplit(filt_libs_str, " "))
+## args = commandArgs(trailingOnly = TRUE)
+## bam_dir = args[1]
 
+#REMOVE THIS STEP
+# Split the filtered libraries string
+(filt_libs = unlist(strsplit(filt_libs_str, " ")))
+
+# Load packages
 library(BiocParallel)
 library(csaw)
 library(edgeR)
 library(tidyverse)
-
-surrounds = 2000
-standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
-param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
-
-bam_list = list.files(path = bam_dir,
-                      pattern = bam_pattern,
-                      full.names = TRUE)
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = bam_pattern,
-                                                   full.names = FALSE))
-bam_list = bam_list[names(bam_list) %in% filt_libs]
 
 ## Script-local functions
 csaw_choose_window = function(bam_list){
@@ -41,7 +33,37 @@ csaw_choose_window = function(bam_list){
   return(thirdq)
 }
 
-window = csaw_choose_window(bam_list)
+#EXPORT TO SMK
+# Specify params
+surrounds = 2000
+standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
+param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
+
+paste0(bam_pattern,"$")
+
+bam_list = list.files(path = bam_dir,
+                       pattern = paste0(bam_pattern, ".bam$"),
+                       full.names = TRUE)
+names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
+                                                   pattern = paste0(bam_pattern, ".bam$"),                                                   
+                                                   full.names = FALSE))
+(bam_list = bam_list[names(bam_list) %in% filt_libs])
+
+filt_libs
+names(bam_list)
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+(bam_list = list.files(path = bam_dir,
+                       pattern = "_regfilt_tn5.bam$",
+                       full.names = TRUE))
+
+(names(bam_list) = gsub("_regfilt_tn5.bam$","",
+                       list.files(path = bam_dir,
+                                  pattern = "_regfilt_tn5.bam$",
+                                  full.names = FALSE)))
+
+(window = csaw_choose_window(bam_list))
 
 counts = windowCounts(bam_list,
                       width = window,

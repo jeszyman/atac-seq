@@ -121,20 +121,3 @@ rule samstats:
         """
         workflow/scripts/samstats.sh {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
         """
-
-rule library_complexity:
-    input:
-        config["bam_dir"] + "/{library_id}.bam",
-    params:
-        script = config["atac_scripts_dir"] + "/library_complexity.R",
-    output:
-        config["qc_dir"] + "/{library_id}_libcomplex.rds",
-    log:
-        config["log_dir"] + "/{library_id}_library_complexity.log",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output} \
-        >& {log}
-        """
