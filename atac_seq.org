@@ -4,6 +4,58 @@
 :logging: nil
 :END:
 ** Setup
+- startup script
+  #+begin_src bash :tangle ./src/repo_startup.sh
+#!/usr/bin/env bash
+repo=$1
+mntpt=$2
+sif_dir=$3
+
+# Check for parameters, return usage if empty
+if [ $# -ne 3 ];
+then
+    printf "\n usage: repo_startup.sh <REPO PATH> <RIS MOUNT PT> <SINGULARITY CONTAINER DIR>
+    \n ATAC-seq repo development helper script 
+    \n "
+else
+
+    # Check git file hook is read-able
+    if [ -r "${repo}/.git/hooks/precommit" ]; then
+        echo "Git size check is read-able"
+    else
+        echo
+        "Git size check is not read-able"
+        exit 1
+    fi
+    
+    # Check mount point  
+    if grep -qs $mntpt /proc/mounts; then
+        echo "RIS storage mounted."
+    else
+        echo "RIS storage NOT mounted, exiting."
+        exit 1
+    fi
+
+    # Check singularity container
+    if [ -r $sif_dir/atac.sif ]; then
+        echo "Local SIF file present"
+    else
+        echo "No local SIF file found"
+        exit 1
+    fi
+
+    # Check singularity container up-to-date
+    if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt $sif_dir/atac.sif ]; then
+        echo "Local SIF is out of date. Updating ..."
+        cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif $sif_dir/atac.sif 
+    else
+        echo "Local SIF file is up to date"
+    fi
+
+    cur_branch=$(git branch | head -n 1)
+    echo "Current branch is $cur_branch"
+fi
+#+end_src
 *** Repository and git
 #+begin_src bash
 git add -A
@@ -225,10 +277,15 @@ launch_atac() {
 **** Ideas
 - add a config at repo dir checker
 *** Box and [[id:be76a873-d2fe-447f-a43c-b84c52a8e77b][rclone]]
-*** TODO Docker and singularity
+*** Docker and singularity
 :LOGBOOK:
 CLOCK: [2021-12-09 Thu 13:10]--[2021-12-09 Thu 13:36] =>  0:26
 :END:
+#+begin_src bash
+mkdir -p ~/sing_containers
+
+if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.sif ]; then cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif; fi
+#+end_src
 - Docker pull build into [[*Configurations][bash config]]. 
 **** Write [[file:config/atac_Dockerfile]]
 
@@ -700,7 +757,7 @@ samtools stats -@ $1 $2 > $3
 samtools flagstat -@ $1 $2 > $4
 
 #+end_src
-** Peak calling and differential accessibility :smk:
+** TODO Peak calling and differential accessibility                     :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/peak_call_and_dif.smk
 :END:
@@ -1058,7 +1115,7 @@ saveRDS(object = final.merged.peaks,
 
 #+end_src
 
-** TODO Differential accessibility                                 :smk_rule:
+*** TODO Differential accessibility                                :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
 :END:
