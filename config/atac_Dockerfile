@@ -1,3 +1,4 @@
+FROM jeszyman/biotools
 #########1#########2#########3#########4#########5#########6#########7#########8
 
 ###################################
@@ -7,7 +8,7 @@
 # After build, the image will be pushed to dockerhub as jeszyman/atac
 # (https://hub.docker.com/repository/docker/jeszyman/atac)
 
-FROM jeszyman/biotools
+RUN apt-get -y update && apt-get upgrade -y
 
 # Simple bioconda installs
 RUN conda install -c bioconda macs2

@@ -292,6 +292,7 @@ if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.
 - BiocManager::install("apeglm")
 
 #+begin_src bash :tangle ./config/atac_Dockerfile
+FROM jeszyman/biotools
 #########1#########2#########3#########4#########5#########6#########7#########8
 
 ###################################
@@ -301,7 +302,7 @@ if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.
 # After build, the image will be pushed to dockerhub as jeszyman/atac
 # (https://hub.docker.com/repository/docker/jeszyman/atac)
 
-FROM jeszyman/biotools
+RUN apt-get -y update && apt-get upgrade -y
 
 # Simple bioconda installs
 RUN conda install -c bioconda macs2
@@ -359,7 +360,7 @@ RUN perl /opt/homer/.//configureHomer.pl -install mouse-p
   waiting on biotools container build
 :END:
 #+begin_src bash
-docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac
+docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac 
 docker push jeszyman/atac
 #+end_src
 **** [[file:src/mk_singularity.sh][Make singularity container from docker container]]

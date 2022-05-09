@@ -13,6 +13,5 @@ rule all:
         expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
         expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
         expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
-        expand(config["qc_dir"] + "/{library_id}_libcomplex.rds", library_id = LIBRARY_IDS),
 
 include: "atac_read_process.smk"
