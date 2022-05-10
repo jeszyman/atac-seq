@@ -1,0 +1,81 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job       count    min threads    max threads
+------  -------  -------------  -------------
+all           1              1              1
+fastqc        2              1              1
+total         3              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (2):
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (2):
+	fastqc
+	fastqc
+Resources after job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+
+[Mon May  9 14:12:05 2022]
+rule fastqc:
+    input: test/fastq/atac1_R2.fastq.gz
+    output: test/qc/atac1_R2_fastqc.html
+    log: test/logs/fastqc_raw_atac1_R2.log
+    jobid: 26
+    wildcards: library_id=atac1, read=R2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac1_R2.fastq.gz &> test/logs/fastqc_raw_atac1_R2.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac1_R2.fastq.gz &> test/logs/fastqc_raw_atac1_R2.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Mon May  9 14:12:05 2022]
+rule fastqc:
+    input: test/fastq/atac2_R2.fastq.gz
+    output: test/qc/atac2_R2_fastqc.html
+    log: test/logs/fastqc_raw_atac2_R2.log
+    jobid: 28
+    wildcards: library_id=atac2, read=R2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac2_R2.fastq.gz &> test/logs/fastqc_raw_atac2_R2.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac2_R2.fastq.gz &> test/logs/fastqc_raw_atac2_R2.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Mon May  9 14:12:09 2022]
+Finished job 26.
+1 of 3 steps (33%) done
+[Mon May  9 14:12:09 2022]
+Finished job 28.
+2 of 3 steps (67%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Mon May  9 14:12:09 2022]
+localrule all:
+    input: test/bam/atac1_dedup.bam, test/bam/atac2_dedup.bam, test/bam/atac3_dedup.bam, test/bam/atac4_dedup.bam, test/bam/atac1_regfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac1_regfilt.bam.bai, test/bam/atac2_regfilt.bam.bai, test/bam/atac3_regfilt.bam.bai, test/bam/atac4_regfilt.bam.bai, test/bam/atac1_open.bam, test/bam/atac2_open.bam, test/bam/atac3_open.bam, test/bam/atac4_open.bam, test/bam/atac1_regfilt_tn5.bam, test/bam/atac2_regfilt_tn5.bam, test/bam/atac3_regfilt_tn5.bam, test/bam/atac4_regfilt_tn5.bam, test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam, test/qc/atac1_R1_fastqc.html, test/qc/atac1_R2_fastqc.html, test/qc/atac2_R1_fastqc.html, test/qc/atac2_R2_fastqc.html, test/qc/atac3_R1_fastqc.html, test/qc/atac3_R2_fastqc.html, test/qc/atac4_R1_fastqc.html, test/qc/atac4_R2_fastqc.html, test/qc/atac1_stat.txt, test/qc/atac2_stat.txt, test/qc/atac3_stat.txt, test/qc/atac4_stat.txt, test/qc/atac1_flagstat.txt, test/qc/atac2_flagstat.txt, test/qc/atac3_flagstat.txt, test/qc/atac4_flagstat.txt
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Mon May  9 14:12:09 2022]
+Finished job 0.
+3 of 3 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-09T141205.165419.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

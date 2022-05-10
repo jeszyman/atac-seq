@@ -1,0 +1,2 @@
+SyntaxError in line 23 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+invalid syntax. Perhaps you forgot a comma? (peak_call_and_dif.smk, line 23)

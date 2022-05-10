@@ -43,4 +43,7 @@ else
     else
         echo "Local SIF file is up to date"
     fi
+
+    cur_branch=$(git branch | head -n 1)
+    echo "Current branch is $cur_branch"
 fi

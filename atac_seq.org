@@ -277,10 +277,10 @@ launch_atac() {
 **** Ideas
 - add a config at repo dir checker
 *** Box and [[id:be76a873-d2fe-447f-a43c-b84c52a8e77b][rclone]]
-*** Docker and singularity
-:LOGBOOK:
-CLOCK: [2021-12-09 Thu 13:10]--[2021-12-09 Thu 13:36] =>  0:26
-:END:
+*** TODO Docker and singularity
+
+missing alignmentSieve 
+[[id:b16d0202-8d35-472b-b538-87a7d6a6cef7][Conda and Miniconda]]
 #+begin_src bash
 mkdir -p ~/sing_containers
 
@@ -438,7 +438,7 @@ for file in "test/fastq/*.fastq"; do gzip -f $file; done
 **** [[file:~/repos/basecamp/basecamp.org::*Scripts][Snakemake basecamp scripts]]
 **** Configuration YAMLS
 #+begin_src bash :tangle ./config/repo_int_test.yaml
-container: "/home/jeszyman/sing_containers/atac.sif"
+container: "~/sing_containers/atac.sif"
 fastq_dir: "test/fastq"
 threads: 4
 bam_dir: "test/bam"
@@ -447,6 +447,7 @@ keep_bed: "resources/keep.bed"
 log_dir: "test/logs"
 qc_dir: "test/qc"
 atac_scripts_dir: "workflow/scripts"
+dca_dir: "test/dca"
 #+end_src
 - common
   #+begin_src bash :tangle config/common.yaml
@@ -470,6 +471,13 @@ WIDTH:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac_read_process.smk
 :END:
+**** Description
+Sequencing read adapters were removed and reads were quality trimmed using flexbar.
+
+Processed reads were aligned to mm10 using bowtie2.
+
+PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
+
 **** DONE Read trim                                                   :smk_rule:
 - Snakemake
   #+begin_src snakemake
@@ -490,7 +498,7 @@ rule read_trim:
         workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
         """
 #+end_src
-        workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
+
 - Script [[file:workflow/scripts/read_trim.sh]]
   #+begin_src bash :noweb yes :tangle ./workflow/scripts/read_trim.sh
 #########1#########2#########3#########4#########5#########6#########7#########8
@@ -518,6 +526,7 @@ params_threads="$4"
 # Run
 flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"            
 #+end_src
+
 **** DONE Align BT2                                                   :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
@@ -557,7 +566,7 @@ output_bam="$5"
 # Run
 bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam" 
 #+end_src
-**** DONE Filter and dedup                                            :smk_rule:
+**** TODO Filter and dedup                                         :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule filter_and_dedup:
@@ -622,7 +631,7 @@ atac_bam_processing "$params_threads" \
                     "$output_regfilt_bam"
 samtools index "$output_regfilt_bam"
 #+end_src
-**** DONE Get open chrom                                              :smk_rule:
+**** TODO Get open chrom                                           :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule get_open_chrom:
@@ -649,7 +658,7 @@ alignmentSieve --bam $1 \
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
-**** DONE Tn5 shift                                                   :smk_rule:
+**** TODO Tn5 shift                                                :smk_rule:
 :LOGBOOK:
 - State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
 - State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
@@ -683,7 +692,7 @@ samtools sort -@ $2 -o $4 $3
 
 samtools index -@ $2 $4
 #+end_src
-**** DONE Tn5 open shift                                              :smk_rule:
+**** TODO Tn5 open shift                                           :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
   add to next run
@@ -714,7 +723,7 @@ samtools sort -@ $2 -o $4 $3
 
 samtools index -@ $2 $4
 #+end_src
-**** DONE FastQC                                                      :smk_rule:
+**** TODO FastQC                                                   :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule fastqc:
@@ -735,7 +744,7 @@ rule fastqc:
   #+begin_src bash :tangle ./workflow/scripts/fastqc.sh
 fastqc --quiet --outdir=$1 $2 &>> $3
 #+end_src
-**** DONE Samstats                                                    :smk_rule:
+**** TODO Samstats                                                 :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule samstats:
@@ -758,57 +767,28 @@ samtools stats -@ $1 $2 > $3
 samtools flagstat -@ $1 $2 > $4
 
 #+end_src
-** TODO Peak calling and differential accessibility                     :smk:
+** [[file:workflow/peak_call_and_dif.smk][Peak calling and differential accessibility]]                          :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/peak_call_and_dif.smk
 :END:
-*** peak calling, all samples
+*** TODO peak calling, all samples
 - Snakemake
   #+begin_src snakemake
 rule make_peak_counts:
+    input:
+        expand(config["bam_dir"] + "/{library_id}_open_tn5.bam", library_id = LIBRARY_IDS)
     params:
-        bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
-        lib_str = config["IR48H_V_SHAM"],	
-        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
+        script = config["atac_scripts_dir"] + "/select_window_size.R",
     output:
-        background_counts = config["data_dir"] + "/atac/background_counts_all_rse.rds"
-        counts_rse = config["data_dir"] + "/atac/counts_all_rse.rds"
+        background_counts = config["dca_dir"] + "/background_counts_all_rse.rds",
+        counts_rse = config["dca_dir"] + "/counts_all_rse.rds",	
     log:
-        config["data_dir"] + "/logs/make_peak_counts.log",
+        config["log_dir"] + "/make_peak_counts.log",
     shell:
         """
-        lib_str="{params.lib_str}"
         Rscript {params.script} \
-        {params.bam_dir} \
-        {params.bam_pattern} \
-        "${{lib_str}}" \
-        {config.threads} \
-        {output.background_counts} \
-        {output.counts_rse} \
-        >& {log}
-        """
-#+end_src
-  #+begin_src snakemake :tangle no
-rule make_peak_counts:
-    params:
-        bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
-        lib_str = config["IR48H_V_SHAM"],	
-        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
-    output:
-        background_counts = config["data_dir"] + "/atac/background_counts_all_rse.rds"
-        counts_rse = config["data_dir"] + "/atac/counts_all_rse.rds"
-    log:
-        config["data_dir"] + "/logs/make_peak_counts.log",
-    shell:
-        """
-        lib_str="{params.lib_str}"
-        Rscript {params.script} \
-        {params.bam_dir} \
-        {params.bam_pattern} \
-        "${{lib_str}}" \
-        {config.threads} \
+        "{input}" \
+        {config[threads]} \
         {output.background_counts} \
         {output.counts_rse} \
         >& {log}
@@ -821,19 +801,16 @@ rule make_peak_counts:
 #############################################################################
 
 # Arguements for testing
-bam_dir = "~/repos/atac-seq/test/bam"
-bam_pattern = "regfilt"
-filt_libs_str = "atac1 atac2 atac4 atac4"
-threads = 4
-out_background_rds = "/tmp/background.rds"
-out_rse_rds = "/tmp/rse.rds"
+## library_ids_str = "/home/jeszyman/repos/atac-seq/test/bam/atac1_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac2_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac3_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac4_open_tn5.bam"
+## threads = 4
+## out_background_rds = "/tmp/background.rds"
+## out_rse_rds = "/tmp/rse.rds"
 
-## args = commandArgs(trailingOnly = TRUE)
-## bam_dir = args[1]
-
-#REMOVE THIS STEP
-# Split the filtered libraries string
-(filt_libs = unlist(strsplit(filt_libs_str, " ")))
+args = commandArgs(trailingOnly = TRUE)
+library_ids_str = args[1]
+threads = args[2]
+out_background_rds = args[3]
+out_rse_rds = args[4]
 
 # Load packages
 library(BiocParallel)
@@ -851,272 +828,51 @@ csaw_choose_window = function(bam_list){
   return(thirdq)
 }
 
-#EXPORT TO SMK
 # Specify params
 surrounds = 2000
 standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
 param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
 
-paste0(bam_pattern,"$")
+# Make bam file list
+bam_list = unlist(strsplit(library_ids_str, " "))
+names(bam_list) = gsub("^.*/","",bam_list)
 
-bam_list = list.files(path = bam_dir,
-                       pattern = paste0(bam_pattern, ".bam$"),
-                       full.names = TRUE)
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = paste0(bam_pattern, ".bam$"),                                                   
-                                                   full.names = FALSE))
-(bam_list = bam_list[names(bam_list) %in% filt_libs])
-
-filt_libs
-names(bam_list)
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-(bam_list = list.files(path = bam_dir,
-                       pattern = "_regfilt_tn5.bam$",
-                       full.names = TRUE))
-
-(names(bam_list) = gsub("_regfilt_tn5.bam$","",
-                       list.files(path = bam_dir,
-                                  pattern = "_regfilt_tn5.bam$",
-                                  full.names = FALSE)))
-
+# Filter per Reske JJ, et al. 2021. https://doi.org/10.1186/s13072-020-00342-y
 (window = csaw_choose_window(bam_list))
-
 counts = windowCounts(bam_list,
                       width = window,
                       param = param,
                       BPPARAM = MulticoreParam(workers=threads))
-
 neighbor = suppressWarnings(resize(rowRanges(counts),
                                    surrounds, fix = "center"))
-
 wider = regionCounts(bam_list,
                      regions = neighbor,
                      param = param,
                      BPPARAM = MulticoreParam(workers=threads))
+# Remove dimnames to avoid SummarizedExperiment error in window filtering
+dimnames(wider) = NULL
+dimnames(counts) = NULL
 
-filter_stat = filterWindowsLocal(counts, wider)
-
+filter_stat = filterWindowsLocal(counts, wider, assay.data = "counts")
 filtered_counts = counts[filter_stat$filter > log2(3),]
-
 background = windowCounts(bam_list,
                           bin = TRUE,
                           width = 10000,
                           param = param,
                           BPPARAM = MulticoreParam(workers=threads))
 
+# Save outputs
 saveRDS(object = filtered_counts, 
-file = counts_rds)
-
+file = out_rse_rds)
 saveRDS(object = background, 
-file = background_rds)
+file = out_background_rds)
 #+end_src
-*** peak calling, 48hrs vs. sham
-*** peak calling, 6wk vs. sham
-**** select 6wk vs sham and validate 48hr
-*** Differential accessibility 48h vs. sham                        :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule differential_accessibility:
-    input:
-        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
-        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
-        data_model = config["data_dir"] + "/data_model/data_model.RData",
-    params:
-        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
-    output:
-        config["data_dir"] + "/atac/dca.rds",
-    log:
-        config["data_dir"] + "/logs/differential_accessibility.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input.counts} \
-        {input.background} \
-	{input.data_model} \
-	{output}
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
-<<r_smk_preamble>>
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to generate differential accessibility model with EdgeR   ###                
-###
+*** Dev
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
 
-args = commandArgs(trailingOnly = TRUE)
-counts_rds = args[1]
-background_rds = args[2]
-data_model = args[3]
-dca_granges_file = args[4]
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-counts = readRDS(counts_rds)
-load(data_model)
-background = readRDS(background_rds)
-
-counts = normFactors(background, se.out = counts)
-
-y <- asDGEList(counts)
-colnames(y$counts) <- colnames(counts)
-rownames(y$samples) <- colnames(counts)
-
-groups =
-  data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
-
-y$samples$group = groups
-
-design <- model.matrix(~0 + groups, data=y$samples)
-
-colnames(design) = levels(groups)
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-
-fit <- glmQLFit(y, design, robust=TRUE)
-
-# testing for differentially-accessible windows
-results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
-
-
-# combine GRanges rowdata with DA statistics
-rowData(working.windows) <- cbind(rowData(working.windows), results$table)
-#working.windows@rowRanges
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
-
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-
-
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
-
-#+end_src
-*** Differential accessibility 6wk vs. sham                        :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule differential_accessibility:
-    input:
-        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
-        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
-        data_model = config["data_dir"] + "/data_model/data_model.RData",
-    params:
-        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
-    output:
-        config["data_dir"] + "/atac/dca.rds",
-    log:
-        config["data_dir"] + "/logs/differential_accessibility.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input.counts} \
-        {input.background} \
-	{input.data_model} \
-	{output}
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
-<<r_smk_preamble>>
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to generate differential accessibility model with EdgeR   ###                
-###
-
-args = commandArgs(trailingOnly = TRUE)
-counts_rds = args[1]
-background_rds = args[2]
-data_model = args[3]
-dca_granges_file = args[4]
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-counts = readRDS(counts_rds)
-load(data_model)
-background = readRDS(background_rds)
-
-counts = normFactors(background, se.out = counts)
-
-y <- asDGEList(counts)
-colnames(y$counts) <- colnames(counts)
-rownames(y$samples) <- colnames(counts)
-
-groups =
-  data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
-
-y$samples$group = groups
-
-design <- model.matrix(~0 + groups, data=y$samples)
-
-colnames(design) = levels(groups)
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-
-fit <- glmQLFit(y, design, robust=TRUE)
-
-# testing for differentially-accessible windows
-results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
-
-
-# combine GRanges rowdata with DA statistics
-rowData(working.windows) <- cbind(rowData(working.windows), results$table)
-#working.windows@rowRanges
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
-
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-
-
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
-
-#+end_src
-
-*** TODO Differential accessibility                                :smk_rule:
+**** TODO Differential accessibility                               :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
 :END:
@@ -1145,6 +901,215 @@ rule differential_accessibility:
 #+end_src
 - [[file:./workflow/scripts/differential_accessibility.R][Base script]]
   #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
+#!/usr/env R
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+### Script to generate ATAC-seq differential accessibility model with EdgeR  ###                
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Setup
+
+## Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+counts_rds = args[1]
+background_rds = args[2]
+data_model = args[3]
+dca_granges_file = args[4]
+
+## Load libraries 
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+## Load data 
+counts = readRDS(counts_rds)
+background = readRDS(background_rds)
+load(data_model)
+
+# Run EdgeR workflow
+counts = normFactors(background, se.out = counts)
+
+y <- asDGEList(counts)
+colnames(y$counts) <- colnames(counts)
+rownames(y$samples) <- colnames(counts)
+
+groups =
+  data.frame(library_id = rownames(y$samples)) %>%
+  left_join(libraries_full, by = "library_id") %>%  
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h") 
+
+y$samples$group = groups
+
+design = model.matrix(~0 + groups, data=y$samples)
+
+colnames(design) = levels(groups)
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+
+fit <- glmQLFit(y, design, robust=TRUE)
+
+# testing for differentially-accessible windows
+results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
+
+
+# combine GRanges rowdata with DA statistics
+rowData(working.windows) <- cbind(rowData(working.windows), results$table)
+#working.windows@rowRanges
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
+
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+
+
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks, 
+        file = dca_grange_file) 
+
+#+end_src
+
+***** Differential accessibility 48h vs. sham                      :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule differential_accessibility:
+    input:
+        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
+        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
+        data_model = config["data_dir"] + "/data_model/data_model.RData",
+    params:
+        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
+    output:
+        config["data_dir"] + "/atac/dca.rds",
+    log:
+        config["data_dir"] + "/logs/differential_accessibility.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.counts} \
+        {input.background} \
+	{input.data_model} \
+	{output}
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
+<<r_smk_preamble>>
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###   Script to generate differential accessibility model with EdgeR   ###                
+###
+
+args = commandArgs(trailingOnly = TRUE)
+counts_rds = args[1]
+background_rds = args[2]
+data_model = args[3]
+dca_granges_file = args[4]
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+counts = readRDS(counts_rds)
+load(data_model)
+background = readRDS(background_rds)
+
+counts = normFactors(background, se.out = counts)
+
+y <- asDGEList(counts)
+colnames(y$counts) <- colnames(counts)
+rownames(y$samples) <- colnames(counts)
+
+groups =
+  data.frame(library_id = rownames(y$samples)) %>%
+  left_join(libraries_full, by = "library_id") %>%  
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h") 
+
+y$samples$group = groups
+
+design <- model.matrix(~0 + groups, data=y$samples)
+
+colnames(design) = levels(groups)
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+
+fit <- glmQLFit(y, design, robust=TRUE)
+
+# testing for differentially-accessible windows
+results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
+
+
+# combine GRanges rowdata with DA statistics
+rowData(working.windows) <- cbind(rowData(working.windows), results$table)
+#working.windows@rowRanges
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
+
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+
+
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks, 
+        file = dca_grange_file) 
+
+#+end_src
+***** Differential accessibility 6wk vs. sham                      :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule differential_accessibility:
+    input:
+        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
+        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
+        data_model = config["data_dir"] + "/data_model/data_model.RData",
+    params:
+        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
+    output:
+        config["data_dir"] + "/atac/dca.rds",
+    log:
+        config["data_dir"] + "/logs/differential_accessibility.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.counts} \
+        {input.background} \
+	{input.data_model} \
+	{output}
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
 <<r_smk_preamble>>
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -1220,10 +1185,10 @@ saveRDS(object = final.merged.peaks,
 
 #+end_src
 
-** TODO Peak annotation
+**** TODO Peak annotation
 - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
 
-*** WAITING Peak annotation of DE                                  :smk_rule:
+***** WAITING Peak annotation of DE                                :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TEST"       [2022-03-31 Thu 14:46]
 :END:
@@ -1303,7 +1268,7 @@ annotation = as_tibble(as.data.frame(chipseek))
 write.csv(annotation, row.names = F, file = annotation_file)
 #+end_src
   
-**** TODO Peak annotation 
+****** TODO Peak annotation 
 - is granges or rowRanges of a RSE 
 #+begin_src R
 test=readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds")
@@ -1767,81 +1732,7 @@ rule make_peak_counts:
         """
 #+end_src
 - [[file:./workflow/scripts/select_window_size.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/select_window_size.R
-<<r_smk_preamble>>
 
-#############################################################################
-###              Script for csaw ATAC-seq local peak calling 
-#############################################################################
-
-args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]
-bam_pattern = args[2]
-filt_libs_str = args[3]
-threads = args[4]
-background_rds = args[5]
-rse_rds = args[6]
-
-filt_libs = unlist(strsplit(filt_libs_str, " "))
-
-library(BiocParallel)
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-surrounds = 2000
-standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
-param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
-
-bam_list = list.files(path = bam_dir,
-                      pattern = bam_pattern,
-                      full.names = TRUE)
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = bam_pattern,
-                                                   full.names = FALSE))
-bam_list = bam_list[names(bam_list) %in% filt_libs]
-
-## Script-local functions
-csaw_choose_window = function(bam_list){
-  # Choose window width by fragment size distribution
-  frag_size = lapply(bam_list, getPESizes)
-  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
-  frag_vect_summary = summary(all_bam_frag_vect)
-  thirdq = frag_vect_summary[[5]]
-  return(thirdq)
-}
-
-window = csaw_choose_window(bam_list)
-
-counts = windowCounts(bam_list,
-                      width = window,
-                      param = param,
-                      BPPARAM = MulticoreParam(workers=threads))
-
-neighbor = suppressWarnings(resize(rowRanges(counts),
-                                   surrounds, fix = "center"))
-
-wider = regionCounts(bam_list,
-                     regions = neighbor,
-                     param = param,
-                     BPPARAM = MulticoreParam(workers=threads))
-
-filter_stat = filterWindowsLocal(counts, wider)
-
-filtered_counts = counts[filter_stat$filter > log2(3),]
-
-background = windowCounts(bam_list,
-                          bin = TRUE,
-                          width = 10000,
-                          param = param,
-                          BPPARAM = MulticoreParam(workers=threads))
-
-saveRDS(object = filtered_counts, 
-file = counts_rds)
-
-saveRDS(object = background, 
-file = background_rds)
-#+end_src
 
 ******* TEST Make peak counts                                      :smk_rule:
 :LOGBOOK:
@@ -1875,7 +1766,7 @@ rule make_peak_counts:
         """
 #+end_src
 - [[file:./workflow/scripts/select_window_size.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/select_window_size.R
+  #+begin_src R :noweb yes
 <<r_smk_preamble>>
 
 #############################################################################
@@ -3007,17 +2898,19 @@ samtools index -@ $2 $4
 
 
 
-** [[file:workflow/int_test.smk][Integration testing]]                                                  :smk:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/int_test.smk
-:END:
-#+begin_src snakemake
+** INPROCESS [[file:workflow/int_test.smk][Integration testing]]                                        :smk:
+*** Snakefiles
+**** Read processing and alignment
+#+begin_src snakemake :tangle ./workflow/int_test_reads.smk
 container: config["container"]
 
 LIBRARY_IDS = ["atac1","atac2","atac3","atac4"]
 
 rule all:
     input:
+        expand(config["fastq_dir"] + "/{library_id}_flex_1.fastq.gz", library_id = LIBRARY_IDS),
+        expand(config["fastq_dir"] + "/{library_id}_flex_2.fastq.gz", library_id = LIBRARY_IDS),
+        expand(config["bam_dir"] + "/{library_id}.bam", library_id = LIBRARY_IDS),
         expand(config["bam_dir"] + "/{library_id}_dedup.bam", library_id = LIBRARY_IDS),
         expand(config["bam_dir"] + "/{library_id}_regfilt.bam", library_id = LIBRARY_IDS),
         expand(config["bam_dir"] + "/{library_id}_regfilt.bam.bai", library_id = LIBRARY_IDS),
@@ -3027,23 +2920,43 @@ rule all:
         expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
         expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
         expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
-
+	
 include: "atac_read_process.smk"
 #+end_src
+**** Peak calling and differential accessibility
+#+begin_src snakemake :tangle ./workflow/int_test_peaks.smk
+container: config["container"]
 
+rule all:
+    input:
+        config["dca_dir"] + "/background_counts_all_rse.rds",
+        config["dca_dir"] + "/counts_all_rse.rds",
+	
+include: "peak_call_and_dif.smk"
+#+end_src
+*** Bash run scripts
 #+begin_src bash
-basecamp/src/smk_dry_run.sh config/repo_int_test.yaml workflow/int_test.smk
-basecamp/src/smk_draw.sh config/repo_int_test.yaml workflow/int_test.smk resources/int_test.pdf
-basecamp/src/smk_run.sh config/repo_int_test.yaml workflow/int_test.smk
-basecamp/src/smk_forced_run.sh config/repo_int_test.yaml workflow/int_test.smk
+basecamp/src/smk_dry_run.sh config/repo_int_test_reads.yaml workflow/int_test_reads.smk
+
+basecamp/src/smk_draw.sh config/repo_int_test_reads.yaml workflow/int_test_reads.smk resources/int_test_reads.pdf
+
+basecamp/src/smk_run.sh config/repo_int_test_reads.yaml workflow/int_test_reads.smk
+
+basecamp/src/smk_forced_run.sh config/repo_int_test_reads.yaml workflow/int_test_reads.smk
+
+basecamp/src/smk_dry_run.sh config/repo_int_test_peaks.yaml workflow/int_test_peaks.smk
+
+basecamp/src/smk_draw.sh config/repo_int_test_peaks.yaml workflow/int_test_peaks.smk resources/int_test_peaks.pdf
+
+basecamp/src/smk_run.sh config/repo_int_test_peaks.yaml workflow/int_test_peaks.smk
+
+basecamp/src/smk_forced_run.sh config/repo_int_test_peaks.yaml workflow/int_test_peaks.smk
 
 #+end_src
-** README
-*** Changelog
-** Reference
-- [[id:271b4d5f-727e-496e-b835-8fe9f8655655][biopipe module]]
-- [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
+
 ** Dev
+:header-args: :tangle no
+- transcription factor sites
 - Percent of genome open
   - http://hgdownload.cse.ucsc.edu/goldenpath/mm10/bigZips/mm10.chrom.sizes
   #+begin_src bash
@@ -3083,7 +2996,7 @@ rule make_keep_bed:
         bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed} > {output.keep_bed}
         """
 #+end_src
-*** WAITING ATAC-seq peak calling and chromating accessibility on subsets
+*** ATAC-seq peak calling and chromating accessibility on subsets
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-03-31 Thu 14:25]
 :END:
@@ -3119,7 +3032,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
 - run ir48h vs sham
 - run ir6w vs sham
 
-**** TODO Peak annotation                                     
+**** Peak annotation                                     
 - Snakemake
   #+begin_src snakemake
 rule peak_annotation:
@@ -3357,7 +3270,7 @@ summary(pca)
 
 #+end_src
 
-******* TODO edgeR:smk_rule:
+******* edgeR:smk_rule:
 https://f1000research.com/articles/5-1438/v2
 
 lfcs are normally distributed, skewed way negative
@@ -4502,7 +4415,7 @@ fragsize %>%
 #+end_src
 
 
-*** TODO Library complexity:smk_rule:
+*** Library complexity:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule library_complexity:
@@ -4640,3 +4553,13 @@ saveRDS(object = complex,
   save_plot("./results/imgs/lib_complex.pdf", library_complexity_plot)
 
   #+end_src
+** README
+*** Prerequisites to run repository local integration testing
+- Singularity container built from https://github.com/jeszyman/atac-seq/blob/master/config/atac_Dockerfile
+- Local snakemake
+- Local snakemake configuration YAML 
+*** Changelog
+** Reference
+- [[https://static-content.springer.com/esm/art%3A10.1186%2Fs13072-020-00342-y/MediaObjects/13072_2020_342_MOESM6_ESM.txt][reske csaw workflow]]
+- [[id:271b4d5f-727e-496e-b835-8fe9f8655655][biopipe module]]
+- [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]

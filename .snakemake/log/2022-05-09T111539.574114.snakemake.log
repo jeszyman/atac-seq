@@ -1,0 +1,19 @@
+Building DAG of jobs...
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+make_peak_counts        1              1              1
+total                   2              1              1
+
+
+[Mon May  9 11:15:39 2022]
+rule make_peak_counts:
+    input: test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam
+    output: test/dca/background_counts_all_rse.rds, test/dca/counts_all_rse.rds
+    log: test/logs/make_peak_counts.log
+    jobid: 1
+    resources: tmpdir=/tmp
+
+RuleException in line 14 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+NameError: The name 'ouput' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}

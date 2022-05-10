@@ -1,0 +1,103 @@
+Building DAG of jobs...
+Forcing incomplete files:
+	test/bam/atac2.bam
+	test/bam/atac3.bam
+	test/bam/atac4.bam
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+align_bt2        3              1              1
+all              1              1              1
+total            4              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (3):
+	align_bt2
+	align_bt2
+	align_bt2
+Select jobs to execute...
+Selected jobs (3):
+	align_bt2
+	align_bt2
+	align_bt2
+Resources after job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+
+[Mon May  9 14:19:16 2022]
+rule align_bt2:
+    input: test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac2_flex_2.fastq.gz
+    output: test/bam/atac2.bam
+    jobid: 3
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac2_flex_1.fastq.gz test/fastq/atac2_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac2.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac2_flex_1.fastq.gz test/fastq/atac2_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac2.bam'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Mon May  9 14:19:16 2022]
+rule align_bt2:
+    input: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    output: test/bam/atac3.bam
+    jobid: 5
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac3_flex_1.fastq.gz test/fastq/atac3_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac3.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac3_flex_1.fastq.gz test/fastq/atac3_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac3.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Mon May  9 14:19:16 2022]
+rule align_bt2:
+    input: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    output: test/bam/atac4.bam
+    jobid: 7
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac4_flex_1.fastq.gz test/fastq/atac4_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac4.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac4_flex_1.fastq.gz test/fastq/atac4_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac4.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Mon May  9 14:20:12 2022]
+Finished job 5.
+1 of 4 steps (25%) done
+[Mon May  9 14:20:14 2022]
+Finished job 3.
+2 of 4 steps (50%) done
+[Mon May  9 14:20:17 2022]
+Finished job 7.
+3 of 4 steps (75%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Mon May  9 14:20:17 2022]
+localrule all:
+    input: test/bam/atac1.bam, test/bam/atac2.bam, test/bam/atac3.bam, test/bam/atac4.bam
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Mon May  9 14:20:17 2022]
+Finished job 0.
+4 of 4 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-09T141916.278600.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks
