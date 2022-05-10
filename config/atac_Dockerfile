@@ -57,3 +57,5 @@ RUN perl /opt/homer/configureHomer.pl -install
 ENV PATH="${PATH}:/opt/homer/bin/"
 
 RUN perl /opt/homer/.//configureHomer.pl -install mouse-p
+
+RUN conda install -c bioconda samtools=1.7
