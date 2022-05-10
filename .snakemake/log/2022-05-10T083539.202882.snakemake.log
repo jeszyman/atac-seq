@@ -1,0 +1,131 @@
+Building DAG of jobs...
+Forcing incomplete files:
+	test/bam/atac1_dedup.bam
+	test/bam/atac1_qfilt.bam
+	test/bam/atac1_regfilt.bam
+	test/bam/atac1_regfilt.bam.bai
+	test/bam/atac2_dedup.bam
+	test/bam/atac2_qfilt.bam
+	test/bam/atac2_regfilt.bam
+	test/bam/atac2_regfilt.bam.bai
+	test/bam/atac4_dedup.bam
+	test/bam/atac4_qfilt.bam
+	test/bam/atac4_regfilt.bam
+	test/bam/atac4_regfilt.bam.bai
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+filter_and_dedup        4              1              1
+total                   5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	filter_and_dedup
+	filter_and_dedup
+	filter_and_dedup
+	filter_and_dedup
+Select jobs to execute...
+Selected jobs (4):
+	filter_and_dedup
+	filter_and_dedup
+	filter_and_dedup
+	filter_and_dedup
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 08:35:39 2022]
+rule filter_and_dedup:
+    input: test/bam/atac4.bam
+    output: test/bam/atac4_dedup.bam, test/bam/atac4_qfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac4_regfilt.bam.bai
+    jobid: 12
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac4.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac4_dedup.bam 	                                     test/bam/atac4_qfilt.bam 	                                     test/bam/atac4_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/filter_and_dedup.sh test/bam/atac4.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac4_dedup.bam 	                                     test/bam/atac4_qfilt.bam 	                                     test/bam/atac4_regfilt.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 10 08:35:39 2022]
+rule filter_and_dedup:
+    input: test/bam/atac1.bam
+    output: test/bam/atac1_dedup.bam, test/bam/atac1_qfilt.bam, test/bam/atac1_regfilt.bam, test/bam/atac1_regfilt.bam.bai
+    jobid: 9
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac1.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac1_dedup.bam 	                                     test/bam/atac1_qfilt.bam 	                                     test/bam/atac1_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/filter_and_dedup.sh test/bam/atac1.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac1_dedup.bam 	                                     test/bam/atac1_qfilt.bam 	                                     test/bam/atac1_regfilt.bam'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 08:35:39 2022]
+rule filter_and_dedup:
+    input: test/bam/atac2.bam
+    output: test/bam/atac2_dedup.bam, test/bam/atac2_qfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac2_regfilt.bam.bai
+    jobid: 10
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac2.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac2_dedup.bam 	                                     test/bam/atac2_qfilt.bam 	                                     test/bam/atac2_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/filter_and_dedup.sh test/bam/atac2.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac2_dedup.bam 	                                     test/bam/atac2_qfilt.bam 	                                     test/bam/atac2_regfilt.bam'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 08:35:39 2022]
+rule filter_and_dedup:
+    input: test/bam/atac3.bam
+    output: test/bam/atac3_dedup.bam, test/bam/atac3_qfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac3_regfilt.bam.bai
+    jobid: 11
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac3.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac3_dedup.bam 	                                     test/bam/atac3_qfilt.bam 	                                     test/bam/atac3_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/filter_and_dedup.sh test/bam/atac3.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac3_dedup.bam 	                                     test/bam/atac3_qfilt.bam 	                                     test/bam/atac3_regfilt.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac4_qfilt.bam.
+[Tue May 10 08:35:44 2022]
+Finished job 12.
+1 of 5 steps (20%) done
+Removing temporary output file test/bam/atac1_qfilt.bam.
+[Tue May 10 08:35:45 2022]
+Finished job 9.
+2 of 5 steps (40%) done
+Removing temporary output file test/bam/atac3_qfilt.bam.
+[Tue May 10 08:35:45 2022]
+Finished job 11.
+3 of 5 steps (60%) done
+Removing temporary output file test/bam/atac2_qfilt.bam.
+[Tue May 10 08:35:45 2022]
+Finished job 10.
+4 of 5 steps (80%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 08:35:45 2022]
+localrule all:
+    input: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz, test/fastq/atac2_flex_2.fastq.gz, test/fastq/atac3_flex_2.fastq.gz, test/fastq/atac4_flex_2.fastq.gz, test/bam/atac1.bam, test/bam/atac2.bam, test/bam/atac3.bam, test/bam/atac4.bam, test/bam/atac1_dedup.bam, test/bam/atac2_dedup.bam, test/bam/atac3_dedup.bam, test/bam/atac4_dedup.bam
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 10 08:35:45 2022]
+Finished job 0.
+5 of 5 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T083539.202882.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

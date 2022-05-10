@@ -2,12 +2,12 @@
 0 + 0 secondary
 0 + 0 supplementary
 0 + 0 duplicates
-16050 + 0 mapped (10.72% : N/A)
+16212 + 0 mapped (10.83% : N/A)
 149732 + 0 paired in sequencing
 74866 + 0 read1
 74866 + 0 read2
-14856 + 0 properly paired (9.92% : N/A)
-15070 + 0 with itself and mate mapped
-980 + 0 singletons (0.65% : N/A)
+14890 + 0 properly paired (9.94% : N/A)
+15104 + 0 with itself and mate mapped
+1108 + 0 singletons (0.74% : N/A)
 0 + 0 with mate mapped to a different chr
 0 + 0 with mate mapped to a different chr (mapQ>=5)
