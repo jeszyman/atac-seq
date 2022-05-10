@@ -17,24 +17,3 @@ rule make_peak_counts:
         {output.counts_rse} \
         >& {log}
         """
-
-rule differential_accessibility:
-    input:
-        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
-        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
-        data_model = config["data_dir"] + "/data_model/data_model.RData",
-    params:
-        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
-    output:
-        config["data_dir"] + "/atac/dca.rds",
-    log:
-        config["data_dir"] + "/logs/differential_accessibility.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input.counts} \
-        {input.background} \
-	{input.data_model} \
-	{output}
-        >& {log}
-        """

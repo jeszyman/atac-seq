@@ -2,7 +2,7 @@
 ###            Script for csaw ATAC-seq local peak calling                ###
 #############################################################################
 
-# Arguements for integration testing
+# Arguements for testing
 ## library_ids_str = "/home/jeszyman/repos/atac-seq/test/bam/atac1_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac2_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac3_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac4_open_tn5.bam"
 ## threads = 4
 ## out_background_rds = "/tmp/background.rds"

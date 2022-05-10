@@ -1,23 +1,31 @@
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to generate differential accessibility model with EdgeR   ###                
-###
+#!/usr/env R
 
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+### Script to generate ATAC-seq differential accessibility model with EdgeR  ###                
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Setup
+
+## Command line arguements
 args = commandArgs(trailingOnly = TRUE)
 counts_rds = args[1]
 background_rds = args[2]
 data_model = args[3]
 dca_granges_file = args[4]
 
+## Load libraries 
 library(csaw)
 library(edgeR)
 library(tidyverse)
 
+## Load data 
 counts = readRDS(counts_rds)
-load(data_model)
 background = readRDS(background_rds)
+load(data_model)
 
+# Run EdgeR workflow
 counts = normFactors(background, se.out = counts)
 
 y <- asDGEList(counts)
@@ -33,7 +41,7 @@ groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
-design <- model.matrix(~0 + groups, data=y$samples)
+design = model.matrix(~0 + groups, data=y$samples)
 
 colnames(design) = levels(groups)
 
