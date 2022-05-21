@@ -371,17 +371,15 @@ RUN R -e "install.packages(c('statmod', repos='http://cran.rstudio.com/'))"
 docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac 
 docker push jeszyman/atac
 #+end_src
-**** [[file:src/mk_singularity.sh][Make singularity container from docker container]]
+**** TODO [[file:src/mk_singularity.sh][Make singularity container from docker container]]
 :LOGBOOK:
 - State "WAITING"    from              [2021-12-21 Tue 14:26]
 - State "WAITING"    from "TODO"       [2021-12-21 Tue 11:51]
 :END:
-#+begin_src bash :noweb yes :tangle ./src/mk_singularity.sh
-<<bash_cmdline_script_preamble>>
+#+begin_src bash :noweb yes 
+singularity pull /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif docker://jeszyman/atac
+cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif
 
-#
-singularity pull $data_dir/atac.sif docker://jeszyman/atac
-cp "${data_dir}/atac.sif" "${sif_dir}/atac.sif" 
 #+end_src
 *** Integration testing setup
 
