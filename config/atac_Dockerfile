@@ -61,5 +61,4 @@ RUN perl /opt/homer/.//configureHomer.pl -install mouse-p
 RUN conda install -c bioconda samtools=1.7
 
 # R CRAN Installs
-RUN R -e "install.packages(c('statmod', \
-                             repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages(c('statmod', repos='http://cran.rstudio.com/'))"
