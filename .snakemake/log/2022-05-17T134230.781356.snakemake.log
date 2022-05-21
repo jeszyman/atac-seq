@@ -1,0 +1,118 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job            count    min threads    max threads
+-----------  -------  -------------  -------------
+all                1              1              1
+open_genome        4              1              1
+total              5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	open_genome
+	open_genome
+	open_genome
+	open_genome
+Select jobs to execute...
+Selected jobs (4):
+	open_genome
+	open_genome
+	open_genome
+	open_genome
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 17 13:42:31 2022]
+rule open_genome:
+    input: test/bam/atac2_open_tn5.bam
+    output: test/open_chrom/atac2_open_chrom.txt
+    jobid: 56
+    wildcards: library_id=atac2
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac2_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac2_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac2_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac2_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 17 13:42:31 2022]
+rule open_genome:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/open_chrom/atac1_open_chrom.txt
+    jobid: 55
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac1_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac1_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac1_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac1_open_chrom.txt'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 17 13:42:31 2022]
+rule open_genome:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/open_chrom/atac4_open_chrom.txt
+    jobid: 58
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac4_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac4_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac4_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac4_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 17 13:42:31 2022]
+rule open_genome:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/open_chrom/atac3_open_chrom.txt
+    jobid: 57
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac3_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac3_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac3_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac3_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 17 13:42:31 2022]
+Finished job 56.
+1 of 5 steps (20%) done
+[Tue May 17 13:42:31 2022]
+Finished job 58.
+2 of 5 steps (40%) done
+[Tue May 17 13:42:31 2022]
+Finished job 55.
+3 of 5 steps (60%) done
+[Tue May 17 13:42:31 2022]
+Finished job 57.
+4 of 5 steps (80%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 17 13:42:31 2022]
+localrule all:
+    input: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz, test/fastq/atac2_flex_2.fastq.gz, test/fastq/atac3_flex_2.fastq.gz, test/fastq/atac4_flex_2.fastq.gz, test/bam/atac1.bam, test/bam/atac2.bam, test/bam/atac3.bam, test/bam/atac4.bam, test/bam/atac1_dedup.bam, test/bam/atac2_dedup.bam, test/bam/atac3_dedup.bam, test/bam/atac4_dedup.bam, test/bam/atac1_regfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac1_regfilt.bam.bai, test/bam/atac2_regfilt.bam.bai, test/bam/atac3_regfilt.bam.bai, test/bam/atac4_regfilt.bam.bai, test/bam/atac1_open.bam, test/bam/atac2_open.bam, test/bam/atac3_open.bam, test/bam/atac4_open.bam, test/bam/atac1_regfilt_tn5.bam, test/bam/atac2_regfilt_tn5.bam, test/bam/atac3_regfilt_tn5.bam, test/bam/atac4_regfilt_tn5.bam, test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam, test/qc/atac1_R1_fastqc.html, test/qc/atac1_R2_fastqc.html, test/qc/atac2_R1_fastqc.html, test/qc/atac2_R2_fastqc.html, test/qc/atac3_R1_fastqc.html, test/qc/atac3_R2_fastqc.html, test/qc/atac4_R1_fastqc.html, test/qc/atac4_R2_fastqc.html, test/qc/atac1_stat.txt, test/qc/atac2_stat.txt, test/qc/atac3_stat.txt, test/qc/atac4_stat.txt, test/qc/atac1_flagstat.txt, test/qc/atac2_flagstat.txt, test/qc/atac3_flagstat.txt, test/qc/atac4_flagstat.txt, test/macs2/atac1_open_peaks.broadPeak, test/macs2/atac1_open_peaks.gappedPeak, test/macs2/atac1_open_peaks.xls, test/macs2/atac1_regfilt_peaks.broadPeak, test/macs2/atac1_regfilt_peaks.gappedPeak, test/macs2/atac1_regfilt_peaks.xls, test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls, test/macs2/atac2_regfilt_peaks.broadPeak, test/macs2/atac2_regfilt_peaks.gappedPeak, test/macs2/atac2_regfilt_peaks.xls, test/macs2/atac3_open_peaks.broadPeak, test/macs2/atac3_open_peaks.gappedPeak, test/macs2/atac3_open_peaks.xls, test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls, test/macs2/atac4_open_peaks.broadPeak, test/macs2/atac4_open_peaks.gappedPeak, test/macs2/atac4_open_peaks.xls, test/macs2/atac4_regfilt_peaks.broadPeak, test/macs2/atac4_regfilt_peaks.gappedPeak, test/macs2/atac4_regfilt_peaks.xls, test/macs2/atac1_open_peaks.narrowPeak, test/macs2/atac1_open_summits.bed, test/macs2/atac1_regfilt_peaks.narrowPeak, test/macs2/atac1_regfilt_summits.bed, test/macs2/atac2_open_peaks.narrowPeak, test/macs2/atac2_open_summits.bed, test/macs2/atac2_regfilt_peaks.narrowPeak, test/macs2/atac2_regfilt_summits.bed, test/macs2/atac3_open_peaks.narrowPeak, test/macs2/atac3_open_summits.bed, test/macs2/atac3_regfilt_peaks.narrowPeak, test/macs2/atac3_regfilt_summits.bed, test/macs2/atac4_open_peaks.narrowPeak, test/macs2/atac4_open_summits.bed, test/macs2/atac4_regfilt_peaks.narrowPeak, test/macs2/atac4_regfilt_summits.bed, test/csaw/background_counts_all_regfilt_rse.rds, test/csaw/background_counts_all_open_rse.rds, test/csaw/counts_all_regfilt_rse.rds, test/csaw/counts_all_open_rse.rds, test/open_chrom/atac1_open_chrom.txt, test/open_chrom/atac2_open_chrom.txt, test/open_chrom/atac3_open_chrom.txt, test/open_chrom/atac4_open_chrom.txt
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 17 13:42:31 2022]
+Finished job 0.
+5 of 5 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-17T134230.781356.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

@@ -1,0 +1,7 @@
+Building DAG of jobs...
+MissingInputException in line 5 of /home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk:
+Missing input files for rule all:
+test/macs2/atac4_open_peaks.broadPeak
+test/macs2/atac3_open_peaks.broadPeak
+test/macs2/atac1_open_peaks.broadPeak
+test/macs2/atac2_open_peaks.broadPeak

@@ -1,0 +1,4 @@
+NameError in line 3 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+name 'LIBRARY_IDS' is not defined
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk", line 8, in <module>
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 3, in <module>

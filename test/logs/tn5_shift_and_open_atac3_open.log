@@ -1,4 +1,16 @@
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 [bam_sort_core] merging from 0 files and 4 in-memory blocks...
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 [bam_sort_core] merging from 0 files and 4 in-memory blocks...
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 [bam_sort_core] merging from 0 files and 4 in-memory blocks...
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 [bam_sort_core] merging from 0 files and 4 in-memory blocks...
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.

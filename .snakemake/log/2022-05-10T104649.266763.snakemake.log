@@ -1,0 +1,57 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+make_peak_counts        1              1              1
+total                   2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	make_peak_counts
+Select jobs to execute...
+Selected jobs (1):
+	make_peak_counts
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 10:46:49 2022]
+rule make_peak_counts:
+    input: test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam
+    output: test/dca/background_counts_all_rse.rds, test/dca/counts_all_rse.rds
+    log: test/logs/make_peak_counts.log
+    jobid: 1
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_open_tn5.bam test/bam/atac2_open_tn5.bam test/bam/atac3_open_tn5.bam test/bam/atac4_open_tn5.bam"         4         test/dca/background_counts_all_rse.rds         test/dca/counts_all_rse.rds         >& test/logs/make_peak_counts.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_open_tn5.bam test/bam/atac2_open_tn5.bam test/bam/atac3_open_tn5.bam test/bam/atac4_open_tn5.bam"         4         test/dca/background_counts_all_rse.rds         test/dca/counts_all_rse.rds         >& test/logs/make_peak_counts.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 10:46:57 2022]
+Finished job 1.
+1 of 2 steps (50%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 10:46:57 2022]
+localrule all:
+    input: test/dca/background_counts_all_rse.rds, test/dca/counts_all_rse.rds
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 10 10:46:57 2022]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T104649.266763.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

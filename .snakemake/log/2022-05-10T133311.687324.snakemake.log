@@ -1,0 +1,58 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+make_peak_counts        1              1              1
+total                   2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	make_peak_counts
+Select jobs to execute...
+Selected jobs (1):
+	make_peak_counts
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 13:33:11 2022]
+rule make_peak_counts:
+    input: test/bam/atac1_regfilt_tn5.bam, test/bam/atac2_regfilt_tn5.bam, test/bam/atac3_regfilt_tn5.bam, test/bam/atac4_regfilt_tn5.bam
+    output: test/csaw/background_counts_all_regfilt_rse.rds, test/csaw/counts_all_regfilt_rse.rds
+    log: test/logs/make_peak_counts_regfilt.log
+    jobid: 17
+    wildcards: bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_regfilt_tn5.bam test/bam/atac2_regfilt_tn5.bam test/bam/atac3_regfilt_tn5.bam test/bam/atac4_regfilt_tn5.bam"         4         test/csaw/background_counts_all_regfilt_rse.rds         test/csaw/counts_all_regfilt_rse.rds         >& test/logs/make_peak_counts_regfilt.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_regfilt_tn5.bam test/bam/atac2_regfilt_tn5.bam test/bam/atac3_regfilt_tn5.bam test/bam/atac4_regfilt_tn5.bam"         4         test/csaw/background_counts_all_regfilt_rse.rds         test/csaw/counts_all_regfilt_rse.rds         >& test/logs/make_peak_counts_regfilt.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:33:19 2022]
+Finished job 17.
+1 of 2 steps (50%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 13:33:19 2022]
+localrule all:
+    input: test/macs2/atac1_open_peaks.broadPeak, test/macs2/atac1_open_peaks.gappedPeak, test/macs2/atac1_open_peaks.xls, test/macs2/atac1_regfilt_peaks.broadPeak, test/macs2/atac1_regfilt_peaks.gappedPeak, test/macs2/atac1_regfilt_peaks.xls, test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls, test/macs2/atac2_regfilt_peaks.broadPeak, test/macs2/atac2_regfilt_peaks.gappedPeak, test/macs2/atac2_regfilt_peaks.xls, test/macs2/atac3_open_peaks.broadPeak, test/macs2/atac3_open_peaks.gappedPeak, test/macs2/atac3_open_peaks.xls, test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls, test/macs2/atac4_open_peaks.broadPeak, test/macs2/atac4_open_peaks.gappedPeak, test/macs2/atac4_open_peaks.xls, test/macs2/atac4_regfilt_peaks.broadPeak, test/macs2/atac4_regfilt_peaks.gappedPeak, test/macs2/atac4_regfilt_peaks.xls, test/macs2/atac1_open_peaks.narrowPeak, test/macs2/atac1_open_summits.bed, test/macs2/atac1_regfilt_peaks.narrowPeak, test/macs2/atac1_regfilt_summits.bed, test/macs2/atac2_open_peaks.narrowPeak, test/macs2/atac2_open_summits.bed, test/macs2/atac2_regfilt_peaks.narrowPeak, test/macs2/atac2_regfilt_summits.bed, test/macs2/atac3_open_peaks.narrowPeak, test/macs2/atac3_open_summits.bed, test/macs2/atac3_regfilt_peaks.narrowPeak, test/macs2/atac3_regfilt_summits.bed, test/macs2/atac4_open_peaks.narrowPeak, test/macs2/atac4_open_summits.bed, test/macs2/atac4_regfilt_peaks.narrowPeak, test/macs2/atac4_regfilt_summits.bed, test/csaw/background_counts_all_regfilt_rse.rds, test/csaw/counts_all_regfilt_rse.rds
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 10 13:33:19 2022]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T133311.687324.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

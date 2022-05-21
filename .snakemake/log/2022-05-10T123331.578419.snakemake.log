@@ -1,0 +1,2 @@
+SyntaxError in line 7 of /home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk:
+Unexpected keyword expand in rule definition (int_test_peaks.smk, line 7)

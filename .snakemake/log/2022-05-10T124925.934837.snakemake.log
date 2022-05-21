@@ -1,0 +1,59 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+call_macs2_broad        1              1              1
+total                   2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 12:49:26 2022]
+rule call_macs2_broad:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/macs2/atac1_open_peaks.broadPeak
+    jobid: 1
+    wildcards: library_id=atac1, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam ${base} test/macs2
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam ${base} test/macs2'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 12:49:27 2022]
+Finished job 1.
+1 of 2 steps (50%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 12:49:27 2022]
+localrule all:
+    input: test/macs2/atac1_open_peaks.broadPeak
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 10 12:49:27 2022]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T124925.934837.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

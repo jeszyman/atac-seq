@@ -1,0 +1,223 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+call_macs2_broad        4              1              1
+total                   5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (4):
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 12:36:54 2022]
+rule call_macs2_broad:
+    input: test/bam/atac2_open_tn5.bam
+    output: test/macs2/atac2_open_peaks.broadPeak
+    jobid: 2
+    wildcards: library_id=atac2, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam {$base} test/macs2
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam {$base} test/macs2'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 12:36:54 2022]
+rule call_macs2_broad:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/macs2/atac3_open_peaks.broadPeak
+    jobid: 3
+    wildcards: library_id=atac3, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_open_tn5.bam {$base} test/macs2
+        
+
+[Tue May 10 12:36:54 2022]
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_open_tn5.bam {$base} test/macs2'
+rule call_macs2_broad:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/macs2/atac4_open_peaks.broadPeak
+    jobid: 4
+    wildcards: library_id=atac4, bam_process=open
+    resources: tmpdir=/tmp
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_open_tn5.bam {$base} test/macs2
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_open_tn5.bam {$base} test/macs2'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 10 12:36:54 2022]
+rule call_macs2_broad:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/macs2/atac1_open_peaks.broadPeak
+    jobid: 1
+    wildcards: library_id=atac1, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam {$base} test/macs2
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam {$base} test/macs2'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/macs2/atac2_open_peaks.broadPeak
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/macs2/atac2_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 2 completed successfully, but some output files are missing. 2
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Job Missing files after 5 seconds:
+test/macs2/atac2_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 2 completed successfully, but some output files are missing. 2
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/macs2/atac1_open_peaks.broadPeak
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/macs2/atac1_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 1 completed successfully, but some output files are missing. 1
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Job Missing files after 5 seconds:
+test/macs2/atac1_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 1 completed successfully, but some output files are missing. 1
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/macs2/atac4_open_peaks.broadPeak
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/macs2/atac4_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 4 completed successfully, but some output files are missing. 4
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Job Missing files after 5 seconds:
+test/macs2/atac4_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 4 completed successfully, but some output files are missing. 4
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/macs2/atac3_open_peaks.broadPeak
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/macs2/atac3_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 3 completed successfully, but some output files are missing. 3
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Job Missing files after 5 seconds:
+test/macs2/atac3_open_peaks.broadPeak
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 3 completed successfully, but some output files are missing. 3
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T123654.591283.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

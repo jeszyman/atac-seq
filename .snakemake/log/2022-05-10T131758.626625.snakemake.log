@@ -1,0 +1,236 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+all                      1              1              1
+call_macs2_narrow        8              1              1
+total                    9              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (8):
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (4):
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:17:58 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac2_regfilt_tn5.bam
+    output: test/macs2/atac2_regfilt_peaks.narrowPeak
+    jobid: 4
+    wildcards: library_id=atac2, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac2_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac2_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac2_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac2_regfilt_tn5.bam ${base} "test/macs2"'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:17:58 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac1_regfilt_tn5.bam
+    output: test/macs2/atac1_regfilt_peaks.narrowPeak
+    jobid: 2
+    wildcards: library_id=atac1, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 10 13:17:58 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/macs2/atac4_open_peaks.narrowPeak
+    jobid: 7
+    wildcards: library_id=atac4, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:17:58 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac3_regfilt_tn5.bam
+    output: test/macs2/atac3_regfilt_peaks.narrowPeak
+    jobid: 6
+    wildcards: library_id=atac3, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:18:00 2022]
+Finished job 4.
+1 of 9 steps (11%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:18:00 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac4_regfilt_tn5.bam
+    output: test/macs2/atac4_regfilt_peaks.narrowPeak
+    jobid: 8
+    wildcards: library_id=atac4, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:18:00 2022]
+Finished job 7.
+2 of 9 steps (22%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:18:00 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/macs2/atac1_open_peaks.narrowPeak
+    jobid: 1
+    wildcards: library_id=atac1, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:18:00 2022]
+Finished job 2.
+3 of 9 steps (33%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	call_macs2_narrow
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:18:00 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/macs2/atac3_open_peaks.narrowPeak
+    jobid: 5
+    wildcards: library_id=atac3, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:18:00 2022]
+Finished job 6.
+4 of 9 steps (44%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:18:00 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac2_open_tn5.bam
+    output: test/macs2/atac2_open_peaks.narrowPeak
+    jobid: 3
+    wildcards: library_id=atac2, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac2_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac2_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac2_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac2_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:18:02 2022]
+Finished job 1.
+5 of 9 steps (56%) done
+[Tue May 10 13:18:02 2022]
+Finished job 5.
+6 of 9 steps (67%) done
+[Tue May 10 13:18:02 2022]
+Finished job 3.
+7 of 9 steps (78%) done
+[Tue May 10 13:18:02 2022]
+Finished job 8.
+8 of 9 steps (89%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 13:18:02 2022]
+localrule all:
+    input: test/macs2/atac1_open_peaks.broadPeak, test/macs2/atac1_open_peaks.gappedPeak, test/macs2/atac1_open_peaks.xls, test/macs2/atac1_regfilt_peaks.broadPeak, test/macs2/atac1_regfilt_peaks.gappedPeak, test/macs2/atac1_regfilt_peaks.xls, test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls, test/macs2/atac2_regfilt_peaks.broadPeak, test/macs2/atac2_regfilt_peaks.gappedPeak, test/macs2/atac2_regfilt_peaks.xls, test/macs2/atac3_open_peaks.broadPeak, test/macs2/atac3_open_peaks.gappedPeak, test/macs2/atac3_open_peaks.xls, test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls, test/macs2/atac4_open_peaks.broadPeak, test/macs2/atac4_open_peaks.gappedPeak, test/macs2/atac4_open_peaks.xls, test/macs2/atac4_regfilt_peaks.broadPeak, test/macs2/atac4_regfilt_peaks.gappedPeak, test/macs2/atac4_regfilt_peaks.xls, test/macs2/atac1_open_peaks.narrowPeak, test/macs2/atac1_regfilt_peaks.narrowPeak, test/macs2/atac2_open_peaks.narrowPeak, test/macs2/atac2_regfilt_peaks.narrowPeak, test/macs2/atac3_open_peaks.narrowPeak, test/macs2/atac3_regfilt_peaks.narrowPeak, test/macs2/atac4_open_peaks.narrowPeak, test/macs2/atac4_regfilt_peaks.narrowPeak
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue May 10 13:18:02 2022]
+Finished job 0.
+9 of 9 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T131758.626625.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

@@ -1,0 +1,170 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+all                      1              1              1
+call_macs2_broad         8              1              1
+call_macs2_narrow        8              1              1
+total                   17              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (16):
+	call_macs2_broad
+	call_macs2_narrow
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_narrow
+	call_macs2_narrow
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (4):
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue May 10 13:13:51 2022]
+rule call_macs2_broad:
+    input: test/bam/atac2_regfilt_tn5.bam
+    output: test/macs2/atac2_regfilt_peaks.broadPeak, test/macs2/atac2_regfilt_peaks.gappedPeak, test/macs2/atac2_regfilt_peaks.xls
+    jobid: 4
+    wildcards: library_id=atac2, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac2_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac2_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Tue May 10 13:13:51 2022]
+rule call_macs2_broad:
+    input: test/bam/atac3_regfilt_tn5.bam
+    output: test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls
+    jobid: 6
+    wildcards: library_id=atac3, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:13:51 2022]
+rule call_macs2_broad:
+    input: test/bam/atac2_open_tn5.bam
+    output: test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls
+    jobid: 3
+    wildcards: library_id=atac2, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac2_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac2_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} "test/macs2"'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Tue May 10 13:13:51 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac1_regfilt_tn5.bam
+    output: test/macs2/atac1_regfilt_peaks.narrowPeak
+    jobid: 10
+    wildcards: library_id=atac1, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 20, in __rule_call_macs2_narrow
+    workflow/scripts/call_macs2_broad.sh {input} ${{base}} "{config[data_dir]}/macs2"
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'' returned non-zero exit status 127.
+
+[Tue May 10 13:13:52 2022]
+Error in rule call_macs2_narrow:
+    jobid: 10
+    output: test/macs2/atac1_regfilt_peaks.narrowPeak
+    shell:
+        
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 20, in __rule_call_macs2_narrow
+    workflow/scripts/call_macs2_broad.sh {input} ${{base}} "{config[data_dir]}/macs2"
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'' returned non-zero exit status 127.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 7 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'' returned non-zero exit status 127.
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 7, in __rule_call_macs2_narrow
+
+RuleException:
+CalledProcessError in line 7 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'' returned non-zero exit status 127.
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 7, in __rule_call_macs2_narrow
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+[Tue May 10 13:13:52 2022]
+Finished job 4.
+1 of 17 steps (6%) done
+[Tue May 10 13:13:52 2022]
+Finished job 6.
+2 of 17 steps (12%) done
+[Tue May 10 13:13:52 2022]
+Finished job 3.
+3 of 17 steps (18%) done
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T131351.562543.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

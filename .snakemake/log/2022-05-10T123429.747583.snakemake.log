@@ -1,0 +1,28 @@
+Building DAG of jobs...
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 696, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 748, in execute
+    dag.init()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 179, in init
+    job = self.update([job], progress=progress, create_inventory=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 793, in update
+    raise exceptions[0]
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 749, in update
+    self.update_(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 906, in update_
+    raise MissingInputException(job.rule, missing_input)
+snakemake.exceptions.MissingInputException: Missing input files for rule all:
+test/macs2/atac2_open_peaks.broadPeak
+test/macs2/atac1_open_peaks.broadPeak
+test/macs2/atac3_open_peaks.broadPeak
+test/macs2/atac4_open_peaks.broadPeak
+
+MissingInputException in line 5 of /home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk:
+Missing input files for rule all:
+test/macs2/atac2_open_peaks.broadPeak
+test/macs2/atac1_open_peaks.broadPeak
+test/macs2/atac3_open_peaks.broadPeak
+test/macs2/atac4_open_peaks.broadPeak
+unlocking
+removed all locks

@@ -1,0 +1,3 @@
+IndexError in line 16 of /home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk:
+tuple index out of range
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk", line 16, in <module>

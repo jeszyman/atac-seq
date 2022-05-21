@@ -1,0 +1,35 @@
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 1177, in expand
+    return [
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 1178, in <listcomp>
+    formatter.vformat(filepattern, (), comb)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/string.py", line 165, in vformat
+    result, _ = self._vformat(format_string, args, kwargs, used_args, 2)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/string.py", line 205, in _vformat
+    obj, arg_used = self.get_field(field_name, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/string.py", line 270, in get_field
+    obj = self.get_value(first, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/string.py", line 227, in get_value
+    return kwargs[key]
+KeyError: 'library_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 591, in snakemake
+    workflow.include(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1173, in include
+    exec(compile(code, snakefile, "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk", line 21, in <module>
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1173, in include
+    exec(compile(code, snakefile, "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 8, in <module>
+    base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 1183, in expand
+    raise WildcardError("No values given for wildcard {}.".format(e))
+snakemake.exceptions.WildcardError: No values given for wildcard 'library_id'.
+
+WildcardError in line 5 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+No values given for wildcard 'library_id'.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test_peaks.smk", line 14, in <module>
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 5, in <module>

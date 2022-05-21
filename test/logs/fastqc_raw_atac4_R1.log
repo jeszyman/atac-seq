@@ -1,7 +1,9 @@
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.
 perl: warning: Setting locale failed.
 perl: warning: Please check that your locale settings:
-	LANGUAGE = (unset),
-	LC_ALL = (unset),
+	LANGUAGE = "en_US:en",
+	LC_ALL = "en_US.UTF-8",
 	LANG = "en_US.UTF-8"
     are supported and installed on your system.
 perl: warning: Falling back to the standard locale ("C").
+ERROR: ld.so: object '/usr/local/lib/libtrash.so' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored.

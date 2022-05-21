@@ -1,0 +1,1081 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+align_bt2                3              1              1
+all                      1              1              1
+call_macs2_broad         6              1              1
+call_macs2_narrow        6              1              1
+filter_and_dedup         3              1              1
+get_open_chrom           3              1              1
+make_peak_counts         2              1              1
+open_genome              3              1              1
+read_trim                3              1              1
+samstats                 3              1              1
+tn5_shift                3              1              1
+tn5_shift_open           3              1              1
+total                   39              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (3):
+	read_trim
+	read_trim
+	read_trim
+Select jobs to execute...
+Selected jobs (3):
+	read_trim
+	read_trim
+	read_trim
+Resources after job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+
+[Sat May 21 06:45:59 2022]
+rule read_trim:
+    input: test/fastq/atac4_R1.fastq.gz, test/fastq/atac4_R2.fastq.gz
+    output: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    jobid: 4
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 06:46:00 2022]
+rule read_trim:
+    input: test/fastq/atac3_R1.fastq.gz, test/fastq/atac3_R2.fastq.gz
+    output: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    jobid: 3
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 06:46:00 2022]
+rule read_trim:
+    input: test/fastq/atac1_R1.fastq.gz, test/fastq/atac1_R2.fastq.gz
+    output: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz
+    jobid: 1
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac1_R1.fastq.gz test/fastq/atac1_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/atac1_R1.fastq.gz test/fastq/atac1_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:46:26 2022]
+Finished job 3.
+1 of 39 steps (3%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (1):
+	align_bt2
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	align_bt2
+Resources after job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+
+[Sat May 21 06:46:26 2022]
+rule align_bt2:
+    input: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    output: test/bam/atac3.bam
+    jobid: 7
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac3_flex_1.fastq.gz test/fastq/atac3_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac3.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac3_flex_1.fastq.gz test/fastq/atac3_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac3.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:46:27 2022]
+Finished job 1.
+2 of 39 steps (5%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (1):
+	align_bt2
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	align_bt2
+Resources after job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+
+[Sat May 21 06:46:27 2022]
+rule align_bt2:
+    input: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz
+    output: test/bam/atac1.bam
+    jobid: 5
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac1_flex_1.fastq.gz test/fastq/atac1_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac1.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac1_flex_1.fastq.gz test/fastq/atac1_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac1.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:46:27 2022]
+Finished job 4.
+3 of 39 steps (8%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (1):
+	align_bt2
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	align_bt2
+Resources after job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+
+[Sat May 21 06:46:27 2022]
+rule align_bt2:
+    input: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    output: test/bam/atac4.bam
+    jobid: 8
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh test/fastq/atac4_flex_1.fastq.gz test/fastq/atac4_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac4.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh test/fastq/atac4_flex_1.fastq.gz test/fastq/atac4_flex_2.fastq.gz test/ref/ucsc_mm10_chr9/ucsc_mm10_chr9 4 test/bam/atac4.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:49:56 2022]
+Finished job 7.
+4 of 39 steps (10%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (2):
+	filter_and_dedup
+	samstats
+Select jobs to execute...
+Selected jobs (2):
+	samstats
+	filter_and_dedup
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:49:56 2022]
+rule samstats:
+    input: test/bam/atac3.bam
+    output: test/qc/atac3_stat.txt, test/qc/atac3_flagstat.txt
+    log: test/logs/atac3_samstats.log
+    jobid: 35
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/samstats.sh 4 test/bam/atac3.bam test/qc/atac3_stat.txt test/qc/atac3_flagstat.txt 2>&1 >> test/logs/atac3_samstats.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/samstats.sh 4 test/bam/atac3.bam test/qc/atac3_stat.txt test/qc/atac3_flagstat.txt 2>&1 >> test/logs/atac3_samstats.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 06:49:56 2022]
+rule filter_and_dedup:
+    input: test/bam/atac3.bam
+    output: test/bam/atac3_dedup.bam, test/bam/atac3_qfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac3_regfilt.bam.bai
+    jobid: 11
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac3.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac3_dedup.bam 	                                     test/bam/atac3_qfilt.bam 	                                     test/bam/atac3_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/filter_and_dedup.sh test/bam/atac3.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac3_dedup.bam 	                                     test/bam/atac3_qfilt.bam 	                                     test/bam/atac3_regfilt.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:00 2022]
+Finished job 35.
+5 of 39 steps (13%) done
+[Sat May 21 06:50:15 2022]
+Finished job 5.
+6 of 39 steps (15%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (2):
+	samstats
+	filter_and_dedup
+Select jobs to execute...
+Selected jobs (2):
+	samstats
+	filter_and_dedup
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:15 2022]
+rule samstats:
+    input: test/bam/atac1.bam
+    output: test/qc/atac1_stat.txt, test/qc/atac1_flagstat.txt
+    log: test/logs/atac1_samstats.log
+    jobid: 33
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/samstats.sh 4 test/bam/atac1.bam test/qc/atac1_stat.txt test/qc/atac1_flagstat.txt 2>&1 >> test/logs/atac1_samstats.log
+        
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/samstats.sh 4 test/bam/atac1.bam test/qc/atac1_stat.txt test/qc/atac1_flagstat.txt 2>&1 >> test/logs/atac1_samstats.log'
+[Sat May 21 06:50:15 2022]
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+rule filter_and_dedup:
+    input: test/bam/atac1.bam
+    output: test/bam/atac1_dedup.bam, test/bam/atac1_qfilt.bam, test/bam/atac1_regfilt.bam, test/bam/atac1_regfilt.bam.bai
+    jobid: 9
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac1.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac1_dedup.bam 	                                     test/bam/atac1_qfilt.bam 	                                     test/bam/atac1_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/filter_and_dedup.sh test/bam/atac1.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac1_dedup.bam 	                                     test/bam/atac1_qfilt.bam 	                                     test/bam/atac1_regfilt.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:18 2022]
+Finished job 33.
+7 of 39 steps (18%) done
+Removing temporary output file test/bam/atac3_qfilt.bam.
+[Sat May 21 06:50:28 2022]
+Finished job 11.
+8 of 39 steps (21%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (2):
+	tn5_shift
+	get_open_chrom
+Select jobs to execute...
+Selected jobs (2):
+	tn5_shift
+	get_open_chrom
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:29 2022]
+rule tn5_shift:
+    input: test/bam/atac3_regfilt.bam
+    output: test/bam/atac3_regfilt_tmp.bam, test/bam/atac3_regfilt_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac3_regfilt.log
+    jobid: 19
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac3_regfilt.bam 	                              4 	                              test/bam/atac3_regfilt_tmp.bam                                       test/bam/atac3_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac3_regfilt.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac3_regfilt.bam 	                              4 	                              test/bam/atac3_regfilt_tmp.bam                                       test/bam/atac3_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac3_regfilt.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 06:50:29 2022]
+rule get_open_chrom:
+    input: test/bam/atac3_regfilt.bam
+    output: test/bam/atac3_unsort_open.bam, test/bam/atac3_open.bam
+    jobid: 15
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac3_regfilt.bam                                            4                                            test/bam/atac3_unsort_open.bam                                            test/bam/atac3_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac3_regfilt.bam                                            4                                            test/bam/atac3_unsort_open.bam                                            test/bam/atac3_open.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:29 2022]
+Finished job 8.
+9 of 39 steps (23%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	filter_and_dedup
+	samstats
+Select jobs to execute...
+Selected jobs (1):
+	filter_and_dedup
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:29 2022]
+rule filter_and_dedup:
+    input: test/bam/atac4.bam
+    output: test/bam/atac4_dedup.bam, test/bam/atac4_qfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac4_regfilt.bam.bai
+    jobid: 12
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/filter_and_dedup.sh test/bam/atac4.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac4_dedup.bam 	                                     test/bam/atac4_qfilt.bam 	                                     test/bam/atac4_regfilt.bam 
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/filter_and_dedup.sh test/bam/atac4.bam 	                                     resources/keep.bed 	                                     4 	                                     test/bam/atac4_dedup.bam 	                                     test/bam/atac4_qfilt.bam 	                                     test/bam/atac4_regfilt.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac3_unsort_open.bam.
+[Sat May 21 06:50:42 2022]
+Finished job 15.
+10 of 39 steps (26%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	samstats
+	tn5_shift_open
+Select jobs to execute...
+Selected jobs (1):
+	samstats
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:42 2022]
+rule samstats:
+    input: test/bam/atac4.bam
+    output: test/qc/atac4_stat.txt, test/qc/atac4_flagstat.txt
+    log: test/logs/atac4_samstats.log
+    jobid: 36
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/samstats.sh 4 test/bam/atac4.bam test/qc/atac4_stat.txt test/qc/atac4_flagstat.txt 2>&1 >> test/logs/atac4_samstats.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/samstats.sh 4 test/bam/atac4.bam test/qc/atac4_stat.txt test/qc/atac4_flagstat.txt 2>&1 >> test/logs/atac4_samstats.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac1_qfilt.bam.
+[Sat May 21 06:50:42 2022]
+Finished job 9.
+11 of 39 steps (28%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	get_open_chrom
+	tn5_shift_open
+	tn5_shift
+Select jobs to execute...
+Selected jobs (1):
+	tn5_shift
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:42 2022]
+rule tn5_shift:
+    input: test/bam/atac1_regfilt.bam
+    output: test/bam/atac1_regfilt_tmp.bam, test/bam/atac1_regfilt_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac1_regfilt.log
+    jobid: 17
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac1_regfilt.bam 	                              4 	                              test/bam/atac1_regfilt_tmp.bam                                       test/bam/atac1_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac1_regfilt.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac1_regfilt.bam 	                              4 	                              test/bam/atac1_regfilt_tmp.bam                                       test/bam/atac1_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac1_regfilt.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:44 2022]
+Finished job 36.
+12 of 39 steps (31%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	tn5_shift_open
+	get_open_chrom
+Select jobs to execute...
+Selected jobs (1):
+	tn5_shift_open
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:44 2022]
+rule tn5_shift_open:
+    input: test/bam/atac3_open.bam
+    output: test/bam/atac3_open_tmp.bam, test/bam/atac3_open_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac3_open.log
+    jobid: 23
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac3_open.bam 	                              4 	                              test/bam/atac3_open_tmp.bam                                       test/bam/atac3_open_tn5.bam > test/logs/tn5_shift_and_open_atac3_open.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac3_open.bam 	                              4 	                              test/bam/atac3_open_tmp.bam                                       test/bam/atac3_open_tn5.bam > test/logs/tn5_shift_and_open_atac3_open.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac4_qfilt.bam.
+[Sat May 21 06:50:49 2022]
+Finished job 12.
+13 of 39 steps (33%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	get_open_chrom
+	tn5_shift
+	get_open_chrom
+Select jobs to execute...
+Selected jobs (1):
+	get_open_chrom
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:49 2022]
+rule get_open_chrom:
+    input: test/bam/atac4_regfilt.bam
+    output: test/bam/atac4_unsort_open.bam, test/bam/atac4_open.bam
+    jobid: 16
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac4_regfilt.bam                                            4                                            test/bam/atac4_unsort_open.bam                                            test/bam/atac4_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac4_regfilt.bam                                            4                                            test/bam/atac4_unsort_open.bam                                            test/bam/atac4_open.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac3_regfilt_tmp.bam.
+[Sat May 21 06:50:50 2022]
+Finished job 19.
+14 of 39 steps (36%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	call_macs2_narrow
+	tn5_shift
+	call_macs2_broad
+	get_open_chrom
+Select jobs to execute...
+Selected jobs (1):
+	get_open_chrom
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:50 2022]
+rule get_open_chrom:
+    input: test/bam/atac1_regfilt.bam
+    output: test/bam/atac1_unsort_open.bam, test/bam/atac1_open.bam
+    jobid: 13
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/get_open_chrom.sh test/bam/atac1_regfilt.bam                                            4                                            test/bam/atac1_unsort_open.bam                                            test/bam/atac1_open.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/get_open_chrom.sh test/bam/atac1_regfilt.bam                                            4                                            test/bam/atac1_unsort_open.bam                                            test/bam/atac1_open.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac4_unsort_open.bam.
+[Sat May 21 06:50:56 2022]
+Finished job 16.
+15 of 39 steps (38%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	call_macs2_narrow
+	tn5_shift_open
+	tn5_shift
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:56 2022]
+rule call_macs2_broad:
+    input: test/bam/atac3_regfilt_tn5.bam
+    output: test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls
+    jobid: 42
+    wildcards: library_id=atac3, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac1_unsort_open.bam.
+[Sat May 21 06:50:57 2022]
+Finished job 13.
+16 of 39 steps (41%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	call_macs2_narrow
+	tn5_shift_open
+	tn5_shift
+	tn5_shift_open
+Select jobs to execute...
+Selected jobs (1):
+	tn5_shift_open
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:57 2022]
+rule tn5_shift_open:
+    input: test/bam/atac1_open.bam
+    output: test/bam/atac1_open_tmp.bam, test/bam/atac1_open_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac1_open.log
+    jobid: 21
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac1_open.bam 	                              4 	                              test/bam/atac1_open_tmp.bam                                       test/bam/atac1_open_tn5.bam > test/logs/tn5_shift_and_open_atac1_open.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac1_open.bam 	                              4 	                              test/bam/atac1_open_tmp.bam                                       test/bam/atac1_open_tn5.bam > test/logs/tn5_shift_and_open_atac1_open.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac1_regfilt_tmp.bam.
+[Sat May 21 06:50:58 2022]
+Finished job 17.
+17 of 39 steps (44%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (5):
+	call_macs2_broad
+	tn5_shift
+	call_macs2_narrow
+	tn5_shift_open
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:58 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac1_regfilt_tn5.bam
+    output: test/macs2/atac1_regfilt_peaks.narrowPeak, test/macs2/atac1_regfilt_summits.bed
+    jobid: 46
+    wildcards: library_id=atac1, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac3_open_tmp.bam.
+[Sat May 21 06:50:59 2022]
+Finished job 23.
+18 of 39 steps (46%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (7):
+	call_macs2_narrow
+	call_macs2_broad
+	tn5_shift
+	call_macs2_broad
+	call_macs2_narrow
+	tn5_shift_open
+	open_genome
+Select jobs to execute...
+Selected jobs (1):
+	open_genome
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:59 2022]
+rule open_genome:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/open_chrom/atac3_open_chrom.txt
+    jobid: 57
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac3_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac3_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac3_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac3_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:59 2022]
+Finished job 42.
+19 of 39 steps (49%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (6):
+	call_macs2_narrow
+	call_macs2_broad
+	tn5_shift
+	call_macs2_broad
+	call_macs2_narrow
+	tn5_shift_open
+Select jobs to execute...
+Selected jobs (1):
+	tn5_shift_open
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:59 2022]
+rule tn5_shift_open:
+    input: test/bam/atac4_open.bam
+    output: test/bam/atac4_open_tmp.bam, test/bam/atac4_open_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac4_open.log
+    jobid: 24
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac4_open.bam 	                              4 	                              test/bam/atac4_open_tmp.bam                                       test/bam/atac4_open_tn5.bam > test/logs/tn5_shift_and_open_atac4_open.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac4_open.bam 	                              4 	                              test/bam/atac4_open_tmp.bam                                       test/bam/atac4_open_tn5.bam > test/logs/tn5_shift_and_open_atac4_open.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:50:59 2022]
+Finished job 57.
+20 of 39 steps (51%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (5):
+	call_macs2_narrow
+	call_macs2_broad
+	tn5_shift
+	call_macs2_broad
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:50:59 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac3_regfilt_tn5.bam
+    output: test/macs2/atac3_regfilt_peaks.narrowPeak, test/macs2/atac3_regfilt_summits.bed
+    jobid: 50
+    wildcards: library_id=atac3, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac3_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:04 2022]
+Finished job 46.
+21 of 39 steps (54%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	call_macs2_narrow
+	call_macs2_broad
+	tn5_shift
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:04 2022]
+rule call_macs2_broad:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/macs2/atac3_open_peaks.broadPeak, test/macs2/atac3_open_peaks.gappedPeak, test/macs2/atac3_open_peaks.xls
+    jobid: 41
+    wildcards: library_id=atac3, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:04 2022]
+Finished job 50.
+22 of 39 steps (56%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	call_macs2_narrow
+	call_macs2_broad
+	tn5_shift
+Select jobs to execute...
+Selected jobs (1):
+	tn5_shift
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:04 2022]
+rule tn5_shift:
+    input: test/bam/atac4_regfilt.bam
+    output: test/bam/atac4_regfilt_tmp.bam, test/bam/atac4_regfilt_tn5.bam
+    log: test/logs/tn5_shift_and_open_atac4_regfilt.log
+    jobid: 20
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/tn5_shift.sh test/bam/atac4_regfilt.bam 	                              4 	                              test/bam/atac4_regfilt_tmp.bam                                       test/bam/atac4_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac4_regfilt.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/tn5_shift.sh test/bam/atac4_regfilt.bam 	                              4 	                              test/bam/atac4_regfilt_tmp.bam                                       test/bam/atac4_regfilt_tn5.bam > test/logs/tn5_shift_and_open_atac4_regfilt.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:07 2022]
+Finished job 41.
+23 of 39 steps (59%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	call_macs2_narrow
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:07 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac3_open_tn5.bam
+    output: test/macs2/atac3_open_peaks.narrowPeak, test/macs2/atac3_open_summits.bed
+    jobid: 49
+    wildcards: library_id=atac3, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac3_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac3_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac1_open_tmp.bam.
+[Sat May 21 06:51:10 2022]
+Finished job 21.
+24 of 39 steps (62%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	open_genome
+	call_macs2_broad
+	call_macs2_broad
+	call_macs2_narrow
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:10 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/macs2/atac1_open_peaks.narrowPeak, test/macs2/atac1_open_summits.bed
+    jobid: 45
+    wildcards: library_id=atac1, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:11 2022]
+Finished job 49.
+25 of 39 steps (64%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	open_genome
+	call_macs2_broad
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:11 2022]
+rule call_macs2_broad:
+    input: test/bam/atac1_regfilt_tn5.bam
+    output: test/macs2/atac1_regfilt_peaks.broadPeak, test/macs2/atac1_regfilt_peaks.gappedPeak, test/macs2/atac1_regfilt_peaks.xls
+    jobid: 38
+    wildcards: library_id=atac1, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac1_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Removing temporary output file test/bam/atac4_open_tmp.bam.
+[Sat May 21 06:51:13 2022]
+Finished job 24.
+26 of 39 steps (67%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (6):
+	open_genome
+	call_macs2_narrow
+	call_macs2_broad
+	open_genome
+	make_peak_counts
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:13 2022]
+rule call_macs2_broad:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/macs2/atac1_open_peaks.broadPeak, test/macs2/atac1_open_peaks.gappedPeak, test/macs2/atac1_open_peaks.xls
+    jobid: 37
+    wildcards: library_id=atac1, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac1_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac1_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:14 2022]
+Finished job 38.
+27 of 39 steps (69%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (5):
+	open_genome
+	call_macs2_narrow
+	open_genome
+	call_macs2_broad
+	make_peak_counts
+Select jobs to execute...
+Selected jobs (1):
+	make_peak_counts
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:14 2022]
+rule make_peak_counts:
+    input: test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam
+    output: test/csaw/background_counts_all_open_rse.rds, test/csaw/counts_all_open_rse.rds
+    log: test/logs/make_peak_counts_open.log
+    jobid: 54
+    wildcards: bam_process=open
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_open_tn5.bam test/bam/atac2_open_tn5.bam test/bam/atac3_open_tn5.bam test/bam/atac4_open_tn5.bam"         4         test/csaw/background_counts_all_open_rse.rds         test/csaw/counts_all_open_rse.rds         >& test/logs/make_peak_counts_open.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_open_tn5.bam test/bam/atac2_open_tn5.bam test/bam/atac3_open_tn5.bam test/bam/atac4_open_tn5.bam"         4         test/csaw/background_counts_all_open_rse.rds         test/csaw/counts_all_open_rse.rds         >& test/logs/make_peak_counts_open.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:15 2022]
+Finished job 45.
+28 of 39 steps (72%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	open_genome
+	call_macs2_narrow
+	open_genome
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:15 2022]
+rule call_macs2_broad:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/macs2/atac4_open_peaks.broadPeak, test/macs2/atac4_open_peaks.gappedPeak, test/macs2/atac4_open_peaks.xls
+    jobid: 43
+    wildcards: library_id=atac4, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:16 2022]
+Finished job 37.
+29 of 39 steps (74%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	call_macs2_narrow
+	open_genome
+	open_genome
+Select jobs to execute...
+Selected jobs (1):
+	open_genome
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:16 2022]
+rule open_genome:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/open_chrom/atac4_open_chrom.txt
+    jobid: 58
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac4_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac4_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac4_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac4_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:17 2022]
+Finished job 58.
+30 of 39 steps (77%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	call_macs2_narrow
+	open_genome
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:17 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac4_open_tn5.bam
+    output: test/macs2/atac4_open_peaks.narrowPeak, test/macs2/atac4_open_summits.bed
+    jobid: 51
+    wildcards: library_id=atac4, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac4_open_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_open_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:18 2022]
+Finished job 43.
+31 of 39 steps (79%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	open_genome
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	open_genome
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:18 2022]
+rule open_genome:
+    input: test/bam/atac1_open_tn5.bam
+    output: test/open_chrom/atac1_open_chrom.txt
+    jobid: 55
+    wildcards: library_id=atac1
+    resources: tmpdir=/tmp
+
+
+        bedmap --echo --bases-uniq --delim '	' resources/mm10.bed test/bam/atac1_open_tn5.bam | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }' > test/open_chrom/atac1_open_chrom.txt
+
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        bedmap --echo --bases-uniq --delim '\''	'\'' resources/mm10.bed test/bam/atac1_open_tn5.bam | awk '\''BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'\'' > test/open_chrom/atac1_open_chrom.txt'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:19 2022]
+Finished job 55.
+32 of 39 steps (82%) done
+Removing temporary output file test/bam/atac4_regfilt_tmp.bam.
+[Sat May 21 06:51:19 2022]
+Finished job 20.
+33 of 39 steps (85%) done
+Resources before job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+Ready jobs (3):
+	call_macs2_narrow
+	make_peak_counts
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (2):
+	make_peak_counts
+	call_macs2_narrow
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:19 2022]
+rule make_peak_counts:
+    input: test/bam/atac1_regfilt_tn5.bam, test/bam/atac2_regfilt_tn5.bam, test/bam/atac3_regfilt_tn5.bam, test/bam/atac4_regfilt_tn5.bam
+    output: test/csaw/background_counts_all_regfilt_rse.rds, test/csaw/counts_all_regfilt_rse.rds
+    log: test/logs/make_peak_counts_regfilt.log
+    jobid: 53
+    wildcards: bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_regfilt_tn5.bam test/bam/atac2_regfilt_tn5.bam test/bam/atac3_regfilt_tn5.bam test/bam/atac4_regfilt_tn5.bam"         4         test/csaw/background_counts_all_regfilt_rse.rds         test/csaw/counts_all_regfilt_rse.rds         >& test/logs/make_peak_counts_regfilt.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/select_window_size.R         "test/bam/atac1_regfilt_tn5.bam test/bam/atac2_regfilt_tn5.bam test/bam/atac3_regfilt_tn5.bam test/bam/atac4_regfilt_tn5.bam"         4         test/csaw/background_counts_all_regfilt_rse.rds         test/csaw/counts_all_regfilt_rse.rds         >& test/logs/make_peak_counts_regfilt.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 06:51:19 2022]
+rule call_macs2_narrow:
+    input: test/bam/atac4_regfilt_tn5.bam
+    output: test/macs2/atac4_regfilt_peaks.narrowPeak, test/macs2/atac4_regfilt_summits.bed
+    jobid: 52
+    wildcards: library_id=atac4, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_narrow.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:21 2022]
+Finished job 51.
+34 of 39 steps (87%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	call_macs2_broad
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 06:51:21 2022]
+rule call_macs2_broad:
+    input: test/bam/atac4_regfilt_tn5.bam
+    output: test/macs2/atac4_regfilt_peaks.broadPeak, test/macs2/atac4_regfilt_peaks.gappedPeak, test/macs2/atac4_regfilt_peaks.xls
+    jobid: 44
+    wildcards: library_id=atac4, bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        base=$(echo $(basename test/bam/atac4_regfilt_tn5.bam) | sed '\''s/_tn5.*$//g'\'')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac4_regfilt_tn5.bam ${base} "test/macs2"'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 06:51:24 2022]
+Finished job 52.
+35 of 39 steps (90%) done
+[Sat May 21 06:51:25 2022]
+Finished job 44.
+36 of 39 steps (92%) done
+[Sat May 21 06:51:37 2022]
+Finished job 54.
+37 of 39 steps (95%) done
+[Sat May 21 06:51:40 2022]
+Finished job 53.
+38 of 39 steps (97%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Sat May 21 06:51:40 2022]
+localrule all:
+    input: test/fastq/atac1_flex_1.fastq.gz, test/fastq/atac2_flex_1.fastq.gz, test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac1_flex_2.fastq.gz, test/fastq/atac2_flex_2.fastq.gz, test/fastq/atac3_flex_2.fastq.gz, test/fastq/atac4_flex_2.fastq.gz, test/bam/atac1.bam, test/bam/atac2.bam, test/bam/atac3.bam, test/bam/atac4.bam, test/bam/atac1_dedup.bam, test/bam/atac2_dedup.bam, test/bam/atac3_dedup.bam, test/bam/atac4_dedup.bam, test/bam/atac1_regfilt.bam, test/bam/atac2_regfilt.bam, test/bam/atac3_regfilt.bam, test/bam/atac4_regfilt.bam, test/bam/atac1_regfilt.bam.bai, test/bam/atac2_regfilt.bam.bai, test/bam/atac3_regfilt.bam.bai, test/bam/atac4_regfilt.bam.bai, test/bam/atac1_open.bam, test/bam/atac2_open.bam, test/bam/atac3_open.bam, test/bam/atac4_open.bam, test/bam/atac1_regfilt_tn5.bam, test/bam/atac2_regfilt_tn5.bam, test/bam/atac3_regfilt_tn5.bam, test/bam/atac4_regfilt_tn5.bam, test/bam/atac1_open_tn5.bam, test/bam/atac2_open_tn5.bam, test/bam/atac3_open_tn5.bam, test/bam/atac4_open_tn5.bam, test/qc/atac1_R1_fastqc.html, test/qc/atac1_R2_fastqc.html, test/qc/atac2_R1_fastqc.html, test/qc/atac2_R2_fastqc.html, test/qc/atac3_R1_fastqc.html, test/qc/atac3_R2_fastqc.html, test/qc/atac4_R1_fastqc.html, test/qc/atac4_R2_fastqc.html, test/qc/atac1_stat.txt, test/qc/atac2_stat.txt, test/qc/atac3_stat.txt, test/qc/atac4_stat.txt, test/qc/atac1_flagstat.txt, test/qc/atac2_flagstat.txt, test/qc/atac3_flagstat.txt, test/qc/atac4_flagstat.txt, test/macs2/atac1_open_peaks.broadPeak, test/macs2/atac1_open_peaks.gappedPeak, test/macs2/atac1_open_peaks.xls, test/macs2/atac1_regfilt_peaks.broadPeak, test/macs2/atac1_regfilt_peaks.gappedPeak, test/macs2/atac1_regfilt_peaks.xls, test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls, test/macs2/atac2_regfilt_peaks.broadPeak, test/macs2/atac2_regfilt_peaks.gappedPeak, test/macs2/atac2_regfilt_peaks.xls, test/macs2/atac3_open_peaks.broadPeak, test/macs2/atac3_open_peaks.gappedPeak, test/macs2/atac3_open_peaks.xls, test/macs2/atac3_regfilt_peaks.broadPeak, test/macs2/atac3_regfilt_peaks.gappedPeak, test/macs2/atac3_regfilt_peaks.xls, test/macs2/atac4_open_peaks.broadPeak, test/macs2/atac4_open_peaks.gappedPeak, test/macs2/atac4_open_peaks.xls, test/macs2/atac4_regfilt_peaks.broadPeak, test/macs2/atac4_regfilt_peaks.gappedPeak, test/macs2/atac4_regfilt_peaks.xls, test/macs2/atac1_open_peaks.narrowPeak, test/macs2/atac1_open_summits.bed, test/macs2/atac1_regfilt_peaks.narrowPeak, test/macs2/atac1_regfilt_summits.bed, test/macs2/atac2_open_peaks.narrowPeak, test/macs2/atac2_open_summits.bed, test/macs2/atac2_regfilt_peaks.narrowPeak, test/macs2/atac2_regfilt_summits.bed, test/macs2/atac3_open_peaks.narrowPeak, test/macs2/atac3_open_summits.bed, test/macs2/atac3_regfilt_peaks.narrowPeak, test/macs2/atac3_regfilt_summits.bed, test/macs2/atac4_open_peaks.narrowPeak, test/macs2/atac4_open_summits.bed, test/macs2/atac4_regfilt_peaks.narrowPeak, test/macs2/atac4_regfilt_summits.bed, test/csaw/background_counts_all_regfilt_rse.rds, test/csaw/background_counts_all_open_rse.rds, test/csaw/counts_all_regfilt_rse.rds, test/csaw/counts_all_open_rse.rds, test/open_chrom/atac1_open_chrom.txt, test/open_chrom/atac2_open_chrom.txt, test/open_chrom/atac3_open_chrom.txt, test/open_chrom/atac4_open_chrom.txt
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Sat May 21 06:51:40 2022]
+Finished job 0.
+39 of 39 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-21T064559.455423.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

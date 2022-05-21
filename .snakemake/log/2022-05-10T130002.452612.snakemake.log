@@ -1,0 +1,89 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count    min threads    max threads
+----------------  -------  -------------  -------------
+all                     1              1              1
+call_macs2_broad        1              1              1
+total                   2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	call_macs2_broad
+Select jobs to execute...
+Selected jobs (1):
+	call_macs2_broad
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue May 10 13:00:02 2022]
+rule call_macs2_broad:
+    input: test/bam/atac2_open_tn5.bam
+    output: test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls
+    jobid: 1
+    wildcards: library_id=atac2, bam_process=open
+    resources: tmpdir=/tmp
+
+
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2
+        
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 32, in __rule_call_macs2_broad
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2' returned non-zero exit status 127.
+
+[Tue May 10 13:00:02 2022]
+Error in rule call_macs2_broad:
+    jobid: 1
+    output: test/macs2/atac2_open_peaks.broadPeak, test/macs2/atac2_open_peaks.gappedPeak, test/macs2/atac2_open_peaks.xls
+    shell:
+        
+        base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 32, in __rule_call_macs2_broad
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2' returned non-zero exit status 127.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 13 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Command 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2' returned non-zero exit status 127.
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 13, in __rule_call_macs2_broad
+
+RuleException:
+CalledProcessError in line 13 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+Command 'base=$(echo $(basename ../test/bam/atac1_open_tn5.bam) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh test/bam/atac2_open_tn5.bam ${base} test/macs2' returned non-zero exit status 127.
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 13, in __rule_call_macs2_broad
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-10T130002.452612.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

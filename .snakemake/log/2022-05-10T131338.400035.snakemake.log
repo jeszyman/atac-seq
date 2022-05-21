@@ -1,0 +1,12 @@
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 591, in snakemake
+    workflow.include(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1173, in include
+    exec(compile(code, snakefile, "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 8, in <module>
+    base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
+NameError: name 'MACS_NARROW_EXT' is not defined
+
+NameError in line 5 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+name 'MACS_NARROW_EXT' is not defined
+  File "/home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk", line 5, in <module>

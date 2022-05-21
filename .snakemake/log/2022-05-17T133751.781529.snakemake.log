@@ -1,0 +1,3 @@
+SyntaxError in line 49 of /home/jeszyman/repos/atac-seq/workflow/peak_call_and_dif.smk:
+invalid syntax
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 31, in <module>
