@@ -1,0 +1,70 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                count    min threads    max threads
+---------------  -------  -------------  -------------
+all                    1              1              1
+peak_annotation        1              1              1
+total                  2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	peak_annotation
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	peak_annotation
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Sun May 22 13:01:49 2022]
+rule peak_annotation:
+    input: test/dca/dca_granges_open.rds
+    output: test/dca/open_dca.csv, test/dca/open_chipseek.rds
+    log: test/logs/open_peak_annotation.log
+    jobid: 62
+    wildcards: bam_process=open
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/workflow/scripts/peak_annotation.R         test/dca/dca_granges_open.rds         test/dca/open_dca.csv         test/dca/open_chipseek.rds         >& test/logs/open_peak_annotation.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/workflow/scripts/peak_annotation.R         test/dca/dca_granges_open.rds         test/dca/open_dca.csv         test/dca/open_chipseek.rds         >& test/logs/open_peak_annotation.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sun May 22 13:01:49 2022]
+Error in rule peak_annotation:
+    jobid: 62
+    output: test/dca/open_dca.csv, test/dca/open_chipseek.rds
+    log: test/logs/open_peak_annotation.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/workflow/scripts/peak_annotation.R         test/dca/dca_granges_open.rds         test/dca/open_dca.csv         test/dca/open_chipseek.rds         >& test/logs/open_peak_annotation.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/dca_and_annot.smk", line 77, in __rule_peak_annotation
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/workflow/scripts/peak_annotation.R         test/dca/dca_granges_open.rds         test/dca/open_dca.csv         test/dca/open_chipseek.rds         >& test/logs/open_peak_annotation.log'' returned non-zero exit status 2.
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-22T130148.618670.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

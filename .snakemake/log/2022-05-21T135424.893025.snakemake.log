@@ -1,0 +1,47 @@
+Building DAG of jobs...
+Forcing incomplete files:
+	test/fastq/lib001_R1.fastq.gz
+	test/fastq/lib003_R1.fastq.gz
+	test/fastq/lib004_R1.fastq.gz
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/common/__init__.py", line 52, in async_run
+    _ = asyncio.get_running_loop()
+RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 763, in execute
+    dag.init()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 195, in init
+    self.update_needrun(create_inventory=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 930, in update_needrun
+    self.workflow.iocache.mtime_inventory(self.jobs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 136, in mtime_inventory
+    async_run(self._mtime_inventory(jobs))
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/common/__init__.py", line 54, in async_run
+    asyncio.run(coroutine)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 172, in _mtime_inventory
+    await asyncio.gather(*tasks)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 153, in worker
+    raise e
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 149, in worker
+    self.mtime[item] = await self.collect_mtime(item)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 175, in collect_mtime
+    return path.mtime_uncached
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 550, in mtime_uncached
+    raise WorkflowError(
+snakemake.exceptions.WorkflowError: Unable to obtain modification time of file test/fastq/lib001_R1.fastq.gz although it existed before. It could be that a concurrent process has deleted it while Snakemake was running.
+
+WorkflowError:
+Unable to obtain modification time of file test/fastq/lib001_R1.fastq.gz although it existed before. It could be that a concurrent process has deleted it while Snakemake was running.
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/asyncio/runners.py", line 44, in run
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+unlocking
+removed all locks

@@ -79,69 +79,6 @@ final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadat
 saveRDS(object = final.merged.peaks, 
         file = dca_grange_file)
 
-# needs to be in atac sif 
-install.packages("statmod")
-
-# needs to be part of counts step
-colnames(counts) = c("lib001","lib002","lib003","lib004")
-
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###                
-###                                                                          ###
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-args = commandArgs(trailingOnly = TRUE)
-
-counts_rds = "~/repos/atac-seq/test/csaw/counts_all_regfilt_rse.rds"
-background_rds = "~/repos/atac-seq/test/csaw/background_counts_all_regfilt_rse.rds"
-groups = as.factor(c("ir48h","ir48h","sham","sham"))
-contrast = "ir48h-sham"
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-counts = readRDS(counts_rds)
-background = readRDS(background_rds)
-counts = normFactors(background, se.out = counts)
-y = asDGEList(counts)
-colnames(y$counts) = colnames(counts)
-rownames(y$samples) = colnames(counts)
-y$samples$group = groups
-design = model.matrix(~0 + groups, data=y$samples)
-colnames(design) = levels(groups)
-y = estimateDisp(y, design)
-fit = glmQLFit(y, design, robust=TRUE)
-results <- glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
-# combine GRanges rowdata with DA statistics
-rowData(counts) = cbind(rowData(counts), results$table)
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-#merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-#merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
-
-merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
-
-
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-
-
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file)
-
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -199,6 +136,66 @@ rowData(working.windows) <- cbind(rowData(working.windows), results$table)
 # max merged window width: 5000 bp
 merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
 merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
+
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+
+
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks, 
+        file = dca_grange_file)
+
+# needs to be part of counts step
+colnames(counts) = c("lib001","lib002","lib003","lib004")
+
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###   Script to generate differential accessibility model with EdgeR         ###                
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+args = commandArgs(trailingOnly = TRUE)
+
+counts_rds = "~/repos/atac-seq/test/csaw/counts_all_regfilt_rse.rds"
+background_rds = "~/repos/atac-seq/test/csaw/background_counts_all_regfilt_rse.rds"
+groups = as.factor(c("ir48h","ir48h","sham","sham"))
+contrast = "ir48h-sham"
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+counts = readRDS(counts_rds)
+background = readRDS(background_rds)
+counts = normFactors(background, se.out = counts)
+y = asDGEList(counts)
+colnames(y$counts) = colnames(counts)
+rownames(y$samples) = colnames(counts)
+y$samples$group = groups
+design = model.matrix(~0 + groups, data=y$samples)
+colnames(design) = levels(groups)
+y = estimateDisp(y, design)
+fit = glmQLFit(y, design, robust=TRUE)
+results <- glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
+# combine GRanges rowdata with DA statistics
+rowData(counts) = cbind(rowData(counts), results$table)
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+#merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+#merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
+
+merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
+
 
 # summary(width(merged.peaks$region))
 # should merge some peaks; change as desired

@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 23 of /home/jeszyman/repos/atac-seq/workflow/tmp2.smk:
+Missing input files for rule move_and_rename_fastqs:
+15533_Oct_2014/15533_L7_R1_001.fastq.gz

@@ -1,0 +1,7 @@
+Building DAG of jobs...
+MissingInputException in line 27 of /home/jeszyman/repos/atac-seq/workflow/tmp.smk:
+Missing input files for rule all:
+test/fastq/lib004_R1.fastq.gz
+test/fastq/lib003_R1.fastq.gz
+test/fastq/lib001_R1.fastq.gz
+test/fastq/lib002_R1.fastq.gz

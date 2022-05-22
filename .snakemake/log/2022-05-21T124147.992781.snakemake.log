@@ -1,0 +1,2 @@
+SyntaxError in line 40 of /home/jeszyman/repos/atac-seq/workflow/tmp.smk:
+Unexpected keyword r1 in rule definition (tmp.smk, line 40)

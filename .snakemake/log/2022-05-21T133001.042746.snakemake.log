@@ -1,0 +1,9 @@
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 593, in snakemake
+    workflow.include(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1182, in include
+    exec(compile(code, snakefile.get_path_or_uri(), "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/tmp2.smk", line 10, in <module>
+    df = pd.read_table(sample_file, sep="\s+", header=0)
+NameError: name 'sample_file' is not defined
+

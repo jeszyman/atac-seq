@@ -1,0 +1,33 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job      count    min threads    max threads
+-----  -------  -------------  -------------
+all          1              1              1
+total        1              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Sat May 21 13:45:47 2022]
+localrule all:
+    input: test/fastq/lib001_R1.fastq.gz, test/fastq/lib002_R1.fastq.gz, test/fastq/lib003_R1.fastq.gz, test/fastq/lib004_R1.fastq.gz
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Sat May 21 13:45:47 2022]
+Finished job 0.
+1 of 1 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-21T134546.459682.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

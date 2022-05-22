@@ -1,0 +1,271 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job               count    min threads    max threads
+--------------  -------  -------------  -------------
+align_bt2             8              1              1
+all                   1              1              1
+read_trim             8              1              1
+symlink_fastqs        8              1              1
+total                25              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (8):
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Select jobs to execute...
+Selected jobs (4):
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib004_R1.fastq.gz, test/fastq/lib004_R2.fastq.gz
+    jobid: 4
+    wildcards: library_id=lib004
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq/lib004_R1.fastq.gz
+        ln -sf --relative test/inputs/atac4_R2.fastq.gz test/fastq/lib004_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq/lib004_R1.fastq.gz
+        ln -sf --relative test/inputs/atac4_R2.fastq.gz test/fastq/lib004_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib002_R1.fastq.gz, test/fastq/lib002_R2.fastq.gz
+    jobid: 2
+    wildcards: library_id=lib002
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq/lib002_R1.fastq.gz
+        ln -sf --relative test/inputs/atac2_R2.fastq.gz test/fastq/lib002_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq/lib002_R1.fastq.gz
+        ln -sf --relative test/inputs/atac2_R2.fastq.gz test/fastq/lib002_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib004_dedup_R1.fastq.gz, test/fastq/lib004_dedup_R2.fastq.gz
+    jobid: 24
+    wildcards: library_id=lib004_dedup
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib004_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib004_dedup_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib004_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib004_dedup_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib002_dedup_R1.fastq.gz, test/fastq/lib002_dedup_R2.fastq.gz
+    jobid: 18
+    wildcards: library_id=lib002_dedup
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib002_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib002_dedup_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib002_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib002_dedup_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 14:37:13 2022]
+Finished job 2.
+1 of 25 steps (4%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (5):
+	read_trim
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Select jobs to execute...
+Selected jobs (1):
+	symlink_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib001_dedup_R1.fastq.gz, test/fastq/lib001_dedup_R2.fastq.gz
+    jobid: 15
+    wildcards: library_id=lib001_dedup
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib001_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib001_dedup_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/_R1.fastq.gz test/fastq/lib001_dedup_R1.fastq.gz
+        ln -sf --relative test/inputs/_R2.fastq.gz test/fastq/lib001_dedup_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 14:37:13 2022]
+Finished job 4.
+2 of 25 steps (8%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (5):
+	read_trim
+	read_trim
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Select jobs to execute...
+Selected jobs (1):
+	symlink_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 14:37:13 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib001_R1.fastq.gz, test/fastq/lib001_R2.fastq.gz
+    jobid: 1
+    wildcards: library_id=lib001
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq/lib001_R1.fastq.gz
+        ln -sf --relative test/inputs/atac1_R2.fastq.gz test/fastq/lib001_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq/lib001_R1.fastq.gz
+        ln -sf --relative test/inputs/atac1_R2.fastq.gz test/fastq/lib001_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 529, in _finish_jobs
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 608, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 1011, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 24 completed successfully, but some output files are missing. 24
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Job Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 24 completed successfully, but some output files are missing. 24
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 529, in _finish_jobs
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 608, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 1011, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 24 completed successfully, but some output files are missing. 24
+
+MissingOutputException in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Job Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 24 completed successfully, but some output files are missing. 24
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 529, in _finish_jobs
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 608, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 1011, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/fastq/lib004_dedup_R1.fastq.gz
+test/fastq/lib004_dedup_R2.fastq.gz
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 24 completed successfully, but some output files are missing. 24
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1069, in execute
+    success = self.scheduler.schedule()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 440, in schedule
+    self._finish_jobs()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 534, in _finish_jobs
+    self._handle_error(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 615, in _handle_error
+    self.running.remove(job)
+KeyError: symlink_fastqs
+
+unlocking
+removing lock
+removing lock
+removed all locks

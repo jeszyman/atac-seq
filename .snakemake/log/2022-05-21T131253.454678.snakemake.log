@@ -1,0 +1,75 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                       count    min threads    max threads
+----------------------  -------  -------------  -------------
+all                           1              1              1
+move_and_rename_fastqs        4              1              1
+total                         5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+Select jobs to execute...
+Selected jobs (4):
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 13:12:54 2022]
+rule move_and_rename_fastqs:
+    output: test/fastq/lib002_R1.fastq.gz
+    jobid: 2
+    wildcards: base=lib002
+    resources: tmpdir=/tmp
+
+
+        ln -sf  test/fastq/lib002_R1.fastq.gz
+        
+
+[Sat May 21 13:12:54 2022]
+rule move_and_rename_fastqs:
+    output: test/fastq/lib004_R1.fastq.gz
+    jobid: 4
+    wildcards: base=lib004
+    resources: tmpdir=/tmp
+
+
+        ln -sf  test/fastq/lib004_R1.fastq.gz
+        
+
+[Sat May 21 13:12:54 2022]
+rule move_and_rename_fastqs:
+    output: test/fastq/lib001_R1.fastq.gz
+    jobid: 1
+    wildcards: base=lib001
+    resources: tmpdir=/tmp
+
+
+        ln -sf  test/fastq/lib001_R1.fastq.gz
+        
+
+[Sat May 21 13:12:54 2022]
+rule move_and_rename_fastqs:
+    output: test/fastq/lib003_R1.fastq.gz
+    jobid: 3
+    wildcards: base=lib003
+    resources: tmpdir=/tmp
+
+
+        ln -sf  test/fastq/lib003_R1.fastq.gz
+        
+Waiting at most 5 seconds for missing files.
+Terminating processes on user request, this might take some time.
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-21T131253.454678.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

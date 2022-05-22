@@ -1,0 +1,123 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                         count    min threads    max threads
+------------------------  -------  -------------  -------------
+all                             1              1              1
+diff_chrom_accessibility        2              1              1
+total                           3              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (2):
+	diff_chrom_accessibility
+	diff_chrom_accessibility
+Select jobs to execute...
+Selected jobs (2):
+	diff_chrom_accessibility
+	diff_chrom_accessibility
+Resources after job selection: {'_cores': 2, '_nodes': 9223372036854775805}
+
+[Sun May 22 11:44:22 2022]
+rule diff_chrom_accessibility:
+    input: test/csaw/dge_open.rds, test/csaw/norm_counts_rse_open.rds
+    output: test/dca/dca_granges_open.rds
+    log: test/logs/diff_chrom_accessibility_open.log
+    jobid: 60
+    wildcards: bam_process=open
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_open.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_open.rds
+        test/dca/dca_granges_open.rds         >& test/logs/diff_chrom_accessibility_open.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_open.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_open.rds
+        test/dca/dca_granges_open.rds         >& test/logs/diff_chrom_accessibility_open.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sun May 22 11:44:22 2022]
+rule diff_chrom_accessibility:
+    input: test/csaw/dge_regfilt.rds, test/csaw/norm_counts_rse_regfilt.rds
+    output: test/dca/dca_granges_regfilt.rds
+    log: test/logs/diff_chrom_accessibility_regfilt.log
+    jobid: 59
+    wildcards: bam_process=regfilt
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_regfilt.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_regfilt.rds
+        test/dca/dca_granges_regfilt.rds         >& test/logs/diff_chrom_accessibility_regfilt.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_regfilt.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_regfilt.rds
+        test/dca/dca_granges_regfilt.rds         >& test/logs/diff_chrom_accessibility_regfilt.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sun May 22 11:44:32 2022]
+Error in rule diff_chrom_accessibility:
+    jobid: 60
+    output: test/dca/dca_granges_open.rds
+    log: test/logs/diff_chrom_accessibility_open.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_open.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_open.rds
+        test/dca/dca_granges_open.rds         >& test/logs/diff_chrom_accessibility_open.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/dca_and_annot.smk", line 35, in __rule_diff_chrom_accessibility
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_open.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_open.rds
+        test/dca/dca_granges_open.rds         >& test/logs/diff_chrom_accessibility_open.log'' returned non-zero exit status 1.
+
+[Sun May 22 11:44:32 2022]
+Error in rule diff_chrom_accessibility:
+    jobid: 59
+    output: test/dca/dca_granges_regfilt.rds
+    log: test/logs/diff_chrom_accessibility_regfilt.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_regfilt.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_regfilt.rds
+        test/dca/dca_granges_regfilt.rds         >& test/logs/diff_chrom_accessibility_regfilt.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/dca_and_annot.smk", line 35, in __rule_diff_chrom_accessibility
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/diff_chrom_accessibility.R         test/csaw/dge_regfilt.rds         "ir48h ir48h sham sham"         "ir48h-sham"         test/csaw/norm_counts_rse_regfilt.rds
+        test/dca/dca_granges_regfilt.rds         >& test/logs/diff_chrom_accessibility_regfilt.log'' returned non-zero exit status 1.
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-22T114421.867948.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

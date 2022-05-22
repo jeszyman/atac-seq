@@ -1,0 +1,12 @@
+Building DAG of jobs...
+AmbiguousRuleException:
+Rules filter_and_dedup and align_bt2 are ambiguous for the file test/bam/lib001_dedup.bam.
+Consider starting rule output with a unique prefix, constrain your wildcards, or use the ruleorder directive.
+Wildcards:
+	filter_and_dedup: library_id=lib001
+	align_bt2: library_id=lib001_dedup
+Expected input files:
+	filter_and_dedup: test/bam/lib001.bam
+	align_bt2: test/fastq/lib001_dedup_flex_1.fastq.gz test/fastq/lib001_dedup_flex_2.fastq.gzExpected output files:
+	filter_and_dedup: test/bam/lib001_dedup.bam test/bam/lib001_qfilt.bam test/bam/lib001_regfilt.bam test/bam/lib001_regfilt.bam.bai
+	align_bt2: test/bam/lib001_dedup.bam

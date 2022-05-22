@@ -1,0 +1,2 @@
+SyntaxError in line 26 of /home/jeszyman/repos/atac-seq/workflow/tmp.smk:
+EOF in multi-line statement (tmp.smk, line 26)

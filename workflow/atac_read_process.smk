@@ -1,13 +1,13 @@
 rule read_trim:
     input:
-        r1 = config["fastq_dir"] + "/{library_id}_R1.fastq.gz",
-        r2 = config["fastq_dir"] + "/{library_id}_R2.fastq.gz",
+        r1 = config["fq_sym_dir"] + "/{library_id}_R1.fastq.gz",
+        r2 = config["fq_sym_dir"] + "/{library_id}_R2.fastq.gz",
     params:
-        outdir = config["fastq_dir"],
+        outdir = config["fq_sym_dir"],
         threads = config["threads"],
     output:
-        config["fastq_dir"] + "/{library_id}_flex_1.fastq.gz",
-        config["fastq_dir"] + "/{library_id}_flex_2.fastq.gz",
+        config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
+        config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
     resources: 
         mem_mb=5000
     shell:
@@ -17,8 +17,8 @@ rule read_trim:
 
 rule align_bt2:
     input:
-        r1 = config["fastq_dir"] + "/{library_id}_flex_1.fastq.gz",
-        r2 = config["fastq_dir"] + "/{library_id}_flex_2.fastq.gz",	
+        r1 = config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
+        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",	
     params:
         prefix = config["bowtie_prefix"],
         threads = config["threads"],
@@ -97,7 +97,7 @@ rule tn5_shift_open:
 
 rule fastqc:
     input:
-        raw = config["fastq_dir"] + "/{library_id}_{read}.fastq.gz",
+        raw = config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz",
     output:
         raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
     log:

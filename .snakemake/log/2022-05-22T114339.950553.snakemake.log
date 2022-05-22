@@ -1,0 +1,37 @@
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 758, in block_content
+    for t in self.subautomaton(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 119, in subautomaton
+    return self.subautomata[automaton](
+KeyError: 'dge'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 593, in snakemake
+    workflow.include(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1182, in include
+    exec(compile(code, snakefile.get_path_or_uri(), "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 46, in <module>
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1164, in include
+    code, linemap, rulecount = parse(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 1194, in parse
+    for t, orig_token in automaton.consume():
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 105, in consume
+    for t, orig in self.state(token):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 1146, in python
+    for t in self.subautomaton(token.string).consume():
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 105, in consume
+    for t, orig in self.state(token):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 179, in block
+    yield from self.block_content(token)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 763, in block_content
+    self.error(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/parser.py", line 116, in error
+    raise SyntaxError(msg, (self.snakefile.path, lineno(token), None, None))
+  File "/home/jeszyman/repos/atac-seq/workflow/dca_and_annot.smk", line 3
+SyntaxError: Unexpected keyword dge in rule definition
+
+SyntaxError in line 3 of /home/jeszyman/repos/atac-seq/workflow/dca_and_annot.smk:
+Unexpected keyword dge in rule definition (dca_and_annot.smk, line 3)
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 46, in <module>

@@ -1,0 +1,228 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job               count    min threads    max threads
+--------------  -------  -------------  -------------
+all                   1              1              1
+read_trim             4              1              1
+symlink_fastqs        4              1              1
+total                 9              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Select jobs to execute...
+Selected jobs (4):
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+	symlink_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 15:24:20 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib003_R1.fastq.gz, test/fastq/lib003_R2.fastq.gz
+    jobid: 3
+    wildcards: library_id=lib003
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq/lib003_R1.fastq.gz
+        ln -sf --relative test/inputs/atac3_R2.fastq.gz test/fastq/lib003_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq/lib003_R1.fastq.gz
+        ln -sf --relative test/inputs/atac3_R2.fastq.gz test/fastq/lib003_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib004_R1.fastq.gz, test/fastq/lib004_R2.fastq.gz
+    jobid: 4
+    wildcards: library_id=lib004
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq/lib004_R1.fastq.gz
+        ln -sf --relative test/inputs/atac4_R2.fastq.gz test/fastq/lib004_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq/lib004_R1.fastq.gz
+        ln -sf --relative test/inputs/atac4_R2.fastq.gz test/fastq/lib004_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib002_R1.fastq.gz, test/fastq/lib002_R2.fastq.gz
+    jobid: 2
+    wildcards: library_id=lib002
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq/lib002_R1.fastq.gz
+        ln -sf --relative test/inputs/atac2_R2.fastq.gz test/fastq/lib002_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq/lib002_R1.fastq.gz
+        ln -sf --relative test/inputs/atac2_R2.fastq.gz test/fastq/lib002_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+rule symlink_fastqs:
+    output: test/fastq/lib001_R1.fastq.gz, test/fastq/lib001_R2.fastq.gz
+    jobid: 1
+    wildcards: library_id=lib001
+    resources: tmpdir=/tmp
+
+
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq/lib001_R1.fastq.gz
+        ln -sf --relative test/inputs/atac1_R2.fastq.gz test/fastq/lib001_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq/lib001_R1.fastq.gz
+        ln -sf --relative test/inputs/atac1_R2.fastq.gz test/fastq/lib001_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+Finished job 3.
+1 of 9 steps (11%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	read_trim
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	read_trim
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 15:24:20 2022]
+rule read_trim:
+    input: test/fastq/lib003_R1.fastq.gz, test/fastq/lib003_R2.fastq.gz
+    output: test/fastq/lib003_flex_1.fastq.gz, test/fastq/lib003_flex_2.fastq.gz
+    jobid: 7
+    wildcards: library_id=lib003
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/lib003_R1.fastq.gz test/fastq/lib003_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/lib003_R1.fastq.gz test/fastq/lib003_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+Finished job 4.
+2 of 9 steps (22%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	read_trim
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	read_trim
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 15:24:20 2022]
+rule read_trim:
+    input: test/fastq/lib004_R1.fastq.gz, test/fastq/lib004_R2.fastq.gz
+    output: test/fastq/lib004_flex_1.fastq.gz, test/fastq/lib004_flex_2.fastq.gz
+    jobid: 8
+    wildcards: library_id=lib004
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/lib004_R1.fastq.gz test/fastq/lib004_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/lib004_R1.fastq.gz test/fastq/lib004_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+Finished job 2.
+3 of 9 steps (33%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	read_trim
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	read_trim
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 15:24:20 2022]
+rule read_trim:
+    input: test/fastq/lib002_R1.fastq.gz, test/fastq/lib002_R2.fastq.gz
+    output: test/fastq/lib002_flex_1.fastq.gz, test/fastq/lib002_flex_2.fastq.gz
+    jobid: 6
+    wildcards: library_id=lib002
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/lib002_R1.fastq.gz test/fastq/lib002_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/lib002_R1.fastq.gz test/fastq/lib002_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:20 2022]
+Finished job 1.
+4 of 9 steps (44%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	read_trim
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	read_trim
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 15:24:20 2022]
+rule read_trim:
+    input: test/fastq/lib001_R1.fastq.gz, test/fastq/lib001_R2.fastq.gz
+    output: test/fastq/lib001_flex_1.fastq.gz, test/fastq/lib001_flex_2.fastq.gz
+    jobid: 5
+    wildcards: library_id=lib001
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/lib001_R1.fastq.gz test/fastq/lib001_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/read_trim.sh test/fastq/lib001_R1.fastq.gz test/fastq/lib001_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Sat May 21 15:24:52 2022]
+Finished job 7.
+5 of 9 steps (56%) done
+[Sat May 21 15:24:54 2022]
+Finished job 8.
+6 of 9 steps (67%) done
+[Sat May 21 15:24:54 2022]
+Finished job 6.
+7 of 9 steps (78%) done
+[Sat May 21 15:24:55 2022]
+Finished job 5.
+8 of 9 steps (89%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Sat May 21 15:24:55 2022]
+localrule all:
+    input: test/fastq/lib001_R1.fastq.gz, test/fastq/lib001_R2.fastq.gz, test/fastq/lib002_R1.fastq.gz, test/fastq/lib002_R2.fastq.gz, test/fastq/lib003_R1.fastq.gz, test/fastq/lib003_R2.fastq.gz, test/fastq/lib004_R1.fastq.gz, test/fastq/lib004_R2.fastq.gz, test/fastq/lib001_flex_1.fastq.gz, test/fastq/lib002_flex_1.fastq.gz, test/fastq/lib003_flex_1.fastq.gz, test/fastq/lib004_flex_1.fastq.gz, test/fastq/lib001_flex_2.fastq.gz, test/fastq/lib002_flex_2.fastq.gz, test/fastq/lib003_flex_2.fastq.gz, test/fastq/lib004_flex_2.fastq.gz
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Sat May 21 15:24:55 2022]
+Finished job 0.
+9 of 9 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-05-21T152419.546811.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

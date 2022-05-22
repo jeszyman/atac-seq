@@ -1,0 +1,91 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                       count    min threads    max threads
+----------------------  -------  -------------  -------------
+all                           1              1              1
+move_and_rename_fastqs        4              1              1
+total                         5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+Select jobs to execute...
+Selected jobs (4):
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+	move_and_rename_fastqs
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Sat May 21 13:58:50 2022]
+rule move_and_rename_fastqs:
+    output: test/fastq/lib002_R1.fastq.gz
+    jobid: 2
+    wildcards: library_id=lib002
+    resources: tmpdir=/tmp
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/rules.py", line 703, in apply_input_function
+    value = func(Wildcards(fromdict=wildcards), **_aux_params)
+  File "/home/jeszyman/repos/atac-seq/workflow/tmp2.smk", line 24, in <lambda>
+TypeError: can only concatenate str (not "list") to str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1069, in execute
+    success = self.scheduler.schedule()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 516, in schedule
+    self.run(runjobs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 563, in run
+    executor.run_jobs(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 149, in run_jobs
+    self.run(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 463, in run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 243, in _run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 169, in _run
+    self.printjob(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 175, in printjob
+    job.log_info(skip_dynamic=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 950, in log_info
+    logger.shellcmd(self.shellcmd, indent=indent)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 418, in shellcmd
+    self.format_wildcards(self.rule.shellcmd)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 854, in format_wildcards
+    params=self.params,
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 262, in params
+    self._params = self.rule.expand_params(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/rules.py", line 893, in expand_params
+    self._apply_wildcards(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/rules.py", line 748, in _apply_wildcards
+    item, incomplete = self.apply_input_function(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/rules.py", line 719, in apply_input_function
+    raise InputFunctionException(e, rule=self, wildcards=wildcards)
+snakemake.exceptions.InputFunctionException: Error:
+  TypeError: can only concatenate str (not "list") to str
+Wildcards:
+  library_id=lib002
+Traceback:
+  File "/home/jeszyman/repos/atac-seq/workflow/tmp2.smk", line 24, in <lambda>
+
+InputFunctionException in line 21 of /home/jeszyman/repos/atac-seq/workflow/tmp2.smk:
+Error:
+  TypeError: can only concatenate str (not "list") to str
+Wildcards:
+  library_id=lib002
+Traceback:
+  File "/home/jeszyman/repos/atac-seq/workflow/tmp2.smk", line 24, in <lambda>
+unlocking
+removing lock
+removing lock
+removed all locks

@@ -11,7 +11,7 @@ Developed with SeqAn, the library for sequence analysis
 Available on github.com/seqan/flexbar
 
 
-Local time:            Sat May 21 06:46:15 2022
+Local time:            Sun May 22 13:25:29 2022
 
 Number of threads:     4
 Bundled fragments:     256
@@ -41,16 +41,16 @@ Nextera-TruSight       CTGTCTCTTATACACATCT
 
 Processing reads ...done.
 
-Elapsed time:       12 sec
-Processing speed:   12500 reads/s
+Elapsed time:       1 min 25 sec
+Processing speed:   5882 reads/s
 
 
-Min, max, mean and median overlap of paired reads: 40 / 150 / 88 / 84
+Min, max, mean and median overlap of paired reads: 40 / 150 / 87 / 84
 
 Adapter removal statistics
 ==========================
 Adapter:            Overlap removal:    Full length:
-Nextera-TruSight    56577               48809
+Nextera-TruSight    284484              253573
 
 Min, max, mean and median overlap: 1 / 20 / 17 / 19
 
@@ -58,25 +58,25 @@ Min, max, mean and median overlap: 1 / 20 / 17 / 19
 Output file statistics
 ======================
 Read file:               test/fastq/atac1_flex_1.fastq.gz
-  written reads          74891
-  short reads            2
+  written reads          249641
+  short reads            5
 Read file 2:             test/fastq/atac1_flex_2.fastq.gz
-  written reads          74891
-  short reads            2
+  written reads          249641
+  short reads            5
 
 
 Filtering statistics
 ====================
-Processed reads                   150000
-  skipped due to uncalled bases      214   (107 uncalled in 107 pairs)
+Processed reads                   500000
+  skipped due to uncalled bases      708   (354 uncalled in 354 pairs)
   short prior to adapter removal       0
-  finally skipped short reads          4
+  finally skipped short reads         10
   skipped paired single reads          0
-Discarded reads overall              218
-Remaining reads                   149782   (99%)
+Discarded reads overall              718
+Remaining reads                   499282   (99%)
 
-Processed bases   22650000
-Remaining bases   18883486   (83% of input)
+Processed bases   75500000
+Remaining bases   56482784   (74% of input)
 
 
 Flexbar completed adapter removal.
