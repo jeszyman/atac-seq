@@ -1020,7 +1020,6 @@ rule open_genome:
     shell:
         """
         bedmap --echo --bases-uniq --delim '\t' {params.genome_bed} {input} | awk 'BEGIN {{ genome_length = 0; masked_length = 0; }} {{ genome_length += ($3 - $2); masked_length += $4; }} END {{ print (masked_length / genome_length); }}' > {output}
-
         """
 #+end_src
 - https://www.biostars.org/p/219099/
