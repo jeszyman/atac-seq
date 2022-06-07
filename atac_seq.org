@@ -1,3 +1,6 @@
+# Latest deepTools on bioconda does not contain alignmentSieve
+RUN conda install -c bioconda deeptools=3.4 --force
+
 * ATAC-seq                                                          :biopipe:
 :PROPERTIES:
 :header-args:bash: :tangle-mode (identity #o555)
@@ -5,21 +8,6 @@
 :logging: nil
 :END:
 ** Setup
-#+begin_src bash
-results_dirs=("bam"
-              "csaw"
-              "dca"
-              "fastq"
-              "logs"
-              "macs2"
-              "open_chrom"
-              "qc")
-
-for dir in "${results_dirs[@]}";
-do
-    \rm -rf $dir
-done
-#+end_src
 - startup script
   #+begin_src bash :tangle ./src/repo_startup.sh
 #!/usr/bin/env bash
@@ -31,7 +19,7 @@ sif_dir=$3
 if [ $# -ne 3 ];
 then
     printf "\n usage: repo_startup.sh <REPO PATH> <RIS MOUNT PT> <SINGULARITY CONTAINER DIR>
-    \n ATAC-seq repo development helper script 
+    \n ATAC-seq repo development helper script
     \n "
 else
 
@@ -43,8 +31,8 @@ else
         "Git size check is not read-able"
         exit 1
     fi
-    
-    # Check mount point  
+
+    # Check mount point
     if grep -qs $mntpt /proc/mounts; then
         echo "RIS storage mounted."
     else
@@ -63,7 +51,7 @@ else
     # Check singularity container up-to-date
     if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt $sif_dir/atac.sif ]; then
         echo "Local SIF is out of date. Updating ..."
-        cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif $sif_dir/atac.sif 
+        cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif $sif_dir/atac.sif
     else
         echo "Local SIF file is up to date"
     fi
@@ -92,7 +80,7 @@ git init
 git add -A
 git commit -am "First commit"
 git branch -M master
-            
+
 #
 git remote add origin git@github.com:jeszyman/atac-seq.git
 git branch -M master
@@ -100,7 +88,7 @@ git push -u origin master
 
 cp basecamp/src/pre-commit src/precommit_git_hook
 ln -s src/precommit_git_hook .git/hooks/precommit
-chmod 777 .git/hooks/precommit 
+chmod 777 .git/hooks/precommit
 #+end_src
 *** R
 **** Configurations
@@ -108,9 +96,9 @@ chmod 777 .git/hooks/precommit
 # Setup
 ##
 ## Config
-if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))) 
+if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R")))
   source(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))
-} else 
+} else
   stop("No config file found")
 }
 
@@ -129,12 +117,12 @@ library(DESeq2)
 **** Preambles
 - Command line
   ## Config
-  if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))) 
+  if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R")))
     source(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))
-  } else 
+  } else
     stop("No config file found")
   }
-- Snakemake 
+- Snakemake
   #+name: r_smk_preamble
   #+begin_src R :noweb yes
 #!/usr/bin/env Rscript
@@ -156,7 +144,7 @@ library(DESeq2)
 #  by a subsequent tangle operation.
 #
 #  This script assumes you are running from the repository main directory in
-#  order to source the appriopriate configuation file. 
+#  order to source the appriopriate configuation file.
 
 # Load bash configuation
 if [ -f ./config/${HOSTNAME}.sh ]; then
@@ -252,7 +240,7 @@ sif_dir=/home/jeszyman/sing_containers
 threads=16
 
 <<bash_common_config>>
-#+end_src  
+#+end_src
 - Common
   #+name: bash_common_config
   #+begin_src bash :noweb yes
@@ -264,8 +252,8 @@ else
     "Git size check is not read-able"
     exit 1
 fi
-          
-# Check mount point  
+
+# Check mount point
 if grep -qs $mntpt /proc/mounts; then
     echo "RIS storage mounted."
 else
@@ -280,8 +268,8 @@ else
     echo "No local SIF file found"
     exit 1
 fi
-         
-launch_atac() { 
+
+launch_atac() {
     if [ -f /.dockerenv ]; then
         echo "shell already in docker, exiting";
         exit 1;
@@ -289,20 +277,20 @@ launch_atac() {
         docker run --env HOME=${HOME} --hostname ${HOSTNAME} --interactive --tty --volume /home/:/home/ --volume /tmp/:/tmp/ --volume /mnt/:/mnt/ --user $(id -u ${USER}) -w "$repo" jeszyman/atac /bin/bash;
     fi
 }
-#+end_src           
+#+end_src
 **** Ideas
 - add a config at repo dir checker
 *** Box and [[id:be76a873-d2fe-447f-a43c-b84c52a8e77b][rclone]]
 *** Docker and singularity
 
-missing alignmentSieve 
+missing alignmentSieve
 [[id:b16d0202-8d35-472b-b538-87a7d6a6cef7][Conda and Miniconda]]
 #+begin_src bash
 mkdir -p ~/sing_containers
 
 if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.sif ]; then cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif; fi
 #+end_src
-- Docker pull build into [[*Configurations][bash config]]. 
+- Docker pull build into [[*Configurations][bash config]].
 **** Write [[file:config/atac_Dockerfile]]
 
 - BiocManager::install("apeglm")
@@ -331,18 +319,18 @@ RUN R -e 'install.packages("BiocManager"); \
           BiocManager::install(c("ATACseqQC", \
                                  "ChIPpeakAnno", \
                                  "ChIPseeker", \
-                                 "clusterProfiler", \    
+                                 "clusterProfiler", \
                                  "csaw"));'
 
 RUN R -e 'install.packages("BiocManager"); \
     BiocManager::install(); \
     BiocManager::install(c("ChIPpeakAnno", \
                            "ChIPseeker", \
-                           "clusterProfiler", \    
+                           "clusterProfiler", \
                            "csaw", \
-                           "EnsDb.Mmusculus.v79", \                           
+                           "EnsDb.Mmusculus.v79", \
                            "org.Mm.eg.db", \
-                           "Rsamtools", \                           
+                           "Rsamtools", \
                            "TxDb.Mmusculus.UCSC.mm10.ensGene"));'
 
 # ATACseqQC
@@ -350,10 +338,10 @@ RUN R -e 'install.packages("BiocManager"); \
 ## Linux prerequisites
 RUN apt-get install -yq --no-install-recommends --allow-unauthenticated --fix-missing \
     libgsl-dev \
-    libcurl4-openssl-dev 
+    libcurl4-openssl-dev
     #libssl-dev
 ##
-## ATACseqQC 
+## ATACseqQC
 RUN R -e 'install.packages("BiocManager"); \
     BiocManager::install(); \
     BiocManager::install(c("ATACseqQC"));'
@@ -373,7 +361,7 @@ RUN conda install -c bioconda samtools=1.7
 # R CRAN Installs
 RUN R -e "install.packages(c('statmod', repos='http://cran.rstudio.com/'))"
 
-#+end_src 
+#+end_src
 
 **** Build
 :LOGBOOK:
@@ -381,7 +369,7 @@ RUN R -e "install.packages(c('statmod', repos='http://cran.rstudio.com/'))"
   waiting on biotools container build
 :END:
 #+begin_src bash
-docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac 
+docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac
 docker push jeszyman/atac
 #+end_src
 **** [[file:src/mk_singularity.sh][Make singularity container from docker container]]
@@ -389,7 +377,7 @@ docker push jeszyman/atac
 - State "WAITING"    from              [2021-12-21 Tue 14:26]
 - State "WAITING"    from "TODO"       [2021-12-21 Tue 11:51]
 :END:
-#+begin_src bash :noweb yes 
+#+begin_src bash :noweb yes
 singularity pull /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif docker://jeszyman/atac
 cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif
 
@@ -415,7 +403,7 @@ input_fa="$1"
 params_prefix="$2"
 params_threads="$3"
 
-# Run 
+# Run
 make_bt2_index $params_threads $input_fa $params_prefix
 #+end_src
 
@@ -436,9 +424,9 @@ zcat "test/inputs/chr19.fa.gz" > test/inputs/chr19.fa
 
 bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
 
-\rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa 
+\rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
 
-# For documentation, not intended to be executable 
+# For documentation, not intended to be executable
 
 zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1000000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
 
@@ -524,7 +512,7 @@ rule read_trim:
     output:
         config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
         config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -556,7 +544,7 @@ params_outdir="$3"
 params_threads="$4"
 
 # Run
-flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"            
+flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 #+end_src
 
 **** DONE Align BT2                                                   :smk_rule:
@@ -568,7 +556,7 @@ flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 rule align_bt2:
     input:
         r1 = config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",	
+        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
     params:
         prefix = config["bowtie_prefix"],
         threads = config["threads"],
@@ -596,7 +584,7 @@ params_threads="$4"
 output_bam="$5"
 
 # Run
-bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam" 
+bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
 #+end_src
 **** DONE Filter and dedup                                            :smk_rule:
 - Snakemake
@@ -609,7 +597,7 @@ rule filter_and_dedup:
         qfilt_bam = temp(config["bam_dir"] + "/{library_id}_qfilt.bam"),
         regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
         regfilt_index = config["bam_dir"] + "/{library_id}_regfilt.bam.bai",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -618,7 +606,7 @@ rule filter_and_dedup:
 	                                     {config[threads]} \
 	                                     {output.dedup_bam} \
 	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam} 
+	                                     {output.regfilt_bam}
         """
 #+end_src
 - [[file:./workflow/scripts/filter_and_dedup.sh][Base script]]
@@ -630,17 +618,17 @@ rule filter_and_dedup:
 atac_bam_processing(){
     #
     # Dedup
-    samtools sort -@ $1 -n -o - $2 | 
-    samtools fixmate -m - - | 
-    samtools sort -@ $1 -o - - | 
+    samtools sort -@ $1 -n -o - $2 |
+    samtools fixmate -m - - |
+    samtools sort -@ $1 -o - - |
     samtools markdup -@ $1 -r - $3
     #
     # Filter to aligned, properly paired reads
-    samtools view -@ $1 -b -f 3 -h -o $4 $3 
+    samtools view -@ $1 -b -f 3 -h -o $4 $3
     #
     # Filter to autosomes and remove blacklisted regions
     samtools view -@ $1 -b -h -L $5 -o - $4 |
-    samtools sort -@ $1 -n -o - - | 
+    samtools sort -@ $1 -n -o - - |
     samtools fixmate -m - - |
     samtools sort -@ $1 -o $6 -
     samtools index $6
@@ -686,7 +674,7 @@ rule get_open_chrom:
 alignmentSieve --bam $1 \
                --maxFragmentLength 150 \
                --numberOfProcessors $2 \
-               --outFile $3 
+               --outFile $3
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
@@ -764,7 +752,7 @@ rule fastqc:
     output:
         raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
     log:
-        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",	
+        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
     shell:
         """
         fastqc --outdir {config[qc_dir]} \
@@ -843,7 +831,7 @@ else
           --outdir $3 \
           --SPMR \
           --treatment $1
-fi            
+fi
 #+end_src
 *** DONE Call MACS2 broad                                             :smk_rule:
 - Snakemake
@@ -895,7 +883,7 @@ rule make_peak_counts:
 	groups_str = "ir48h ir48h sham sham"
     output:
         norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
-        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",	
+        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
     log:
         config["log_dir"] + "/make_peak_counts_{bam_process}.log",
     shell:
@@ -1002,7 +990,7 @@ groups = as.factor(unlist(strsplit(groups_str, " ")))
 y$samples$group = groups
 
 # Save outputs
-saveRDS(object = filtered_counts, 
+saveRDS(object = filtered_counts,
         file = out_rse_rds)
 saveRDS(object = y,
         file = out_dge_rds)
@@ -1025,7 +1013,7 @@ rule open_genome:
 - https://www.biostars.org/p/219099/
   #+begin_src bash
 singularity shell --help
-singularity shell --bind /mnt/:/mnt/ ~/sing_containers/atac.sif 
+singularity shell --bind /mnt/:/mnt/ ~/sing_containers/atac.sif
 
 fract(){
     bedmap --echo --bases-uniq --delim '\t' ~/repos/atac-seq/resources/mm10.bed $1 | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'
@@ -1058,15 +1046,15 @@ cp /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
 rule diff_chrom_accessibility:
     input:
         dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
-        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds", 
+        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
     params:
-        groups_str = "ir48h ir48h sham sham", 
+        groups_str = "ir48h ir48h sham sham",
         contrast = "ir48h-sham",
         script = config["atac_scripts_dir"] + "/diff_chrom_accessibility.R",
     output:
         config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
     log:
-        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",	
+        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
     shell:
         """
         Rscript {params.script} \
@@ -1077,13 +1065,13 @@ rule diff_chrom_accessibility:
         {output} \
         >& {log}
         """
-#+end_src  
+#+end_src
 - [[file:workflow/scripts/diff_chrom_accessibility.R][Base script]]
   #+begin_src R :noweb yes :tangle ./workflow/scripts/diff_chrom_accessibility.R
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###                
+###   Script to generate differential accessibility model with EdgeR         ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -1133,8 +1121,8 @@ final.merged.peaks = merged.peaks$region
 final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
-        file = dca_granges_rds) 
+saveRDS(object = final.merged.peaks,
+        file = dca_granges_rds)
 
 #+end_src
 *** Peak annotation                                                :smk_rule:
@@ -1183,7 +1171,7 @@ txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
 
 chipseek = annotatePeak(peaks, TxDb = txdb, annoDb = "org.Mm.eg.db")
 
-annotation = as_tibble(as.data.frame(chipseek)) 
+annotation = as_tibble(as.data.frame(chipseek))
 
 write.csv(annotation, row.names = F, file = annotation_csv)
 
@@ -1219,7 +1207,7 @@ writeLines(as.character(motifs_up_ensembl), "/mnt/ris/jschwarz/cardiac-radiobiol
   #+begin_src bash
 mkdir -p /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/
 
-nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12 
+nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
 
 # try
 
@@ -1238,15 +1226,15 @@ perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
 
 - Extract gene names
   #+begin_src bash
-            
+
 #+end_src
 
 
 *** Snakefile                                                  :smk:noexport:
 :PROPERTIES:
-:header-args:snakemake:  :tangle ./workflow/motifs.smk 
+:header-args:snakemake:  :tangle ./workflow/motifs.smk
 :END:
-**** Smk preamble                                          
+**** Smk preamble
 #+begin_src snakemake :noweb yes
 <<smk_preamble>>
 #+end_src
@@ -1279,7 +1267,7 @@ rule extract_gene_list:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###    SCRIPT TITLE   ###                
+###    SCRIPT TITLE   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -1288,14 +1276,14 @@ dca_tbl = args[1]
 #+end_src
 **** Find motifs for gene list promoters
 #+begin_src bash
-#nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12 
+#nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
 
 findMotifs.pl test/homer/open_48hr-sham_down_genelist.txt \
               mouse \
               test/homer/open_ir48h-sham_less -fdr10 -p 4
 
 #+end_src
-- Find motifs by gene list 
+- Find motifs by gene list
   #+begin_src bash
 # TODO install homer w/ mouse-p promoter set
 
@@ -1304,7 +1292,7 @@ source ~/repos/cardradbio-atac/config/${HOSTNAME}.sh
 # Fake gene list from peak annotation output, is ensembl IDs
 #
 
-# Install mouse homer promotor set 
+# Install mouse homer promotor set
 perl /home/jeszyman/homer/.//configureHomer.pl -install mouse-p
 
 mkdir -p /tmp/out
@@ -1325,7 +1313,7 @@ library(fgsea)
 
 ## Generate all msigdb mouse hallmark gene sets as list of lists
 msigdbr_df <- msigdbr(species = "mouse", category = "H")
-ms_path_list = split(x = msigdbr_df$ensembl_gene, f = msigdbr_df$gs_name)  
+ms_path_list = split(x = msigdbr_df$ensembl_gene, f = msigdbr_df$gs_name)
 
 test = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/dca_ir84_sham_annot.RDS")
 
@@ -1461,13 +1449,13 @@ annotation %>% filter(logFC > 2)
 \vspace{5mm}
 \hfill Last compiled {{{time(%Y-%m-%d)}}}.
 \newpage
-**** Discussion 
+**** Discussion
 Expect immune infiltrate at > 1 week supercite:colman2015
 **** References                                                      :ignore:
 \printbibliography
 **** External files
-*** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs 
-Error in env[[as.character(i)]] <- value : 
+*** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs
+Error in env[[as.character(i)]] <- value :
   wrong args for environment subassignment
 Calls: regionCounts ... bploop -> bploop.iterate -> <Anonymous> -> add_inorder
 Execution halted
@@ -1480,7 +1468,7 @@ library(tidyverse)
   #+begin_src R :noweb yes :tangle ./workflow/scripts/csaw_peak.R
 
 #############################################################################
-###              Script for csaw ATAC-seq local peak calling 
+###              Script for csaw ATAC-seq local peak calling
 #############################################################################
 
 args = commandArgs(trailingOnly = TRUE)
@@ -1550,12 +1538,12 @@ background = windowCounts(bam_list,
 
 colnames(filtered_counts) = names(bam_list)
 
-saveRDS(object = filtered_counts, 
+saveRDS(object = filtered_counts,
 file = counts_rds)
 
 colnames(background) = names(bam_list)
 
-saveRDS(object = background, 
+saveRDS(object = background,
 file = background_rds)
 #+end_src
 - [X] run test
@@ -1568,9 +1556,9 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
         "${lib_str}" \
         8 \
         /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds         
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds
 #+end_src
-- [X] run for open 
+- [X] run for open
   #+begin_src bash
 lib_str="lib001 lib002 lib003 lib004 lib005 lib006 lib007 lib008 lib009 lib010 lib011 lib012 lib013 lib015 lib016 lib017 lib018 lib019 lib020 lib021 lib022 lib023 lib024 lib025"
 
@@ -1580,7 +1568,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
         "${lib_str}" \
         4 \
         /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_counts.rds         
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_counts.rds
 #+end_src
 - [-] run for full
   #+begin_src bash
@@ -1592,23 +1580,23 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
         "${lib_str}" \
         8 \
         /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_counts.rds         
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_counts.rds
 #+end_src
 
 
 
 **** Ideas and dev
 ***** Description                                                    :ignore:
-ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR. 
+ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
 
-Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker. 
+Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
 
 ***** ATAC-seq peak calling and chromatin accessibility, 6wks
 ****** [[file:workflow/peak_calling.smk][Snakefile]]                                               :smk:noexport:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/peak_calling.smk
 :END:
-******* Smk preamble                                          
+******* Smk preamble
 #+begin_src snakemake :noweb yes
 <<smk_preamble>>
 #+end_src
@@ -1616,7 +1604,7 @@ Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
 #+begin_src snakemake
 rule all:
     input:
-        config["data_dir"] + "/atac/bk_rse.rds",	
+        config["data_dir"] + "/atac/bk_rse.rds",
         config["data_dir"] + "/atac/counts_rse.rds",
 #+end_src
 
@@ -1629,12 +1617,12 @@ rule all:
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
+        bam_pattern = "_regfilt_tn5.bam$",
         lib_str = {lib_str}
 
         expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
 
-        lib_str = config["IR48H_V_SHAM"],	
+        lib_str = config["IR48H_V_SHAM"],
         script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
     output:
         background_counts = config["data_dir"] + "/atac/{c}background_counts_rse.rds"
@@ -1666,8 +1654,8 @@ rule make_peak_counts:
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
-        lib_str = config["IR48H_V_SHAM"],	
+        bam_pattern = "_regfilt_tn5.bam$",
+        lib_str = config["IR48H_V_SHAM"],
         script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
     output:
         background_counts = config["data_dir"] + "/atac/background_counts_rse.rds"
@@ -1693,7 +1681,7 @@ rule make_peak_counts:
 <<r_smk_preamble>>
 
 #############################################################################
-###              Script for csaw ATAC-seq local peak calling 
+###              Script for csaw ATAC-seq local peak calling
 #############################################################################
 
 args = commandArgs(trailingOnly = TRUE)
@@ -1758,10 +1746,10 @@ background = windowCounts(bam_list,
                           param = param,
                           BPPARAM = MulticoreParam(workers=threads))
 
-saveRDS(object = filtered_counts, 
+saveRDS(object = filtered_counts,
 file = counts_rds)
 
-saveRDS(object = background, 
+saveRDS(object = background,
 file = background_rds)
 #+end_src
 ******* TEST Differential accessibility                            :smk_rule:
@@ -1793,7 +1781,7 @@ rule differential_accessibility:
 <<r_smk_preamble>>
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to generate differential accessibility model with EdgeR   ###                
+###   Script to generate differential accessibility model with EdgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -1818,10 +1806,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -1860,8 +1848,8 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
+saveRDS(object = final.merged.peaks,
+        file = dca_grange_file)
 
 #+end_src
 ******* TEST Peak annotation                                       :smk_rule:
@@ -1890,7 +1878,7 @@ rule peak_annotation:
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to annotate csaw peaks   ###                
+###   Script to annotate csaw peaks   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -1910,7 +1898,7 @@ peak_loc = peaks
 
 chipseek = annotatePeak(peak_loc, TxDb = txdb, annoDb = "org.Mm.eg.db")
 
-annotation = as_tibble(as.data.frame(chipseek)) 
+annotation = as_tibble(as.data.frame(chipseek))
 
 write.csv(annotation, row.names = F, file = annotation_file)
 #+end_src
@@ -1948,7 +1936,7 @@ rule make_backgroud_bins:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to make background bins for csaw TMM normalization   ###                
+###   Script to make background bins for csaw TMM normalization   ###
 ###
 
 # Setup
@@ -2015,10 +2003,10 @@ library(tidyverse)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 
 y$samples$group = groups
@@ -2027,7 +2015,7 @@ colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"
 
 (design <- model.matrix(~0 + group, data=y$samples))
 
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 # stabilize dispersion estimates with empirical bayes
 y <- estimateDisp(y, design)
@@ -2073,19 +2061,19 @@ final.merged.peaks$sig <- "n.s."
 final.merged.peaks$sig[final.merged.peaks$FDR < FDR.thresh] <- "significant"
 
 ggplot(data=data.frame(final.merged.peaks),
-       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) + 
-  geom_point() + scale_color_manual(values = c("black", "red")) + 
+       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) +
+  geom_point() + scale_color_manual(values = c("black", "red")) +
   geom_smooth(inherit.aes=F, aes(x = logCPM, y = logFC), method = "loess") + # smoothed loess fit; can add span=0.5 to reduce computation load/time
   geom_hline(yintercept = 0) + labs(col = NULL)
 
-  
+
 #+end_src
 
 #+begin_src R
 # Make logCPM counts of normalized data
 make_logcpm = function(in_norm){
   dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)  
+  colnames(dge) = colnames(in_norm)
   log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
   return(log_cpm)
 }
@@ -2129,11 +2117,11 @@ shell:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Do differential expression of ATAC-seq peaks through edgeR   ###                
+###   Do differential expression of ATAC-seq peaks through edgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-= args[1]                
+= args[1]
 
 library(csaw)
 library(DESeq2)
@@ -2149,14 +2137,14 @@ load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
 # setup design matrix
 # see edgeR manual for more information
 y <- asDGEList(counts)
-colnames(y$counts) = 
+colnames(y$counts) =
 rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
 
@@ -2174,10 +2162,10 @@ y <- asDGEList(counts)
 colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
@@ -2189,7 +2177,7 @@ dev.off()
 plotMDS(y, col = colors, top = 100)
 
 design <- model.matrix(~group, data=y$samples)
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 
 # stabilize dispersion estimates with empirical bayes
@@ -2260,7 +2248,7 @@ final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$
 final.merged.peaks.sig # significant differentially-accessible windows
 
 
-  
+
 
 colnames(design) = levels(counts$samples$group)
 
@@ -2303,7 +2291,7 @@ test = working.windows[,8:15]
 rowData(test) = cbind(rowData(test), results$table)
 
 test@rowRanges
-working.windows = test 
+working.windows = test
 
 # merge nearby windows
 # up to "tol" distance apart: 500 bp in this case
@@ -2349,7 +2337,7 @@ pca_plot = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library_id") %>%
   left_join(libraries_full, by = "library_id") %>%
   ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
-  geom_point(size = 4) 
+  geom_point(size = 4)
 pca_plot
 
 
@@ -2360,17 +2348,17 @@ pca_plot
 #+end_src
 
 ****** Description                                                   :ignore:
-ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR. 
+ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
 
-Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker. 
+Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
 
 
-*** All count logcpms for QC 
+*** All count logcpms for QC
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-03-31 Thu 14:24]
 :END:
 
-- [X] Functions and test 
+- [X] Functions and test
   #+begin_src R :tangle ./workflow/scripts/counts_to_logcpm.R
 args = commandArgs(trailingOnly = TRUE)
 counts_rds = args[1]
@@ -2388,28 +2376,28 @@ counts = normFactors(background, se.out = counts)
 
 make_logcpm = function(in_norm){
   dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)  
+  colnames(dge) = colnames(in_norm)
   log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
   return(log_cpm)
 }
 
 logcpm = make_logcpm(counts)
 
-saveRDS(object = logcpm, 
+saveRDS(object = logcpm,
         file = logcpm_file)
 #+end_src
   #+begin_src bash
 Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R \
 	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds \
 	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
-	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_logcpm.rds            
+	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_logcpm.rds
 #+end_src
 
 - All sample PCA
   #+begin_src bash
-            
+
 #+end_src
-- Filtered PCA 
+- Filtered PCA
 - Reference
   - PCA of mislabeled samples
     #+begin_src R
@@ -2427,7 +2415,7 @@ Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R
 
   make_logcpm = function(in_norm){
     dge = asDGEList(in_norm)
-    colnames(dge) = colnames(in_norm)  
+    colnames(dge) = colnames(in_norm)
     log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
     return(log_cpm)
   }
@@ -2452,8 +2440,8 @@ Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R
       geom_text_repel() +
       xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
       ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-      guides(color="none")    
-    return(pca_plot)  
+      guides(color="none")
+    return(pca_plot)
   }
 
 
@@ -2473,7 +2461,7 @@ Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R
     geom_text_repel(force = 10) +
     xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
     ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-    guides(color="none")    
+    guides(color="none")
 
 
   ggsave(pca_plot, filename = "/mnt/ris/jschwarz/cardiac-radiobiology/tmp/pca2.pdf")
@@ -2495,15 +2483,15 @@ CLOSED: [2022-03-11 Fri 12:19]
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/preprocess_align.smk
 :CUSTOM_ID: readp
-:END:              
+:END:
 :LOGBOOK:
 - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:19]
 :END:
 ***** Smk preamble
 #+begin_src snakemake
-container: config["container"]            
+container: config["container"]
 RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
-#+end_src              
+#+end_src
 ***** Smk rules
 ****** All rule
 #+begin_src snakemake
@@ -2515,7 +2503,7 @@ rule all:
         expand(config["data_dir"] + "/atac/bam/{library_id}_open.bam", library_id=RUNSAMPLES),
         expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam", library_id=RUNSAMPLES),
         expand(config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam", library_id=RUNSAMPLES),
-#+end_src                            
+#+end_src
 ****** Read trim                                                   :smk_rule:
 - Snakemake
   #+begin_src snakemake
@@ -2529,7 +2517,7 @@ rule read_trim:
     output:
         config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
         config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -2561,7 +2549,7 @@ params_outdir="$3"
 params_threads="$4"
 
 # Run
-flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"            
+flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 #+end_src
 ****** Make bowtie index                                           :smk_rule:
 - Snakemake
@@ -2573,7 +2561,7 @@ rule make_bowtie_index:
         prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
         threads = config["threads"]
     output:
-        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",	
+        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",
     shell:
         """
         workflow/scripts/make_bowtie_index.sh {input.fa} {params.prefix} {params.threads}
@@ -2598,8 +2586,8 @@ input_fa="$1"
 params_prefix="$2"
 params_threads="$3"
 
-# Run 
-make_bt2_index $params_threads $input_fa $params_prefix 
+# Run
+make_bt2_index $params_threads $input_fa $params_prefix
 #+end_src
 ****** Align BT2                                                   :smk_rule:
 :LOGBOOK:
@@ -2610,7 +2598,7 @@ make_bt2_index $params_threads $input_fa $params_prefix
 rule align_bt2:
     input:
         r1 = config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
-        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",	
+        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
     params:
         prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
         threads = config["threads"],
@@ -2638,7 +2626,7 @@ params_threads="$4"
 output_bam="$5"
 
 # Run
-bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam" 
+bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
 #+end_src
 ****** Make keep bed                                               :smk_rule:
 - Snakemake
@@ -2662,13 +2650,13 @@ rule filter_and_dedup:
         bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
     params:
         keep_bed = config["data_dir"] + "/ref/keep.bed",
-        threads = config["threads"],	
+        threads = config["threads"],
     output:
         dedup_bam = config["data_dir"] + "/atac/bam/{library_id}_dedup.bam",
         qfilt_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_qfilt.bam"),
         regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
         regfilt_index = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam.bai",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -2677,7 +2665,7 @@ rule filter_and_dedup:
 	                                     {params.threads} \
 	                                     {output.dedup_bam} \
 	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam} 
+	                                     {output.regfilt_bam}
         """
 #+end_src
 - [[file:./workflow/scripts/filter_and_dedup.sh][Base script]]
@@ -2689,17 +2677,17 @@ rule filter_and_dedup:
 atac_bam_processing(){
     #
     # Dedup
-    samtools sort -@ $1 -n -o - $2 | 
-    samtools fixmate -m - - | 
-    samtools sort -@ $1 -o - - | 
+    samtools sort -@ $1 -n -o - $2 |
+    samtools fixmate -m - - |
+    samtools sort -@ $1 -o - - |
     samtools markdup -@ $1 -r - $3
     #
     # Filter to aligned, properly paired reads
-    samtools view -@ $1 -b -f 3 -h -o $4 $3 
+    samtools view -@ $1 -b -f 3 -h -o $4 $3
     #
     # Filter to autosomes and remove blacklisted regions
     samtools view -@ $1 -b -h -L $5 -o - $4 |
-    samtools sort -@ $1 -n -o - - | 
+    samtools sort -@ $1 -n -o - - |
     samtools fixmate -m - - |
     samtools sort -@ $1 -o $6 -
     samtools index $6
@@ -2745,7 +2733,7 @@ rule get_open_chrom:
 alignmentSieve --bam $1 \
                --maxFragmentLength 150 \
                --numberOfProcessors $2 \
-               --outFile $3 
+               --outFile $3
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
@@ -2816,12 +2804,27 @@ samtools index -@ $2 $4
 #+end_src
 
 ***** Ideas
-- redefine samtools tmp dir outside repo     
+- redefine samtools tmp dir outside repo
 
 
 
 
 ** INPROCESS Integration testing :smk:
+#+begin_src bash
+results_dirs=("bam"
+              "csaw"
+              "dca"
+              "fastq"
+              "logs"
+              "macs2"
+              "open_chrom"
+              "qc")
+
+for dir in "${results_dirs[@]}";
+do
+    \rm -rf $dir
+done
+#+end_src
 *** Bash run scripts
 #+begin_src bash
 basecamp/src/smk_dry_run.sh config/int_test.yaml workflow/int_test.smk
@@ -2868,7 +2871,7 @@ rule all:
         expand(config["data_dir"] + "/dca/{bam_process}_dca.csv", bam_process = BAM_PROCESS),
         expand(config["data_dir"] + "/dca/{bam_process}_chipseek.rds", bam_process = BAM_PROCESS),
 
-		
+
 include: "atac_read_process.smk"
 include: "peak_call_and_norm.smk"
 include: "dca_and_annot.smk"
@@ -2911,7 +2914,7 @@ include: "peak_call_and_dif.smk"
 
 
 #+begin_src python
-import pandas as pd            
+import pandas as pd
 import re
 
 libraries = (
@@ -2968,7 +2971,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
       "${lib_str}" \
       16 \
       /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_open_background_counts.rds \
-      /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_open_counts.rds         
+      /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_open_counts.rds
 
 #+end_src
   - [ ] run 6wk
@@ -2982,7 +2985,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
       "${lib_str}" \
       16 \
       /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_regfilt_background_counts.rds \
-      /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_regfilt_counts.rds         
+      /mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48h_regfilt_counts.rds
 
 #+end_src
   - [ ] run 6wk
@@ -2990,7 +2993,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
 - run ir48h vs sham
 - run ir6w vs sham
 
-**** Peak annotation                                     
+**** Peak annotation
 - Snakemake
   #+begin_src snakemake
 rule peak_annotation:
@@ -3016,7 +3019,7 @@ rule peak_annotation:
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to annotate csaw peaks   ###                
+###   Script to annotate csaw peaks   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -3036,7 +3039,7 @@ peak_loc = peaks
 
 chipseek = annotatePeak(peak_loc, TxDb = txdb, annoDb = "org.Mm.eg.db")
 
-annotation = as_tibble(as.data.frame(chipseek)) 
+annotation = as_tibble(as.data.frame(chipseek))
 
 write.csv(annotation, row.names = F, file = annotation_file)
 #+end_src
@@ -3074,7 +3077,7 @@ rule make_backgroud_bins:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to make background bins for csaw TMM normalization   ###                
+###   Script to make background bins for csaw TMM normalization   ###
 ###
 
 # Setup
@@ -3141,10 +3144,10 @@ library(tidyverse)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 
 y$samples$group = groups
@@ -3153,7 +3156,7 @@ colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"
 
 (design <- model.matrix(~0 + group, data=y$samples))
 
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 # stabilize dispersion estimates with empirical bayes
 y <- estimateDisp(y, design)
@@ -3199,19 +3202,19 @@ final.merged.peaks$sig <- "n.s."
 final.merged.peaks$sig[final.merged.peaks$FDR < FDR.thresh] <- "significant"
 
 ggplot(data=data.frame(final.merged.peaks),
-       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) + 
-  geom_point() + scale_color_manual(values = c("black", "red")) + 
+       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) +
+  geom_point() + scale_color_manual(values = c("black", "red")) +
   geom_smooth(inherit.aes=F, aes(x = logCPM, y = logFC), method = "loess") + # smoothed loess fit; can add span=0.5 to reduce computation load/time
   geom_hline(yintercept = 0) + labs(col = NULL)
 
-  
+
 #+end_src
 
 #+begin_src R
 # Make logCPM counts of normalized data
 make_logcpm = function(in_norm){
   dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)  
+  colnames(dge) = colnames(in_norm)
   log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
   return(log_cpm)
 }
@@ -3255,11 +3258,11 @@ shell:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Do differential expression of ATAC-seq peaks through edgeR   ###                
+###   Do differential expression of ATAC-seq peaks through edgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-= args[1]                
+= args[1]
 
 library(csaw)
 library(DESeq2)
@@ -3275,14 +3278,14 @@ load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
 # setup design matrix
 # see edgeR manual for more information
 y <- asDGEList(counts)
-colnames(y$counts) = 
+colnames(y$counts) =
 rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
 
@@ -3300,10 +3303,10 @@ y <- asDGEList(counts)
 colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
@@ -3315,7 +3318,7 @@ dev.off()
 plotMDS(y, col = colors, top = 100)
 
 design <- model.matrix(~group, data=y$samples)
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 
 # stabilize dispersion estimates with empirical bayes
@@ -3386,7 +3389,7 @@ final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$
 final.merged.peaks.sig # significant differentially-accessible windows
 
 
-  
+
 
 colnames(design) = levels(counts$samples$group)
 
@@ -3429,7 +3432,7 @@ test = working.windows[,8:15]
 rowData(test) = cbind(rowData(test), results$table)
 
 test@rowRanges
-working.windows = test 
+working.windows = test
 
 # merge nearby windows
 # up to "tol" distance apart: 500 bp in this case
@@ -3475,7 +3478,7 @@ pca_plot = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library_id") %>%
   left_join(libraries_full, by = "library_id") %>%
   ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
-  geom_point(size = 4) 
+  geom_point(size = 4)
 pca_plot
 
 
@@ -3489,7 +3492,7 @@ pca_plot
     - - https://www.biostars.org/p/396538/
     - note- log didn't work [[file:/mnt/ris/jschwarz/cardiac-radiobiology/log/fastqc_log.txt]]
     - #TODO how to add log file to find "$data_dir}/atac/atac-fastq" -name "*.fastq.gz" | parallel fastqc --outdir="$data_dir}/qc" }
-  - preamble  
+  - preamble
 
 
 **** Reference
@@ -3507,7 +3510,7 @@ header-args:snakemake: :tangle no
 :header-args:snakemake: :tangle no
 :END:
 
-**** [#Y] Make nucleosome positioning alignments 
+**** [#Y] Make nucleosome positioning alignments
 :PROPERTIES:
 :CREATED:  [2021-09-02 Thu 11:22]
 :ID:       5acea857-b98c-473b-9b23-d430665cbb4d
@@ -3526,11 +3529,11 @@ library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 
 data_dir = file.path("/mnt/ris/jschwarz/cardiac-radiobiology")
 
-# GAlignment-input analysis 
+# GAlignment-input analysis
 # bamfile tags to be read in
-possibleTag <- list("integer"=c("AM", "AS", "CM", "CP", "FI", "H0", "H1", "H2", 
+possibleTag <- list("integer"=c("AM", "AS", "CM", "CP", "FI", "H0", "H1", "H2",
                               "HI", "IH", "MQ", "NH", "NM", "OP", "PQ", "SM",
-                              "TC", "UQ"), 
+                              "TC", "UQ"),
                "character"=c("BC", "BQ", "BZ", "CB", "CC", "CO", "CQ", "CR",
                              "CS", "CT", "CY", "E2", "FS", "LB", "MC", "MD",
                              "MI", "OA", "OC", "OQ", "OX", "PG", "PT", "PU",
@@ -3615,9 +3618,9 @@ rule atac-seq_qc:
 #########1#########2#########3#########4#########5#########6#########7#########8
 
 ###
-###   / SCRIPT TITLE   ###                
+###   / SCRIPT TITLE   ###
 ###
-        
+
 #+end_src
 
 ***** Transcription start sites occupancy
@@ -3628,7 +3631,7 @@ rule atac-seq_qc:
   #+begin_src R
 #########1#########2#########3#########4#########5#########6#########7#########8
 #setwd("/home/jeszyman/repos/card-rad-bio")
-#source("./src/setup.R") 
+#source("./src/setup.R")
 library(preseqR)
 library(ATACseqQC)
 library(Rsamtools)
@@ -3636,11 +3639,11 @@ library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 
 data_dir = file.path("/mnt/ris/jschwarz/cardiac-radiobiology")
 
-# GAlignment-input analysis 
+# GAlignment-input analysis
 # bamfile tags to be read in
-possibleTag <- list("integer"=c("AM", "AS", "CM", "CP", "FI", "H0", "H1", "H2", 
+possibleTag <- list("integer"=c("AM", "AS", "CM", "CP", "FI", "H0", "H1", "H2",
                                 "HI", "IH", "MQ", "NH", "NM", "OP", "PQ", "SM",
-                                "TC", "UQ"), 
+                                "TC", "UQ"),
                  "character"=c("BC", "BQ", "BZ", "CB", "CC", "CO", "CQ", "CR",
                                "CS", "CT", "CY", "E2", "FS", "LB", "MC", "MD",
                                "MI", "OA", "OC", "OQ", "OX", "PG", "PT", "PU",
@@ -3707,7 +3710,7 @@ tsse = TSSEscore(gal_ct01, txs)
 summary(tsse$TSSEscore)
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(100*(-9:10-.5), tsse$values, type="b", 
+plot(100*(-9:10-.5), tsse$values, type="b",
      xlab="distance to TSS",
      ylab="aggregate TSS score")
 dev.off()
@@ -3732,10 +3735,10 @@ TSS <- unique(TSS)
 
 NTILE <- 101
 dws <- ups <- 1010
-sigs <- enrichedFragments(gal=objs[c("NucleosomeFree", 
+sigs <- enrichedFragments(gal=objs[c("NucleosomeFree",
                                      "mononucleosome",
                                      "dinucleosome",
-                                     "trinucleosome")], 
+                                     "trinucleosome")],
                           TSS=TSS,
                           librarySize=librarySize,
                           TSS.filter=0.5,
@@ -3755,19 +3758,19 @@ dev.off()
 
 ## get signals normalized for nucleosome-free and nucleosome-bound regions.
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-out <- featureAlignedDistribution(sigs, 
+out <- featureAlignedDistribution(sigs,
                                   reCenterPeaks(TSS, width=ups+dws),
-                                  zeroAt=.5, n.tile=NTILE, type="l", 
+                                  zeroAt=.5, n.tile=NTILE, type="l",
                                   ylab="Averaged coverage")
 dev.off()
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
 range01 <- function(x)(x-min(x))/(max(x)-min(x))}
 out <- apply(out, 2, range01)
-matplot(out, type="l", xaxt="n", 
-        xlab="Position (bp)", 
+matplot(out, type="l", xaxt="n",
+        xlab="Position (bp)",
         ylab="Fraction of signal")
-axis(1, at=seq(0, 100, by=10)+1, 
+axis(1, at=seq(0, 100, by=10)+1,
      labels=c("-1K", seq(-800, 800, by=200), "1K"), las=2)
 abline(v=seq(0, 100, by=10)+1, lty=2, col="gray")
 dev.off()
@@ -3840,14 +3843,14 @@ pt = PTscore(gal1, txs)
 pt
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(pt$log2meanCoverage, pt$PT_score, 
+plot(pt$log2meanCoverage, pt$PT_score,
      xlab="log2 mean coverage",
      ylab="Promoter vs Transcript")
 dev.off()
 
 nfr <- NFRscore(gal1, txs)
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(nfr$log2meanCoverage, nfr$NFR_score, 
+plot(nfr$log2meanCoverage, nfr$NFR_score,
      xlab="log2 mean coverage",
      ylab="Nucleosome Free Regions score",
      main="NFRscore for 200bp flanking TSSs",
@@ -3856,7 +3859,7 @@ dev.off()
 #+end_src
 
 #+begin_src R
-#TODO LOAD gals 
+#TODO LOAD gals
 library(TxDb.Mmusculus.UCSC.mm10.ensGene)
 txs <- transcripts(TxDb.Mmusculus.UCSC.mm10.ensGene)
 
@@ -3864,7 +3867,7 @@ tsse = TSSEscore(gal_ct01, txs)
 summary(tsse$TSSEscore)
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(100*(-9:10-.5), tsse$values, type="b", 
+plot(100*(-9:10-.5), tsse$values, type="b",
      xlab="distance to TSS",
      ylab="aggregate TSS score")
 dev.off()
@@ -3889,10 +3892,10 @@ TSS <- unique(TSS)
 
 NTILE <- 101
 dws <- ups <- 1010
-sigs <- enrichedFragments(gal=objs[c("NucleosomeFree", 
+sigs <- enrichedFragments(gal=objs[c("NucleosomeFree",
                                      "mononucleosome",
                                      "dinucleosome",
-                                     "trinucleosome")], 
+                                     "trinucleosome")],
                           TSS=TSS,
                           librarySize=librarySize,
                           TSS.filter=0.5,
@@ -3912,19 +3915,19 @@ dev.off()
 
 ## get signals normalized for nucleosome-free and nucleosome-bound regions.
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-out <- featureAlignedDistribution(sigs, 
+out <- featureAlignedDistribution(sigs,
                                   reCenterPeaks(TSS, width=ups+dws),
-                                  zeroAt=.5, n.tile=NTILE, type="l", 
+                                  zeroAt=.5, n.tile=NTILE, type="l",
                                   ylab="Averaged coverage")
 dev.off()
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
 range01 <- function(x)(x-min(x))/(max(x)-min(x))}
 out <- apply(out, 2, range01)
-matplot(out, type="l", xaxt="n", 
-        xlab="Position (bp)", 
+matplot(out, type="l", xaxt="n",
+        xlab="Position (bp)",
         ylab="Fraction of signal")
-axis(1, at=seq(0, 100, by=10)+1, 
+axis(1, at=seq(0, 100, by=10)+1,
      labels=c("-1K", seq(-800, 800, by=200), "1K"), las=2)
 abline(v=seq(0, 100, by=10)+1, lty=2, col="gray")
 dev.off()
@@ -3997,14 +4000,14 @@ pt = PTscore(gal1, txs)
 pt
 
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(pt$log2meanCoverage, pt$PT_score, 
+plot(pt$log2meanCoverage, pt$PT_score,
      xlab="log2 mean coverage",
      ylab="Promoter vs Transcript")
 dev.off()
 
 nfr <- NFRscore(gal1, txs)
 pdf("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test.pdf")
-plot(nfr$log2meanCoverage, nfr$NFR_score, 
+plot(nfr$log2meanCoverage, nfr$NFR_score,
      xlab="log2 mean coverage",
      ylab="Nucleosome Free Regions score",
      main="NFRscore for 200bp flanking TSSs",
@@ -4015,7 +4018,7 @@ dev.off()
 #+caption: CAPTION label:fig-atac-nuc-position
 [[file:results/imgs/atac_nuc_position.pdf][file:results/imgs/atac_nuc_position.pdf]]
 
-  
+
 
 - Post-atacseqqc
 #+end_src
@@ -4065,7 +4068,7 @@ nfr = NFRscore(gal, txs)
 tsse = TSSEscore(gal, txs)
 
 # Ideas
-## Adjust start sites 
+## Adjust start sites
 #+end_src
   - for split alignment conservation https://support.bioconductor.org/p/96226/ (works in docker)
 - lib complexity w/ preseq http://smithlabresearch.org/software/preseq/ https://github.com/smithlabcode/preseq
@@ -4107,7 +4110,7 @@ rule multiqc:
 multiqc_wrap()
     # Check for parameters, return usage if empty
     if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix 
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
            \n Wrapper for multiqc, see options in function
            \n $1 = input_dir
            \n $2 = output_dir
@@ -4130,7 +4133,7 @@ multiqc_wrap()
 multiqc_wrap()
     # Check for parameters, return usage if empty
     if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix 
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
            \n Wrapper for multiqc, see options in function
            \n $1 = input_dir
            \n $2 = output_dir
@@ -4172,11 +4175,11 @@ rule make_frag_distribution_mat:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   R Script to make fragment size distribution matrix   ###                
+###   R Script to make fragment size distribution matrix   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]                
+bam_dir = args[1]
 rds = args[2]
 
 library(preseqR)
@@ -4216,7 +4219,7 @@ fragSizeDist <- function(bamFiles, bamFiles.labels, index=bamFiles, ylim=NULL,
   on.exit(par(opar))
   pe <- mapply(testPairedEndBam, bamFiles, index)
   if(any(!pe)){
-    stop(paste(bamFiles[!pe], collapse = ", "), 
+    stop(paste(bamFiles[!pe], collapse = ", "),
          "is not Paired-End file.")
   }
   summaryFunction <- function(seqname, seqlength, bamFile, ind, ...) {
@@ -4226,7 +4229,7 @@ fragSizeDist <- function(bamFiles, bamFiles.labels, index=bamFiles, ylim=NULL,
                    flag=scanBamFlag(isSecondaryAlignment = FALSE,
                                     isUnmappedQuery=FALSE,
                                     isNotPassingQualityControls = FALSE))
-    table(abs(unlist(sapply(scanBam(bamFile, index=ind, ..., param=param), 
+    table(abs(unlist(sapply(scanBam(bamFile, index=ind, ..., param=param),
                             `[[`, "isize"), use.names = FALSE)))
   }
 }
@@ -4235,7 +4238,7 @@ idxstats <- unique(do.call(rbind, mapply(function(.ele, .ind)
     idxstatsBam(.ele, index = .ind)[, c("seqnames", "seqlength")], bamFiles, index, SIMPLIFY=FALSE)))
   seqnames <- as.character(idxstats[, "seqnames"])
   seqlen <- as.numeric(idxstats[, "seqlength"])
-  fragment.len <- mapply(function(bamFile, ind) summaryFunction(seqname=seqnames, seqlength=seqlen, bamFile, ind), 
+  fragment.len <- mapply(function(bamFile, ind) summaryFunction(seqname=seqnames, seqlength=seqlen, bamFile, ind),
                          bamFiles, index, SIMPLIFY=FALSE)
 
   names(fragment.len) <- bamFiles.labels
@@ -4341,7 +4344,7 @@ fragsize_ct01
 load(file.path(data_dir,"/atac/fragsize.RData"))
 
 # Rename old frag size files
-fragsize_lib051 = fragsize_ct01 
+fragsize_lib051 = fragsize_ct01
 fragsize_lib052 = fragsize_ct02
 fragsize_lib053 = fragsize_ir01
 fragsize_lib054 = fragsize_ir02
@@ -4398,7 +4401,7 @@ rule library_complexity:
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   R Script to assess ATAC-seq library complexity by fragment length   ###                
+###   R Script to assess ATAC-seq library complexity by fragment length   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -4416,13 +4419,13 @@ libCompWrap = function(dup_bam){
 
 complex = libCompWrap("/mnt/ris/jschwarz/cardiac-radiobiology/inputs/Rentschler_s5469_MGI2048/lc-08.TCGTGATCAG-ACACTACGTA/lc-08.TCGTGATCAG-ACACTACGTA.genome_accepted_hits.bam")
 
-saveRDS(object = complex, 
+saveRDS(object = complex,
         file = rds)
 
 #+end_src
 - Reference
   - https://github.com/smithlabcode/preseq
-  - lib complexity w/ preseq http://smithlabresearch.org/software/preseq/    
+  - lib complexity w/ preseq http://smithlabresearch.org/software/preseq/
   - Old code
     #+begin_src R
   load(file.path(repo,"/results/rdata/library_complexity_raw.RData"))
@@ -4431,7 +4434,7 @@ saveRDS(object = complex,
 
   test = as.data.frame(library_complexity_raw)
 
-  lib_complex_plot = 
+  lib_complex_plot =
     as.data.frame(library_complexity_raw) %>%
     pivot_longer(cols = ends_with("values"), names_to = "library_id", values_to = "pred") %>%
     pivot_longer(cols = ends_with("reads"), names_to = "library_id2", values_to = "reads") %>%
@@ -4479,7 +4482,7 @@ saveRDS(object = complex,
     select(library_id, processing, read_prs) %>%
     pivot_wider(names_from = processing, values_from = read_prs) %>%
     mutate(p_proc = processed/raw*100) %>%
-    mutate(p_open = open/raw*100) 
+    mutate(p_open = open/raw*100)
   atac_multiqc_general_mod
 
   library_complexity_mod = as_tibble(data.frame(lib051 = library_complexity_raw[[1]],
@@ -4518,7 +4521,7 @@ rule symlink_fastqs:
         fastq = lambda w: libraries[libraries.library_id == w.library_id].fq_basename.tolist()
     output:
         r1 = config["fq_sym_dir"] + "/{library_id}_R1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_R2.fastq.gz",	
+        r2 = config["fq_sym_dir"] + "/{library_id}_R2.fastq.gz",
     shell:
         """
         ln -sf --relative {config[fq_src_dir]}/{params.fastq}_R1.fastq.gz {output.r1}
@@ -4558,7 +4561,7 @@ rule differential_accessibility:
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-### Script to generate ATAC-seq differential accessibility model with EdgeR  ###                
+### Script to generate ATAC-seq differential accessibility model with EdgeR  ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -4571,12 +4574,12 @@ background_rds = args[2]
 data_model = args[3]
 dca_granges_file = args[4]
 
-## Load libraries 
+## Load libraries
 library(csaw)
 library(edgeR)
 library(tidyverse)
 
-## Load data 
+## Load data
 counts = readRDS(counts_rds)
 background = readRDS(background_rds)
 load(data_model)
@@ -4590,10 +4593,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -4632,8 +4635,8 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
+saveRDS(object = final.merged.peaks,
+        file = dca_grange_file)
 
 #+end_src
 
@@ -4666,7 +4669,7 @@ rule differential_accessibility:
 <<r_smk_preamble>>
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to generate differential accessibility model with EdgeR   ###                
+###   Script to generate differential accessibility model with EdgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -4691,10 +4694,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -4733,8 +4736,8 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
+saveRDS(object = final.merged.peaks,
+        file = dca_grange_file)
 
 #+end_src
 
@@ -4771,7 +4774,7 @@ colnames(counts) = c("lib001","lib002","lib003","lib004")
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###                
+###   Script to generate differential accessibility model with EdgeR         ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -4822,12 +4825,12 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
-        file = dca_grange_file) 
+saveRDS(object = final.merged.peaks,
+        file = dca_grange_file)
 
 #+end_src
-**** Peak annotation 
-- is granges or rowRanges of a RSE 
+**** Peak annotation
+- is granges or rowRanges of a RSE
 #+begin_src R
 test=readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds")
 test
@@ -4840,7 +4843,7 @@ currently only for mouse for macs2
 *** Prerequisites to run repository local integration testing
 - Singularity container built from https://github.com/jeszyman/atac-seq/blob/master/config/atac_Dockerfile
 - Local snakemake
-- Local snakemake configuration YAML 
+- Local snakemake configuration YAML
 *** Changelog
 ** Reference
 - [[https://static-content.springer.com/esm/art%3A10.1186%2Fs13072-020-00342-y/MediaObjects/13072_2020_342_MOESM6_ESM.txt][reske csaw workflow]]
