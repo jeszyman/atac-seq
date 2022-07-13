@@ -295,73 +295,7 @@ if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.
 
 - BiocManager::install("apeglm")
 
-#+begin_src bash :tangle ./config/atac_Dockerfile
-FROM jeszyman/biotools
-#########1#########2#########3#########4#########5#########6#########7#########8
 
-###################################
-###   Dockerfile for ATAC-seq   ###
-###################################
-
-# After build, the image will be pushed to dockerhub as jeszyman/atac
-# (https://hub.docker.com/repository/docker/jeszyman/atac)
-
-RUN apt-get -y update && apt-get upgrade -y
-
-# Simple bioconda installs
-RUN conda install -c bioconda macs2
-
-# Simple R installs
-##
-## Via Bioconductor
-RUN R -e 'install.packages("BiocManager"); \
-          BiocManager::install(); \
-          BiocManager::install(c("ATACseqQC", \
-                                 "ChIPpeakAnno", \
-                                 "ChIPseeker", \
-                                 "clusterProfiler", \
-                                 "csaw"));'
-
-RUN R -e 'install.packages("BiocManager"); \
-    BiocManager::install(); \
-    BiocManager::install(c("ChIPpeakAnno", \
-                           "ChIPseeker", \
-                           "clusterProfiler", \
-                           "csaw", \
-                           "EnsDb.Mmusculus.v79", \
-                           "org.Mm.eg.db", \
-                           "Rsamtools", \
-                           "TxDb.Mmusculus.UCSC.mm10.ensGene"));'
-
-# ATACseqQC
-##
-## Linux prerequisites
-RUN apt-get install -yq --no-install-recommends --allow-unauthenticated --fix-missing \
-    libgsl-dev \
-    libcurl4-openssl-dev
-    #libssl-dev
-##
-## ATACseqQC
-RUN R -e 'install.packages("BiocManager"); \
-    BiocManager::install(); \
-    BiocManager::install(c("ATACseqQC"));'
-
-# Homer
-RUN mkdir /opt/homer
-RUN cd /opt/homer
-RUN wget http://homer.ucsd.edu/homer/configureHomer.pl -O /opt/homer/configureHomer.pl
-RUN perl /opt/homer/configureHomer.pl -install
-
-ENV PATH="${PATH}:/opt/homer/bin/"
-
-RUN perl /opt/homer/.//configureHomer.pl -install mouse-p
-
-RUN conda install -c bioconda samtools=1.7
-
-# R CRAN Installs
-RUN R -e "install.packages(c('statmod', repos='http://cran.rstudio.com/'))"
-
-#+end_src
 
 **** Build
 :LOGBOOK:
@@ -2833,7 +2767,7 @@ basecamp/src/smk_forced_run.sh config/int_test.yaml workflow/int_test.smk
 
 #+end_src
 
-*** [[file:workflow/int_test.smk][Snakefile]] :smk:
+*** [[file:workflow/int_test.smk][Snakefile]]                                                           :smk:
 #+begin_src snakemake :tangle ./workflow/int_test.smk
 container: config["container"]
 
