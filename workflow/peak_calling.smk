@@ -1,19 +1,19 @@
-
+<<smk_preamble>>
 
 rule all:
     input:
-        config["data_dir"] + "/atac/bk_rse.rds",	
+        config["data_dir"] + "/atac/bk_rse.rds",
         config["data_dir"] + "/atac/counts_rse.rds",
 
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
+        bam_pattern = "_regfilt_tn5.bam$",
         lib_str = {lib_str}
 
         expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
 
-        lib_str = config["IR48H_V_SHAM"],	
+        lib_str = config["IR48H_V_SHAM"],
         script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
     output:
         background_counts = config["data_dir"] + "/atac/{c}background_counts_rse.rds"
@@ -36,8 +36,8 @@ rule make_peak_counts:
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",	
-        lib_str = config["IR48H_V_SHAM"],	
+        bam_pattern = "_regfilt_tn5.bam$",
+        lib_str = config["IR48H_V_SHAM"],
         script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
     output:
         background_counts = config["data_dir"] + "/atac/background_counts_rse.rds"

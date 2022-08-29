@@ -1,6 +1,3 @@
-# Latest deepTools on bioconda does not contain alignmentSieve
-RUN conda install -c bioconda deeptools=3.4 --force
-
 * ATAC-seq                                                          :biopipe:
 :PROPERTIES:
 :header-args:bash: :tangle-mode (identity #o555)
@@ -8,340 +5,9 @@ RUN conda install -c bioconda deeptools=3.4 --force
 :logging: nil
 :END:
 ** Setup
-- startup script
-  #+begin_src bash :tangle ./src/repo_startup.sh
-#!/usr/bin/env bash
-repo=$1
-mntpt=$2
-sif_dir=$3
-
-# Check for parameters, return usage if empty
-if [ $# -ne 3 ];
-then
-    printf "\n usage: repo_startup.sh <REPO PATH> <RIS MOUNT PT> <SINGULARITY CONTAINER DIR>
-    \n ATAC-seq repo development helper script
-    \n "
-else
-
-    # Check git file hook is read-able
-    if [ -r "${repo}/.git/hooks/precommit" ]; then
-        echo "Git size check is read-able"
-    else
-        echo
-        "Git size check is not read-able"
-        exit 1
-    fi
-
-    # Check mount point
-    if grep -qs $mntpt /proc/mounts; then
-        echo "RIS storage mounted."
-    else
-        echo "RIS storage NOT mounted, exiting."
-        exit 1
-    fi
-
-    # Check singularity container
-    if [ -r $sif_dir/atac.sif ]; then
-        echo "Local SIF file present"
-    else
-        echo "No local SIF file found"
-        exit 1
-    fi
-
-    # Check singularity container up-to-date
-    if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt $sif_dir/atac.sif ]; then
-        echo "Local SIF is out of date. Updating ..."
-        cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif $sif_dir/atac.sif
-    else
-        echo "Local SIF file is up to date"
-    fi
-
-    cur_branch=$(git branch | head -n 1)
-    echo "Current branch is $cur_branch"
-fi
-#+end_src
-*** Repository and git
-#+begin_src bash
-git add -A
-git commit -m "feat: initial dev"
-git push origin master
-
-git branch dev_initial
-git checkout dev_initial
-git push origin dev_initial
-#+end_src
-#+begin_src bash
-ln -s /home/jeszyman/repos/biotools /home/jeszyman/repos/atac-seq/
-ln -s /home/jeszyman/repos/basecamp /home/jeszyman/repos/atac-seq/
-biotools/src/add_biorepo_dirs.sh /home/jeszyman/repos/atac-seq/
-#+end_src
-#+begin_src bash
-git init
-git add -A
-git commit -am "First commit"
-git branch -M master
-
-#
-git remote add origin git@github.com:jeszyman/atac-seq.git
-git branch -M master
-git push -u origin master
-
-cp basecamp/src/pre-commit src/precommit_git_hook
-ln -s src/precommit_git_hook .git/hooks/precommit
-chmod 777 .git/hooks/precommit
-#+end_src
-*** R
-**** Configurations
-#!/usr/bin/env Rscript
-# Setup
-##
-## Config
-if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R")))
-  source(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))
-} else
-  stop("No config file found")
-}
-
-- Common
-  #+begin_src R :tangle ./config/common.R
-library(csaw)
-#+end_src
-- Library load
-  #+begin_src R :tangle ./config/libs.R
-library(csaw)
-library(tidyverse)
-library(tximport)
-library(DESeq2)
-#+end_src
-
-**** Preambles
-- Command line
-  ## Config
-  if(file.exists(paste0("./config/",as.character(Sys.info()["nodename"]),".R")))
-    source(paste0("./config/",as.character(Sys.info()["nodename"]),".R"))
-  } else
-    stop("No config file found")
-  }
-- Snakemake
-  #+name: r_smk_preamble
-  #+begin_src R :noweb yes
-#!/usr/bin/env Rscript
-#+end_src
-
-*** Bash
-**** Preambles
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2021-12-09 Thu 15:35]
-:END:
-- Command line script
-  #+name: bash_cmdline_script_preamble
-  #+begin_src bash :noweb yes
-#!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-# Notes:
-#  This script is tangled from source code in the cardradbio-atac.org file
-#  Therefore any changes to this compiled file in place will likely be reverted
-#  by a subsequent tangle operation.
-#
-#  This script assumes you are running from the repository main directory in
-#  order to source the appriopriate configuation file.
-
-# Load bash configuation
-if [ -f ./config/${HOSTNAME}.sh ]; then
-    source ./config/${HOSTNAME}.sh
-else
-    echo "No bash config found. Are you running from repo main dir?"
-fi
-#+end_src
-- Command line interactive
-  ,#+name: bash_preamble_cmd
-  ,#+begin_src bash :noweb yes
-
-#+end_src
-- Snakemake
-  #+name: bash_script_smk_preamble
-  #+begin_src bash :noweb yes
-#!/usr/bin/env bash
-
-#+end_src
-**** Configurations
-:PROPERTIES:
-:header-args: :noweb yes
-:END:
-:LOGBOOK:
-- State "DONE"       from "TODO"       [2021-12-09 Thu 15:28]
-:END:
-- Local (by $HOSTNAME)
-  - [[file:config/jeff-mac-book.sh][jeff-mac-book]]
-    #+begin_src bash :noweb yes :tangle ./config/jeff-mac-book.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-################################################################
-###   Bash configuration sourcing script for jeff-mac-book   ###
-################################################################
-
-# Host-local variables
-data_dir=/mnt/ris/jschwarz/cardiac-radiobiology
-mntpt="/mnt/ris/jschwarz"
-repo=/home/jeszyman/repos/cardradbio-atac
-threads=4
-sif_dir=/home/jeszyman/sing_containers
-<<bash_common_config>>
-#+end_src
-  - [[file:config/jeff-server.sh][jeff-server]]
-    #+begin_src bash :tangle ./config/jeff-server.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-##############################################################
-###   Bash configuration sourcing script for jeff-server   ###
-##############################################################
-
-# Host-local variables
-data_dir=/mnt/ris/jschwarz/cardiac-radiobiology
-mntpt=/mnt/ris/jschwarz
-repo=/home/jeszyman/repos/cardradbio-atac
-sif_dir=/home/jeszyman/sing_containers
-threads=8
-
-<<bash_common_config>>
-#+end_src
-  - [[file:config/jeszyman-work.sh][jeszyman-work]]
-    #+begin_src bash :tangle ./config/jeszyman-work.sh
-#!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-################################################################
-###   Bash configuration sourcing script for jeszyman-work   ###
-################################################################
-
-# Host-local variables
-data_dir=/mnt/ris/jschwarz/cardiac-radiobiology
-mntpt=/mnt/ris/jschwarz
-repo=/home/jeszyman/repos/cardradbio-atac
-sif_dir=/home/jeszyman/sing_containers
-threads=8
-
-<<bash_common_config>>
-    #+end_src
-  - [[file:config/radonc-cancerbio.sh][radonc-cancerbio]]
-    #+begin_src bash :noweb yes :tangle ./config/radonc-cancerbio.sh
-#!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-##################################################################
-###   Bash configuration sourcing script for radonc-cancerbio  ###
-##################################################################
-
-# Host-local variables
-data_dir=/mnt/ris/jschwarz/cardiac-radiobiology
-mntpt="/mnt/ris/jschwarz"
-repo=/home/jeszyman/repos/cardradbio-atac
-sif_dir=/home/jeszyman/sing_containers
-threads=16
-
-<<bash_common_config>>
-#+end_src
-- Common
-  #+name: bash_common_config
-  #+begin_src bash :noweb yes
-# Check git file hook is read-able
-if [ -r "${repo}/.git/hooks/precommit" ]; then
-   echo "Git size check is read-able"
-else
-    echo
-    "Git size check is not read-able"
-    exit 1
-fi
-
-# Check mount point
-if grep -qs $mntpt /proc/mounts; then
-    echo "RIS storage mounted."
-else
-    echo "RIS storage NOT mounted, exiting."
-    exit 1
-fi
-
-# Check singularity container
-if [ -r $sif_dir/atac.sif ]; then
-    echo "Local SIF file present"
-else
-    echo "No local SIF file found"
-    exit 1
-fi
-
-launch_atac() {
-    if [ -f /.dockerenv ]; then
-        echo "shell already in docker, exiting";
-        exit 1;
-    else
-        docker run --env HOME=${HOME} --hostname ${HOSTNAME} --interactive --tty --volume /home/:/home/ --volume /tmp/:/tmp/ --volume /mnt/:/mnt/ --user $(id -u ${USER}) -w "$repo" jeszyman/atac /bin/bash;
-    fi
-}
-#+end_src
-**** Ideas
-- add a config at repo dir checker
-*** Box and [[id:be76a873-d2fe-447f-a43c-b84c52a8e77b][rclone]]
-*** Docker and singularity
-
-missing alignmentSieve
-[[id:b16d0202-8d35-472b-b538-87a7d6a6cef7][Conda and Miniconda]]
-#+begin_src bash
-mkdir -p ~/sing_containers
-
-if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt ~/sing_containers/atac.sif ]; then cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif; fi
-#+end_src
-- Docker pull build into [[*Configurations][bash config]].
-**** Write [[file:config/atac_Dockerfile]]
-
-- BiocManager::install("apeglm")
-
-
-
-**** Build
-:LOGBOOK:
-- State "WAITING"    from              [2022-03-31 Thu 09:01] \\
-  waiting on biotools container build
-:END:
-#+begin_src bash
-docker build . --file ./config/atac_Dockerfile --tag jeszyman/atac
-docker push jeszyman/atac
-#+end_src
-**** [[file:src/mk_singularity.sh][Make singularity container from docker container]]
-:LOGBOOK:
-- State "WAITING"    from              [2021-12-21 Tue 14:26]
-- State "WAITING"    from "TODO"       [2021-12-21 Tue 11:51]
-:END:
-#+begin_src bash :noweb yes
-singularity pull /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif docker://jeszyman/atac
-cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif ~/sing_containers/atac.sif
-
-#+end_src
 *** Integration testing setup
-
-#+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
-cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-make_bt2_index(){
-    index_dir=$(dirname $3)
-    mkdir -p $index_dir
-    bowtie2-build -f \
-                  --threads $1 \
-                  $2 \
-                  $3
-}
-
-# Snakemake variables
-input_fa="$1"
-params_prefix="$2"
-params_threads="$3"
-
-# Run
-make_bt2_index $params_threads $input_fa $params_prefix
-#+end_src
-
-#+begin_src bash
+- Make reference fasta from mm10 chr 19
+  #+begin_src bash
 mkdir -p "test/inputs"
 
 wget --directory-prefix="test/inputs/" "https://hgdownload.soe.ucsc.edu/goldenPath/mm10/chromosomes/chr19.fa.gz"
@@ -356,11 +22,12 @@ singularity shell ~/sing_containers/atac.sif
 
 zcat "test/inputs/chr19.fa.gz" > test/inputs/chr19.fa
 
-bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
 
 \rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
 
-# For documentation, not intended to be executable
+#+end_src
+- Get sample fastqs
+  #+begin_src bash
 
 zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1000000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
 
@@ -386,10 +53,11 @@ for file in test/inputs/*.fastq.gz; do
     ln -sf --relative $file test/fastq/
 done
 #+end_src
+bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
 
-*** Snakemake
-**** [[file:~/repos/basecamp/basecamp.org::*Scripts][Snakemake basecamp scripts]]
-**** Configuration YAMLS
+\rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
+
+*** Snakemake YAML
 #+begin_src bash :tangle ./config/int_test.yaml
 container: "~/sing_containers/atac.sif"
 threads: 4
@@ -426,14 +94,14 @@ WIDTH:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac_read_process.smk
 :END:
-**** Description
+*** Description
 Sequencing read adapters were removed and reads were quality trimmed using flexbar.
 
 Processed reads were aligned to mm10 using bowtie2.
 
 PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
 
-**** DONE Read trim                                                   :smk_rule:
+*** DONE Read trim                                                    :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule read_trim:
@@ -481,7 +149,7 @@ params_threads="$4"
 flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 #+end_src
 
-**** DONE Align BT2                                                   :smk_rule:
+*** DONE Align BT2                                                    :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
 :END:
@@ -520,7 +188,7 @@ output_bam="$5"
 # Run
 bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
 #+end_src
-**** DONE Filter and dedup                                            :smk_rule:
+*** DONE Filter and dedup                                             :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule filter_and_dedup:
@@ -585,7 +253,7 @@ atac_bam_processing "$params_threads" \
                     "$output_regfilt_bam"
 samtools index "$output_regfilt_bam"
 #+end_src
-**** DONE Get open chrom                                              :smk_rule:
+*** DONE Get open chrom                                               :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule get_open_chrom:
@@ -612,7 +280,7 @@ alignmentSieve --bam $1 \
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
-**** DONE Tn5 shift                                                   :smk_rule:
+*** DONE Tn5 shift                                                    :smk_rule:
 :LOGBOOK:
 - State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
 - State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
@@ -646,7 +314,7 @@ samtools sort -@ $2 -o $4 $3
 
 samtools index -@ $2 $4
 #+end_src
-**** DONE Tn5 open shift                                              :smk_rule:
+*** DONE Tn5 open shift                                               :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
   add to next run
@@ -677,7 +345,7 @@ samtools sort -@ $2 -o $4 $3
 
 samtools index -@ $2 $4
 #+end_src
-**** DONE FastQC                                                      :smk_rule:
+*** DONE FastQC                                                       :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule fastqc:
@@ -698,7 +366,7 @@ rule fastqc:
   #+begin_src bash :tangle ./workflow/scripts/fastqc.sh
 fastqc --quiet --outdir=$1 $2 &>> $3
 #+end_src
-**** DONE Samstats                                                    :smk_rule:
+*** DONE Samstats                                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule samstats:
@@ -967,1782 +635,8 @@ head /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
 
 cp /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
 #+end_src
-** [[file:workflow/dca_and_annot.smk][Differential chromatin accessibility and annotation]]                  :smk:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/dca_and_annot.smk
-:END:
-:LOGBOOK:
-- State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
-:END:
-*** Differential chromatin accessibility
-- Snakemake
-  #+begin_src snakemake
-rule diff_chrom_accessibility:
-    input:
-        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
-        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
-    params:
-        groups_str = "ir48h ir48h sham sham",
-        contrast = "ir48h-sham",
-        script = config["atac_scripts_dir"] + "/diff_chrom_accessibility.R",
-    output:
-        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
-    log:
-        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
-    shell:
-        """
-        Rscript {params.script} \
-        {input.dge} \
-        "{params.groups_str}" \
-        "{params.contrast}" \
-        {input.norm_counts_rse} \
-        {output} \
-        >& {log}
-        """
-#+end_src
-- [[file:workflow/scripts/diff_chrom_accessibility.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/diff_chrom_accessibility.R
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###
-###                                                                          ###
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Setup
-
-## Arguements for testing
-dge_rds = "~/repos/atac-seq/test/csaw/dge_regfilt.rds"
-groups_str = "ir48h ir48h sham sham"
-contrast = "ir48h-sham"
-norm_counts_rds = "~/repos/atac-seq/test/csaw/norm_counts_rse_regfilt.rds"
-dca_granges_rds = "/tmp/test.rds"
-
-args = commandArgs(trailingOnly = TRUE)
-dge_rds = args[1]
-groups_str =args [2]
-contrast = args[3]
-norm_counts_rds = args[4]
-dca_granges_rds = args[5]
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-y = readRDS(dge_rds)
-groups = as.factor(unlist(strsplit(groups_str, " ")))
-
-design = model.matrix(~0 + groups, data=y$samples)
-colnames(design) = levels(groups)
-y = estimateDisp(y, design)
-fit = glmQLFit(y, design, robust=TRUE)
-results = glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
-
-# combine GRanges rowdata with DA statistics
-counts = readRDS(norm_counts_rds)
-rowData(counts) = cbind(rowData(counts), results$table)
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best = getBestTest(merged.peaks$id, results$table)
-
-# combine merged peaks window range with statistics
-final.merged.peaks = merged.peaks$region
-final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks,
-        file = dca_granges_rds)
-
-#+end_src
-*** Peak annotation                                                :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule peak_annotation:
-    input:
-        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds",
-    params:
-        script = config["atac_scripts_dir"] + "/peak_annotation.R"
-    output:
-        csv = config["data_dir"] + "/dca/{bam_process}_dca.csv",
-        chipseek = config["data_dir"] + "/dca/{bam_process}_chipseek.rds"
-    log:
-        config["data_dir"] + "/logs/{bam_process}_peak_annotation.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.csv} \
-        {output.chipseek} \
-        >& {log}
-        """
-#+end_src
-- Base script
-  #+begin_src R :tangle ./workflow/scripts/peak_annotation.R
-# Arguements for testing
-## granges_rds = "/home/jeszyman/repos/atac-seq/test/dca/dca_granges_regfilt.rds"
-## annotation_csv = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_dca.csv"
-## chipseek_file = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_chipseek.rds"
-
-# Arguements for command line input
-args = commandArgs(trailingOnly = TRUE)
-granges_rds = args[1]
-annotation_csv = args[2]
-chipseek_file = args[3]
-
-peaks = readRDS(granges_rds)
-
-library(ChIPseeker)
-library(csaw)
-library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-library(tidyverse)
-
-txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
-
-chipseek = annotatePeak(peaks, TxDb = txdb, annoDb = "org.Mm.eg.db")
-
-annotation = as_tibble(as.data.frame(chipseek))
-
-write.csv(annotation, row.names = F, file = annotation_csv)
-
-saveRDS(object = chipseek,
-        file = chipseek_file)
-#+end_src
-- Reference
-  - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
-** TODO Motif analysis
-- Get gene list- Takes annotated edger results as table
-  #+begin_src R
-library(tidyverse)
-test = as_tibble(read.csv("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_de.csv", header = T))
-
-motifs_down_ensembl = test %>%
-  filter(grepl("promoter", annotation, ignore.case = T)) %>%
-  filter(FDR < 0.05) %>%
-  filter(logFC < 0) %>%
-  pull(geneId)
-
-motifs_up_ensembl = test %>%
-  filter(grepl("promoter", annotation, ignore.case = T)) %>%
-  filter(FDR < 0.05) %>%
-  filter(logFC > 0) %>%
-  pull(geneId)
-
-writeLines(as.character(motifs_down_ensembl), "/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt")
-writeLines(as.character(motifs_up_ensembl), "/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_up.txt")
-
-#+end_src
-
-- Find motifs
-  #+begin_src bash
-mkdir -p /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/
-
-nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
-
-# try
-
-
-
-Number of CPUs to use ("-p <#>", default 1)
-HOMER is now multicore compliant.  It's not perfectly parallelized, however, certain types of analysis can benefit.  In general, the longer the length of the motif, the better the speed-up you'll see.
-
-Number of motifs to find ("-S <#>", default 25)
-Specifies the number of motifs of each length to find.  25 is already quite a bit.  If anything, I'd recommend reducing this number, particularly for long motifs to reduce the total execution time.
-perl /opt/miniconda/share/homer/.//configureHomer.pl -list
-
-perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
-
-#+end_src
-
-- Extract gene names
-  #+begin_src bash
-
-#+end_src
-
-
-*** Snakefile                                                  :smk:noexport:
-:PROPERTIES:
-:header-args:snakemake:  :tangle ./workflow/motifs.smk
-:END:
-**** Smk preamble
-#+begin_src snakemake :noweb yes
-<<smk_preamble>>
-#+end_src
-**** All rule
-#+begin_src snakemake
-rule all:
-    input:
-#+end_src
-**** Extract gene list                                             :smk_rule:
-
-extract ensembl ID lists from csaw-EdgeR DCA workflow
-
-- Snakemake
-  #+begin_src snakemake
-rule extract_gene_list:
-    input:
-    params:
-        script = config["repo"] + "/workflow/scripts/extract_gene_list.R"
-    output:
-    log:
-        config["data_dir"] + "/logs/extract_gene_list.log"
-    shell:
-        """
-        Rscript {params.script} \
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/extract_gene_list.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/extract_gene_list.R
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###    SCRIPT TITLE   ###
-###
-
-args = commandArgs(trailingOnly = TRUE)
-dca_tbl = args[1]
-
-#+end_src
-**** Find motifs for gene list promoters
-#+begin_src bash
-#nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
-
-findMotifs.pl test/homer/open_48hr-sham_down_genelist.txt \
-              mouse \
-              test/homer/open_ir48h-sham_less -fdr10 -p 4
-
-#+end_src
-- Find motifs by gene list
-  #+begin_src bash
-# TODO install homer w/ mouse-p promoter set
-
-source ~/repos/cardradbio-atac/config/${HOSTNAME}.sh
-
-# Fake gene list from peak annotation output, is ensembl IDs
-#
-
-# Install mouse homer promotor set
-perl /home/jeszyman/homer/.//configureHomer.pl -install mouse-p
-
-mkdir -p /tmp/out
-
-findMotifs.pl /tmp/test.txt mouse /tmp/out
-
-perl /opt/miniconda/share/homer/.//configureHomer.pl -list
-
-perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
-
-#+end_src
-*** Description                                                      :ignore:
-** TODO Pathway analysis
-- GSEA
-  #+begin_src R
-library(msigdbr)
-library(fgsea)
-
-## Generate all msigdb mouse hallmark gene sets as list of lists
-msigdbr_df <- msigdbr(species = "mouse", category = "H")
-ms_path_list = split(x = msigdbr_df$ensembl_gene, f = msigdbr_df$gs_name)
-
-test = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/dca_ir84_sham_annot.RDS")
-
-str(annotation)
-
-
-sign = sign(annotation$logFC)
-logP = -log10(annotation$PValue)
-rank = logP/sign
-
-names(rank) = annotation$ENSEMBL
-
-gsea = as_tibble(fgseaMultilevel(ms_path_list, rank, maxSize = 500))
-
-min(gsea$padj, na.rm = T)
-
-gsea %>% arrange(pval)
-
-gsea = gsea[,1:7]
-
-gsea = as.data.frame(gsea)
-
-gsea
-write.csv(file = "/tmp/test.csv", gsea)
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Promoter only
-
-promoters = annotation %>%
-  filter(grepl("Promoter", annotation))
-
-nrow(promoters)
-
-sign = sign(promoters$logFC)
-logP = -log10(promoters$PValue)
-rank = logP/sign
-
-names(rank) = promoters$ENSEMBL
-
-gsea = as_tibble(fgseaMultilevel(ms_path_list, rank, maxSize = 500))
-
-min(gsea$padj, na.rm = T)
-
-gsea %>% arrange(pval)
-
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-str(annotation)
-
-annotation$pos = as.character(annotation$annotation)
-
-annotation %>% filter(FDR < 0.05, logFC > 1) %>% dplyr::select(pos)
-
-
-test =annotation %>% filter(FDR < 0.05, logFC < -1, grepl("Promoter", annotation)) %>% pull(SYMBOL)
-
-cat(test, file = "~/down.txt")
-annotation %>% filter()
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-library(biomaRt)
-
-
-ensembl <- useEnsembl(biomart = "ensembl")
-
-datasets <- listDatasets(ensembl)
-
-searchDatasets(mart = ensembl, pattern = "mmusculus")
-
-ensembl <- useDataset(dataset = "mmusculus_gene_ensembl", mart = ensembl)
-
-
-grep("entrez", filters, ignore.case = T, value = T)
-
-values = test$ENTREZID
-
-
-values = values[!is.na(values)]
-
-index = getBM(attributes = c('ensembl_gene_id','entrezgene_id'),
-              filters = 'entrezgene_id',
-              values = values,
-              mart = ensembl, useCache = F)
-
-nrow(index
-index$entrezgene_id = as.character(index$entrezgene_id)
-
-library(tidyverse)
-
-
-test2 = test %>% left_join(index, by = c("ENTREZID" = "entrezgene_id"))
-test2 = test2[!is.na(test2$ensembl_gene_id),]
-test2 = test2[grepl("Promoter", test2$annotation), ]
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-#enricher lists
-test = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/dca_ir48_sham.RDS")
-
-head(test)
-res = as.data.frame(test)
-ggplot(res, aes(x = logFC))+geom_density()
-
-ls()
-
-res %>% filter(rep.logFC > 2)
-str(res)
-#+end_src
-#+begin_src R
-annotation
-
-annotation %>% filter(logFC > 2)
-#+end_src
-
-*** Transcription factors
-*** Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours :sci_rep:
-:PROPERTIES:
-:export_latex_class: paper
-:export_latex_header: \usepackage{./latex/tex/report}
-:export_title: Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours
-:export_options: tags:nil todo:nil toc:2 \n:t ^:nil
-:export_file_name: ./results/reports/szymanski_ms_atac_48_report.pdf
-:ID:       70d78969-3820-4def-b6f3-ab3c7c3e5d87
-:END:
-**** LaTeX settings                                                :noexport:
-[[file:results/reports/szymanski_ms_atac_48_report.tex]]
-[[file:~/repos/latex/tex/report.sty]]
-\usepackage[T1]{fontenc}
-\usepackage{tgbonum}
-**** LaTeX Preamble                                                  :ignore:
-\setcounter{secnumdepth}{0}
-\vspace{5mm}
-\hfill Last compiled {{{time(%Y-%m-%d)}}}.
-\newpage
-**** Discussion
-Expect immune infiltrate at > 1 week supercite:colman2015
-**** References                                                      :ignore:
-\printbibliography
-**** External files
-*** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs
-Error in env[[as.character(i)]] <- value :
-  wrong args for environment subassignment
-Calls: regionCounts ... bploop -> bploop.iterate -> <Anonymous> -> add_inorder
-Execution halted
-
-
-install.packages("tidyverse")
-library(tidyverse)
-
-- base rscript
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/csaw_peak.R
-
-#############################################################################
-###              Script for csaw ATAC-seq local peak calling
-#############################################################################
-
-args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]
-bam_pattern = args[2]
-filt_libs_str = args[3]
-threads = args[4]
-background_rds = args[5]
-counts_rds = args[6]
-
-filt_libs = unlist(strsplit(filt_libs_str, " "))
-
-library(BiocParallel)
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-surrounds = 2000
-standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
-param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
-
-bam_list = list.files(path = bam_dir,
-                      pattern = bam_pattern,
-                      full.names = TRUE)
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = bam_pattern,
-                                                   full.names = FALSE))
-bam_list = bam_list[names(bam_list) %in% filt_libs]
-
-## Script-local functions
-csaw_choose_window = function(bam_list){
-  # Choose window width by fragment size distribution
-  frag_size = lapply(bam_list, getPESizes)
-  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
-  frag_vect_summary = summary(all_bam_frag_vect)
-  thirdq = frag_vect_summary[[5]]
-  return(thirdq)
-}
-
-window = csaw_choose_window(bam_list)
-
-counts = windowCounts(bam_list,
-                      width = window,
-                      param = param,
-                      BPPARAM = MulticoreParam(workers=threads))
-
-neighbor = suppressWarnings(resize(rowRanges(counts),
-                                   surrounds, fix = "center"))
-
-wider = regionCounts(bam_list,
-                     regions = neighbor,
-                     param = param,
-                     BPPARAM = MulticoreParam(workers=threads))
-
-dimnames(wider) = c()
-dimnames(counts) = c()
-
-filter_stat = filterWindowsLocal(counts, wider)
-
-filtered_counts = counts[filter_stat$filter > log2(3),]
-
-background = windowCounts(bam_list,
-                          bin = TRUE,
-                          width = 10000,
-                          param = param,
-                          BPPARAM = MulticoreParam(workers=threads))
-
-colnames(filtered_counts) = names(bam_list)
-
-saveRDS(object = filtered_counts,
-file = counts_rds)
-
-colnames(background) = names(bam_list)
-
-saveRDS(object = background,
-file = background_rds)
-#+end_src
-- [X] run test
-  #+begin_src bash
-lib_str="lib001 lib002"
-
-nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
-        "_regfilt_tn5.bam$" \
-        "${lib_str}" \
-        8 \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds
-#+end_src
-- [X] run for open
-  #+begin_src bash
-lib_str="lib001 lib002 lib003 lib004 lib005 lib006 lib007 lib008 lib009 lib010 lib011 lib012 lib013 lib015 lib016 lib017 lib018 lib019 lib020 lib021 lib022 lib023 lib024 lib025"
-
-nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
-        "_open_tn5.bam$" \
-        "${lib_str}" \
-        4 \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_counts.rds
-#+end_src
-- [-] run for full
-  #+begin_src bash
-lib_str="lib001 lib002 lib003 lib004 lib005 lib006 lib007 lib008 lib009 lib010 lib011 lib012 lib013 lib015 lib016 lib017 lib018 lib019 lib020 lib021 lib022 lib023 lib024 lib025"
-
-nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
-        "_regfilt_tn5.bam$" \
-        "${lib_str}" \
-        8 \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_background_counts.rds \
-        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_counts.rds
-#+end_src
-
-
-
-**** Ideas and dev
-***** Description                                                    :ignore:
-ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
-
-Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
-
-***** ATAC-seq peak calling and chromatin accessibility, 6wks
-****** [[file:workflow/peak_calling.smk][Snakefile]]                                               :smk:noexport:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/peak_calling.smk
-:END:
-******* Smk preamble
-#+begin_src snakemake :noweb yes
-<<smk_preamble>>
-#+end_src
-******* All rule
-#+begin_src snakemake
-rule all:
-    input:
-        config["data_dir"] + "/atac/bk_rse.rds",
-        config["data_dir"] + "/atac/counts_rse.rds",
-#+end_src
-
-******* TEST Make peak counts                                      :smk_rule:
-:LOGBOOK:
-- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
-:END:
-- Snakemake
-  #+begin_src snakemake
-rule make_peak_counts:
-    params:
-        bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",
-        lib_str = {lib_str}
-
-        expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
-
-        lib_str = config["IR48H_V_SHAM"],
-        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
-    output:
-        background_counts = config["data_dir"] + "/atac/{c}background_counts_rse.rds"
-        counts_rse = config["data_dir"] + "/atac/counts_rse.rds"
-    log:
-        config["data_dir"] + "/logs/make_peak_counts.log",
-    shell:
-        """
-        lib_str="{params.lib_str}"
-        Rscript {params.script} \
-        {params.bam_dir} \
-        {params.bam_pattern} \
-        "${{lib_str}}" \
-        {config.threads} \
-        {output.background_counts} \
-        {output.counts_rse} \
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/select_window_size.R][Base script]]
-
-
-******* TEST Make peak counts                                      :smk_rule:
-:LOGBOOK:
-- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
-:END:
-- Snakemake
-  #+begin_src snakemake
-rule make_peak_counts:
-    params:
-        bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",
-        lib_str = config["IR48H_V_SHAM"],
-        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
-    output:
-        background_counts = config["data_dir"] + "/atac/background_counts_rse.rds"
-        counts_rse = config["data_dir"] + "/atac/counts_rse.rds"
-	window_size = config["data_dir"] + "/atac/window_size.rds",
-    log:
-        config["data_dir"] + "/logs/make_peak_counts.log",
-    shell:
-        """
-        lib_str="{params.lib_str}"
-        Rscript {params.script} \
-        {params.bam_dir} \
-        {params.bam_pattern} \
-        "${{lib_str}}" \
-        {config.threads} \
-        {output.background_counts} \
-        {output.counts_rse} \
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/select_window_size.R][Base script]]
-  #+begin_src R :noweb yes
-<<r_smk_preamble>>
-
-#############################################################################
-###              Script for csaw ATAC-seq local peak calling
-#############################################################################
-
-args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]
-bam_pattern = args[2]
-filt_libs_str = args[3]
-threads = args[4]
-background_rds = args[5]
-rse_rds = args[6]
-
-filt_libs = unlist(strsplit(filt_libs_str, " "))
-
-library(BiocParallel)
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-surrounds = 2000
-standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
-param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
-
-bam_list = list.files(path = bam_dir,
-                      pattern = bam_pattern,
-                      full.names = TRUE)
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = bam_pattern,
-                                                   full.names = FALSE))
-bam_list = bam_list[names(bam_list) %in% filt_libs]
-
-## Script-local functions
-csaw_choose_window = function(bam_list){
-  # Choose window width by fragment size distribution
-  frag_size = lapply(bam_list, getPESizes)
-  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
-  frag_vect_summary = summary(all_bam_frag_vect)
-  thirdq = frag_vect_summary[[5]]
-  return(thirdq)
-}
-
-window = csaw_choose_window(bam_list)
-
-counts = windowCounts(bam_list,
-                      width = window,
-                      param = param,
-                      BPPARAM = MulticoreParam(workers=threads))
-
-neighbor = suppressWarnings(resize(rowRanges(counts),
-                                   surrounds, fix = "center"))
-
-wider = regionCounts(bam_list,
-                     regions = neighbor,
-                     param = param,
-                     BPPARAM = MulticoreParam(workers=threads))
-
-filter_stat = filterWindowsLocal(counts, wider)
-
-filtered_counts = counts[filter_stat$filter > log2(3),]
-
-background = windowCounts(bam_list,
-                          bin = TRUE,
-                          width = 10000,
-                          param = param,
-                          BPPARAM = MulticoreParam(workers=threads))
-
-saveRDS(object = filtered_counts,
-file = counts_rds)
-
-saveRDS(object = background,
-file = background_rds)
-#+end_src
-******* TEST Differential accessibility                            :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule differential_accessibility:
-    input:
-        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
-        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
-        data_model = config["data_dir"] + "/data_model/data_model.RData",
-    params:
-        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
-    output:
-        config["data_dir"] + "/atac/dca.rds",
-    log:
-        config["data_dir"] + "/logs/differential_accessibility.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input.counts} \
-        {input.background} \
-	{input.data_model} \
-	{output}
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
-<<r_smk_preamble>>
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to generate differential accessibility model with EdgeR   ###
-###
-
-args = commandArgs(trailingOnly = TRUE)
-counts_rds = args[1]
-background_rds = args[2]
-data_model = args[3]
-dca_granges_file = args[4]
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-counts = readRDS(counts_rds)
-load(data_model)
-background = readRDS(background_rds)
-
-counts = normFactors(background, se.out = counts)
-
-y <- asDGEList(counts)
-colnames(y$counts) <- colnames(counts)
-rownames(y$samples) <- colnames(counts)
-
-groups =
-  data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h")
-
-y$samples$group = groups
-
-design <- model.matrix(~0 + groups, data=y$samples)
-
-colnames(design) = levels(groups)
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-
-fit <- glmQLFit(y, design, robust=TRUE)
-
-# testing for differentially-accessible windows
-results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
-
-
-# combine GRanges rowdata with DA statistics
-rowData(working.windows) <- cbind(rowData(working.windows), results$table)
-#working.windows@rowRanges
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
-
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-
-
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks,
-        file = dca_grange_file)
-
-#+end_src
-******* TEST Peak annotation                                       :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule peak_annotation:
-    input:
-        config["data_dir"] + "/atac/dca.rds"
-    params:
-        script = config["repo"] + "/workflow/scripts/peak_annotation.R"
-    output:
-        annotated_counts = config["data_dir"] + "/atac/annotated_counts.rds",
-    log:
-        config["data_dir"] + "/logs/peak_annotation.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.annot} \
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/peak_annotation.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/peak_annotation.R
-<<r_smk_preabmle>>
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to annotate csaw peaks   ###
-###
-
-args = commandArgs(trailingOnly = TRUE)
-peaks_rds = args[1]
-annotation_file = args[2]
-
-peaks = readRDS(peaks_rds)
-
-library(ChIPseeker)
-library(csaw)
-library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-library(tidyverse)
-
-txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
-
-peak_loc = peaks
-
-chipseek = annotatePeak(peak_loc, TxDb = txdb, annoDb = "org.Mm.eg.db")
-
-annotation = as_tibble(as.data.frame(chipseek))
-
-write.csv(annotation, row.names = F, file = annotation_file)
-#+end_src
-******* Dev
-:PROPERTIES:
-:header-args:snakemake: :tangle no
-:END:
-******* Ideas
-:PROPERTIES:
-:header-args:snakemake: :tangle no
-:END:
-******** Make backgroud bins                                       :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule make_backgroud_bins:
-    input:
-    params:
-        script = config["repo"] + "/workflow/scripts/make_backgroud_bins.R"
-    params:
-        script = config["repo"] + "/workflow/scripts/call_csaw_peaks.R",
-	bam_dir = config["data_dir"] + "/atac/bam",
-        bam_pattern = "_regfilt_tn5.bam$",
-        lib_str = config["IR48H_V_SHAM"],
-    output:
-    log:
-        config["data_dir"] + "/logs/make_backgroud_bins.log"
-    shell:
-        """
-        Rscript {params.script} \
-        >& {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/make_backgroud_bins.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/make_backgroud_bins.R
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Script to make background bins for csaw TMM normalization   ###
-###
-
-# Setup
-##
-## Snakemake
-args = commandArgs(trailingOnly = TRUE)
-window_file =  args[1]
-bam_dir = args[2]
-bam_pattern = args[3]
-filt_libs_str = args[4]
-rse = args[4]
-bk = args[5]
-
-filt_libs = unlist(strsplit(filt_libs_str, " "))
-
-## Libraries
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-## Script-local variables
-surrounds = 2000
-standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
-param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
-
-bam_list = list.files(path = bam_dir,
-                  pattern = bam_pattern,
-                  full.names = TRUE)
-
-names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
-                                                   pattern = bam_pattern,
-                                                   full.names = FALSE))
-
-bam_list = bam_list[names(bam_list) %in% filt_libs]
-
-binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
-
-#+end_src
-******** d
-#+begin_src R
-library(csaw)
-library(edgeR)
-# DIFFERENTIAL ACCESSIBILITY ANALYSIS
-
-working.windows = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/norm/csaw_all_csaw_open_filt_tmm_rse.rds")
-
-# set working windows for the desired analysis
-working.windows <- peak.counts.tmm # MACS2 peaks only, standard TMM normalization based on binned counts
-# working.windows <- peak.counts.loess # MACS2 peaks only, for trended biases
-# working.windows <- counts.local.tmm # csaw de novo peaks by local enrichment, standard TMM normalization based on binned counts
-# working.windows <- counts.local.loess # csaw de novo peaks by local enrichment, for trended biases
-# SEE THE CSAW MANUAL FOR MORE INFO ON NORMALIZATION METHODS
-###########
-
-# setup design matrix
-# see edgeR manual for more information
-y <- asDGEList(working.windows)
-colnames(y$counts) <- colnames(working.windows)
-rownames(y$samples) <- colnames(working.windows)
-
-load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
-
-library(tidyverse)
-
-groups =
-  data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h")
-groups
-
-y$samples$group = groups
-colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
-
-
-(design <- model.matrix(~0 + group, data=y$samples))
-
-colnames(design) = levels(groups)
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-fit <- glmQLFit(y, design, robust=TRUE)
-
-# testing for differentially-accessible windows
-results <- glmQLFTest(fit, contrast=makeContrasts(ir6w-sham, levels=design))
-# head(results$table)
-
-# combine GRanges rowdata with DA statistics
-rowData(working.windows) <- cbind(rowData(working.windows), results$table)
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-head(tab.best)
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-final.merged.peaks # all windows
-
-# filter by FDR threshold
-FDR.thresh <- 0.05 # set as desired
-final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
-final.merged.peaks.sig # significant differentially-accessible windows
-
-write.table(final.merged.peaks, "treat_vs_control_csaw_DA-windows_all.txt", sep="\t", quote=F, col.names=T, row.names=F)
-write.table(final.merged.peaks.sig, "treat_vs_control_csaw_DA-windows_significant.txt", sep="\t", quote=F, col.names=T, row.names=F)
-
-###########################################
-
-# Generate MA plot
-library(ggplot2)
-
-final.merged.peaks$sig <- "n.s."
-final.merged.peaks$sig[final.merged.peaks$FDR < FDR.thresh] <- "significant"
-
-ggplot(data=data.frame(final.merged.peaks),
-       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) +
-  geom_point() + scale_color_manual(values = c("black", "red")) +
-  geom_smooth(inherit.aes=F, aes(x = logCPM, y = logFC), method = "loess") + # smoothed loess fit; can add span=0.5 to reduce computation load/time
-  geom_hline(yintercept = 0) + labs(col = NULL)
-
-
-#+end_src
-
-#+begin_src R
-# Make logCPM counts of normalized data
-make_logcpm = function(in_norm){
-  dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)
-  log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
-  return(log_cpm)
-}
-
-logcpm_all_csaw_open_filt_tmm = make_logcpm(tmm)
-logcpm_all_csaw_open_filt_loess = make_logcpm(loess)
-
-pca = prcomp(t(logcpm_all_csaw_open_filt_tmm))
-
-
-pca = prcomp(t(test2))
-
-summary(pca)
-
-#+end_src
-
-********* edgeR:smk_rule:
-https://f1000research.com/articles/5-1438/v2
-
-lfcs are normally distributed, skewed way negative
-https://support.bioconductor.org/p/57328/
-see for batch correction https://www.nature.com/articles/s41598-020-66998-4#Sec9
-- Snakemake
-#+begin_src snakemake
-rule edger:
-    input:
-        rse = config["data_dir"] + "/atac/counts/{counter}_all_{join}_{chrom_filt}_{width}_{norm}_rse.rds",
-    params:
-        script = config["repo"] + "/workflow/scripts/edger.R"
-    output:
-log:
-    config["data_dir"] + "/logs/edger.log"
-shell:
-    """
-    Rscript {params.script} \
-    >& {log}
-    """
-#+end_src
-- [[file:./workflow/scripts/edger.R][Base script]]
-#+begin_src R :noweb yes :tangle ./workflow/scripts/edger.R
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   Do differential expression of ATAC-seq peaks through edgeR   ###
-###
-
-args = commandArgs(trailingOnly = TRUE)
-= args[1]
-
-library(csaw)
-library(DESeq2)
-library(edgeR)
-library(tidyverse)
-
-# Load counts as DGE list
-counts = readRDS(input)
-
-counts = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/norm/macs2_all_union_open_narrow_tmm_rse.rds")
-load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
-
-# setup design matrix
-# see edgeR manual for more information
-y <- asDGEList(counts)
-colnames(y$counts) =
-rownames(y$samples) = names(counts$bam.files)
-groups =
-  data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h")
-y$samples$group = groups
-colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
-
-plotMDS(y, col = colors, gene.selection = "common", top = 1000000)
-
-test
-
-test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004")))
-test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004","lib013","lib018")))
-counts = test
-
-# setup design matrix
-# see edgeR manual for more information
-y <- asDGEList(counts)
-colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
-groups =
-  data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%
-  droplevels() %>%
-  pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h")
-groups
-y$samples$group = groups
-colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
-
-pdf("/tmp/pca.pdf")
-plotMDS(y, col = colors, gene.selection = "common", top = 80)
-dev.off()
-
-plotMDS(y, col = colors, top = 100)
-
-design <- model.matrix(~group, data=y$samples)
-colnames(design) = levels(groups)
-
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-fit <- glmQLFit(y, design, robust=TRUE)
-
-summary(fit$df.prior)
-
-fit <- glmQLFit(y, design)
-
-class(design)
-# testing for differentially-accessible windows
-results <- glmQLFTest(fit, contrast=makeContrasts(sham-ir6w, levels=design))
-# head(results$table)
-
-topTags(results)
-
-# combine GRanges rowdata with DA statistics
-rowData(counts) <- cbind(rowData(counts), results$table)
-
-res = as.data.frame(topTags(results, n = Inf))
-
-ggplot(res, aes(x = logFC)) + geom_density()
-summary(as.data.frame(topTags(results, n = Inf))$FDR)
-
-test = as_tibble(as.data.frame(topTags(results, n = Inf)))
-
-max(test$FDR)
-
-summary(results$table$PValue)
-
-head(results$table$PValue)
-
-fit = glmFit(y, design, contrast = makeContrasts(ir48h-sham, levels = design))
-
-fit
-lrt = glmLRT(fit, contrast = makeContrasts(ir48h-sham, levels = design))
-test=as.data.frame(topTags(lrt, n = 10000))
-class(test)
-summary(test$FDR)
-lrt
-head(lrt$table)
-et = exactTest(y)
-topTags(et)
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
-# summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-head(tab.best)
-min(tab.best$PValue)
-min(tab.best$FDR)
-
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-final.merged.peaks # all windows
-
-# filter by FDR threshold
-FDR.thresh <- 0.05 # set as desired
-final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
-final.merged.peaks.sig # significant differentially-accessible windows
-
-
-
-
-colnames(design) = levels(counts$samples$group)
-
-test = rlog(assays(counts)$counts)
-rld = test
-
-class(rld)
-mat = t(rld)
-pca = prcomp(mat)
-
-summary(pca)
-
-head(counts$counts)
-rownames(counts$counts)
-
-class(working.windows)
-
-working.windows
-
-# stabilize dispersion estimates with empirical bayes
-y <- estimateDisp(y, design)
-fit <- glmQLFit(y, design, robust=TRUE)
-
-# testing for differentially-accessible windows
-#results <- glmQLFTest(fit, contrast=makeContrasts(treat-control, levels=design))
-
-results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
-# head(results$table)
-
-test = results$table
-min(test$PValue)
-
-class(working.windows)
-
-test = working.windows[,8:15]
-
-
-# combine GRanges rowdata with DA statistics
-#rowData(working.windows) <- cbind(rowData(working.windows), results$table)
-rowData(test) = cbind(rowData(test), results$table)
-
-test@rowRanges
-working.windows = test
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
-summary(width(merged.peaks$region))
-# should merge some peaks; change as desired
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best <- getBestTest(merged.peaks$id, results$table)
-head(tab.best)
-# combine merged peaks window range with statistics
-final.merged.peaks <- merged.peaks$region
-final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-final.merged.peaks # all windows
-
-# filter by FDR threshold
-#FDR.thresh <- 0.05 # set as desired
-#final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
-#final.merged.peaks.sig # significant differentially-accessible windows
-
-
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-library(DESeq2)
-
-test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004","lib013","lib018", "lib023", "lib014")))
-counts = test
-
-
-test = rlog(assays(counts)$counts)
-rld = test
-
-rld = vst(assays(counts)$counts)
-mat = t(rld)
-pca = prcomp(mat)
-
-summary(pca)
-
-pca_plot = as.data.frame(pca$x) %>%
-  rownames_to_column(var = "library_id") %>%
-  left_join(libraries_full, by = "library_id") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
-  geom_point(size = 4)
-pca_plot
-
-
-
-#lowdate = as.character(data.frame(library_id = colnames(y)) %>% left_join(libraries_full, by = "library_id") %>% pull(flow_date))
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-#+end_src
-
-****** Description                                                   :ignore:
-ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
-
-Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
-
-
-*** All count logcpms for QC
-:LOGBOOK:
-- State "WAITING"    from "TODO"       [2022-03-31 Thu 14:24]
-:END:
-
-- [X] Functions and test
-  #+begin_src R :tangle ./workflow/scripts/counts_to_logcpm.R
-args = commandArgs(trailingOnly = TRUE)
-counts_rds = args[1]
-background_rds = args[2]
-logcpm_file = args[3]
-
-background = readRDS(background_rds)
-counts = readRDS(counts_rds)
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-counts = normFactors(background, se.out = counts)
-
-make_logcpm = function(in_norm){
-  dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)
-  log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
-  return(log_cpm)
-}
-
-logcpm = make_logcpm(counts)
-
-saveRDS(object = logcpm,
-        file = logcpm_file)
-#+end_src
-  #+begin_src bash
-Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R \
-	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds \
-	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
-	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_logcpm.rds
-#+end_src
-
-- All sample PCA
-  #+begin_src bash
-
-#+end_src
-- Filtered PCA
-- Reference
-  - PCA of mislabeled samples
-    #+begin_src R
-  load("/mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48_v_sham_tmp.rdata")
-
-  load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
-
-  participants$cohort_id[which(participants$part_id == "ms015")] = "ir48h"
-
-  libraries_full$cohort_id[which(libraries_full$library_id == "lib009")] = "ir48h"
-
-  libraries_full$cohort_id[which(libraries_full$library_id == "lib016")] = "sham"
-
-  library(csaw)
-
-  make_logcpm = function(in_norm){
-    dge = asDGEList(in_norm)
-    colnames(dge) = colnames(in_norm)
-    log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
-    return(log_cpm)
-  }
-
-  logcpm = make_logcpm(filtered_counts)
-
-  pca = prcomp(t(logcpm))
-  summary(pca)
-
-  library(tidyverse)
-  library(ggrepel)
-
-  make_pca_plots = function(in_pca, full_libs){
-    pve_pc1=round(100*summary(in_pca)$importance[2,1])
-    pve_pc2=round(100*summary(in_pca)$importance[2,2])
-
-    pca_plot = as.data.frame(in_pca$x) %>%
-      rownames_to_column(var = "library_id") %>%
-      left_join(full_libs, by = "library_id") %>%
-      ggplot(., aes(x = PC1, y = PC2, color = cohort_id, label = library_id)) +
-      geom_point(size = 4) +
-      geom_text_repel() +
-      xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-      ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-      guides(color="none")
-    return(pca_plot)
-  }
-
-
-
-  test =make_pca_plots(pca, libraries_full)
-
-
-  in_pca = pca
-  pve_pc1=round(100*summary(in_pca)$importance[2,1])
-  pve_pc2=round(100*summary(in_pca)$importance[2,2])
-
-  pca_plot = as.data.frame(in_pca$x) %>%
-    rownames_to_column(var = "library_id") %>%
-    left_join(libraries_full, by = "library_id") %>%
-    ggplot(., aes(x = PC1, y = PC2, color = cohort_id, label = library_id)) +
-    geom_point(size = 4) +
-    geom_text_repel(force = 10) +
-    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-    guides(color="none")
-
-
-  ggsave(pca_plot, filename = "/mnt/ris/jschwarz/cardiac-radiobiology/tmp/pca2.pdf")
-
-  ggsave(pca_plot, filename = "~/repos/cardradbio-atac/results/imgs/ir48h_v_sham_full_pca.pdf")
-  #+end_src
-
-*** Read processing and alignment
-**** Description                                                     :ignore:
-Sequencing read adapters were removed and reads were quality trimmed using flexbar.
-
-Processed reads were aligned to mm10 using bowtie2.
-
-PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
-
-
-**** DONE [[file:workflow/preprocess_align.smk][Snakefile]]                :smk:
-CLOSED: [2022-03-11 Fri 12:19]
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/preprocess_align.smk
-:CUSTOM_ID: readp
-:END:
-:LOGBOOK:
-- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:19]
-:END:
-***** Smk preamble
-#+begin_src snakemake
-container: config["container"]
-RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
-#+end_src
-***** Smk rules
-****** All rule
-#+begin_src snakemake
-rule all:
-    input:
-        expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
-        config["data_dir"] + "/ref/keep.bed",
-        expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam", library_id=RUNSAMPLES),
-        expand(config["data_dir"] + "/atac/bam/{library_id}_open.bam", library_id=RUNSAMPLES),
-        expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam", library_id=RUNSAMPLES),
-        expand(config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam", library_id=RUNSAMPLES),
-#+end_src
-****** Read trim                                                   :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule read_trim:
-    input:
-        r1 = config["data_dir"] + "/atac/fastq/{library_id}_R1.fastq.gz",
-        r2 = config["data_dir"] + "/atac/fastq/{library_id}_R2.fastq.gz",
-    params:
-        outdir = config["data_dir"] + "/atac/fastq",
-        threads = config["threads"],
-    output:
-        config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
-        config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
-    resources:
-        mem_mb=5000
-    shell:
-        """
-        workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
-        """
-#+end_src
-- Script [[file:workflow/scripts/read_trim.sh]]
-  #+begin_src bash :noweb yes :tangle ./workflow/scripts/read_trim.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-#
-# Function for flexbar processing
-flexbar_atac() {
-    base=$(basename -s _R1.fastq.gz $1)
-    flexbar \
-        --adapter-pair-overlap ON \
-        --adapter-preset Nextera \
-        --pre-trim-right 1 \
-        --reads "${1}" \
-        --reads2 "${2}" \
-        --target "${3}/${base}_flex" \
-        --threads ${4} \
-        --zip-output GZ
-}
-
-# Snakemake parameters
-input_r1="$1"
-input_r2="$2"
-params_outdir="$3"
-params_threads="$4"
-
-# Run
-flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
-#+end_src
-****** Make bowtie index                                           :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule make_bowtie_index:
-    input:
-        fa = config["data_dir"] + "/ref/mm10.fa",
-    params:
-        prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
-        threads = config["threads"]
-    output:
-        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",
-    shell:
-        """
-        workflow/scripts/make_bowtie_index.sh {input.fa} {params.prefix} {params.threads}
-        """
-#+end_src
-- [[file:./workflow/scripts/make_bowtie_index.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-make_bt2_index(){
-    index_dir=$(dirname $3)
-    mkdir -p $index_dir
-    bowtie2-build -f \
-                  --threads $1 \
-                  $2 \
-                  $3
-}
-
-# Snakemake variables
-input_fa="$1"
-params_prefix="$2"
-params_threads="$3"
-
-# Run
-make_bt2_index $params_threads $input_fa $params_prefix
-#+end_src
-****** Align BT2                                                   :smk_rule:
-:LOGBOOK:
-- State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
-:END:
-- Snakemake
-  #+begin_src snakemake
-rule align_bt2:
-    input:
-        r1 = config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
-        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
-    params:
-        prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
-        threads = config["threads"],
-    output:
-        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
-    shell:
-        """
-        workflow/scripts/align_bt2.sh {input.r1} {input.r2} {params.prefix} {params.threads} {output.bam}
-        """
-#+end_src
-- [[file:./workflow/scripts/align_bt2.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/align_bt2.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-bt2_align(){
-    bowtie2 --maxins 2000 --threads $1 --very-sensitive -x $2 -1 $3 -2 $4 | samtools view -bS - > $5
-}
-
-# Snakemake variables
-input_r1="$1"
-input_r2="$2"
-params_prefix="$3"
-params_threads="$4"
-output_bam="$5"
-
-# Run
-bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
-#+end_src
-****** Make keep bed                                               :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule make_keep_bed:
-    input:
-        autosome_bed = config["data_dir"] + "/ref/grcm38_primary_assembly_chr.bed",
-        blacklist_bed = config["data_dir"] + "/ref/mm10-blacklist.v2_ENSEMBL_chr.bed",
-    output:
-        keep_bed = config["data_dir"] + "/ref/keep.bed",
-    shell:
-        """
-        bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed} > {output.keep_bed}
-        """
-#+end_src
-****** Filter and dedup                                            :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule filter_and_dedup:
-    input:
-        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
-    params:
-        keep_bed = config["data_dir"] + "/ref/keep.bed",
-        threads = config["threads"],
-    output:
-        dedup_bam = config["data_dir"] + "/atac/bam/{library_id}_dedup.bam",
-        qfilt_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_qfilt.bam"),
-        regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
-        regfilt_index = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam.bai",
-    resources:
-        mem_mb=5000
-    shell:
-        """
-        workflow/scripts/filter_and_dedup.sh {input.bam} \
-	                                     {params.keep_bed} \
-	                                     {params.threads} \
-	                                     {output.dedup_bam} \
-	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam}
-        """
-#+end_src
-- [[file:./workflow/scripts/filter_and_dedup.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/filter_and_dedup.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-
-atac_bam_processing(){
-    #
-    # Dedup
-    samtools sort -@ $1 -n -o - $2 |
-    samtools fixmate -m - - |
-    samtools sort -@ $1 -o - - |
-    samtools markdup -@ $1 -r - $3
-    #
-    # Filter to aligned, properly paired reads
-    samtools view -@ $1 -b -f 3 -h -o $4 $3
-    #
-    # Filter to autosomes and remove blacklisted regions
-    samtools view -@ $1 -b -h -L $5 -o - $4 |
-    samtools sort -@ $1 -n -o - - |
-    samtools fixmate -m - - |
-    samtools sort -@ $1 -o $6 -
-    samtools index $6
-}
-
-# Snakemake variables
-input_bam="$1"
-params_keep_bed="$2"
-params_threads="$3"
-output_dedup_bam="$4"
-output_qfilt_bam="$5"
-output_regfilt_bam="$6"
-
-# Run command
-atac_bam_processing "$params_threads" \
-                    "$input_bam" \
-                    "$output_dedup_bam" \
-                    "$output_qfilt_bam" \
-                    "$params_keep_bed" \
-                    "$output_regfilt_bam"
-samtools index "$output_regfilt_bam"
-#+end_src
-****** Get open chrom                                              :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule get_open_chrom:
-    input:
-        regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
-    output:
-        unsort_open_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_unsort_open.bam"),
-        open_bam = config["data_dir"] + "/atac/bam/{library_id}_open.bam",
-    shell:
-        """
-        workflow/scripts/get_open_chrom.sh {input.regfilt_bam} \
-                                           {config[threads]} \
-                                           {output.unsort_open_bam} \
-                                           {output.open_bam}
-        """
-#+end_src
-- [[file:./workflow/scripts/get_open_chrom.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/get_open_chrom.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-alignmentSieve --bam $1 \
-               --maxFragmentLength 150 \
-               --numberOfProcessors $2 \
-               --outFile $3
-samtools sort -@ $2 -o $4 $3
-samtools index -@ $2 $4
-#+end_src
-****** Tn5 shift                                                   :smk_rule:
-:LOGBOOK:
-- State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
-- State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
-- State "DONE"       from "RUN"        [2022-02-11 Fri 16:40]
-- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
-  add to next run
-:END:
-- Snakemake
-  #+begin_src snakemake
-rule tn5_shift_and_open:
-    input:
-        atac_bam =         config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
-    output:
-        tmp_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tmp.bam"),
-        tn5_bam =      config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam",
-    log:
-        config["data_dir"] + "/logs/tn5_shift_and_open_{library_id}_regfilt.log",
-    shell:
-        """
-        workflow/scripts/tn5_shift.sh {input.atac_bam} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
-        """
-#+end_src
-- [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
-alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
-
-samtools sort -@ $2 -o $4 $3
-
-samtools index -@ $2 $4
-#+end_src
-****** Tn5 open shift                                              :smk_rule:
-:LOGBOOK:
-- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
-  add to next run
-:END:
-- Snakemake
-  #+begin_src snakemake
-rule tn5_shift_open:
-    input:
-        atac_bam =         config["data_dir"] + "/atac/bam/{library_id}_open.bam",
-    output:
-        tmp_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_open_tmp.bam"),
-        tn5_bam =      config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam",
-    log:
-        config["data_dir"] + "/logs/tn5_shift_and_open_{library_id}_open.log",
-    shell:
-        """
-        workflow/scripts/tn5_shift.sh {input.atac_bam} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
-        """
-#+end_src
-- [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
-alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
-
-samtools sort -@ $2 -o $4 $3
-
-samtools index -@ $2 $4
-#+end_src
-
-***** Ideas
-- redefine samtools tmp dir outside repo
-
-
-
-
+** ATAC-seq QC
+code.r
 ** INPROCESS Integration testing :smk:
 #+begin_src bash
 results_dirs=("bam"
@@ -2759,14 +653,6 @@ do
     \rm -rf $dir
 done
 #+end_src
-*** Bash run scripts
-#+begin_src bash
-basecamp/src/smk_dry_run.sh config/int_test.yaml workflow/int_test.smk
-basecamp/src/smk_run.sh config/int_test.yaml workflow/int_test.smk
-basecamp/src/smk_forced_run.sh config/int_test.yaml workflow/int_test.smk
-
-#+end_src
-
 *** [[file:workflow/int_test.smk][Snakefile]]                                                           :smk:
 #+begin_src snakemake :tangle ./workflow/int_test.smk
 container: config["container"]
@@ -2799,11 +685,11 @@ rule all:
         expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
         expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
         expand(config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt", library_id = LIBRARY_IDS),
-	expand(config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/csaw/dge_{bam_process}.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/dca/dca_granges_{bam_process}.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/dca/{bam_process}_dca.csv", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/dca/{bam_process}_chipseek.rds", bam_process = BAM_PROCESS),
+	#expand(config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/csaw/dge_{bam_process}.rds", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/dca/dca_granges_{bam_process}.rds", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/dca/{bam_process}_dca.csv", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/dca/{bam_process}_chipseek.rds", bam_process = BAM_PROCESS),
 
 
 include: "atac_read_process.smk"
@@ -2840,7 +726,124 @@ rule all:
 
 include: "peak_call_and_dif.smk"
 #+end_src
-** Dev
+
+*** Bash run scripts
+#+begin_src bash
+basecamp/src/smk_dry_run.sh config/int_test.yaml workflow/int_test.smk
+basecamp/src/smk_run.sh config/int_test.yaml workflow/int_test.smk
+basecamp/src/smk_forced_run.sh config/int_test.yaml workflow/int_test.smk
+
+#+end_src
+
+** :dev:
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:header-args:bash: :tangle no
+:END:
+- add bowtie index step
+  #+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
+cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Function
+make_bt2_index(){
+    index_dir=$(dirname $3)
+    mkdir -p $index_dir
+    bowtie2-build -f \
+                  --threads $1 \
+                  $2 \
+                  $3
+}
+
+# Snakemake variables
+input_fa="$1"
+params_prefix="$2"
+params_threads="$3"
+
+# Run
+make_bt2_index $params_threads $input_fa $params_prefix
+#+end_src
+- atac-seq qc
+*** ideas
+#+begin_src bash
+git add -A
+git commit -m "feat: initial dev"
+git push origin master
+
+git branch dev_initial
+git checkout dev_initial
+git push origin dev_initial
+#+end_src
+
+#+begin_src bash
+git init
+git add -A
+git commit -am "First commit"
+git branch -M master
+
+#
+git remote add origin git@github.com:jeszyman/atac-seq.git
+git branch -M master
+git push -u origin master
+
+cp basecamp/src/pre-commit src/precommit_git_hook
+ln -s src/precommit_git_hook .git/hooks/precommit
+chmod 777 .git/hooks/precommit
+#+end_src
+
+- startup script
+  #+begin_src bash :tangle
+#!/usr/bin/env bash
+repo=$1
+mntpt=$2
+sif_dir=$3
+
+# Check for parameters, return usage if empty
+if [ $# -ne 3 ];
+then
+    printf "\n usage: repo_startup.sh <REPO PATH> <RIS MOUNT PT> <SINGULARITY CONTAINER DIR>
+    \n ATAC-seq repo development helper script
+    \n "
+else
+
+    # Check git file hook is read-able
+    if [ -r "${repo}/.git/hooks/precommit" ]; then
+        echo "Git size check is read-able"
+    else
+        echo
+        "Git size check is not read-able"
+        exit 1
+    fi
+
+    # Check mount point
+    if grep -qs $mntpt /proc/mounts; then
+        echo "RIS storage mounted."
+    else
+        echo "RIS storage NOT mounted, exiting."
+        exit 1
+    fi
+
+    # Check singularity container
+    if [ -r $sif_dir/atac.sif ]; then
+        echo "Local SIF file present"
+    else
+        echo "No local SIF file found"
+        exit 1
+    fi
+
+    # Check singularity container up-to-date
+    if [ /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif -nt $sif_dir/atac.sif ]; then
+        echo "Local SIF is out of date. Updating ..."
+        cp /mnt/ris/jschwarz/cardiac-radiobiology/atac.sif $sif_dir/atac.sif
+    else
+        echo "Local SIF file is up to date"
+    fi
+
+    cur_branch=$(git branch | head -n 1)
+    echo "Current branch is $cur_branch"
+fi
+#+end_src
+
 
 
 
@@ -2877,7 +880,7 @@ libraries = (
 - transcription factor sites
 - homer superenhancers http://homer.ucsd.edu/homer/ngs/peaks.html
 
-*** Make keep bed                                                  :smk_rule:
+**** Make keep bed                                                 :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_keep_bed:
@@ -2891,7 +894,7 @@ rule make_keep_bed:
         bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed} > {output.keep_bed}
         """
 #+end_src
-*** ATAC-seq peak calling and chromating accessibility on subsets
+**** ATAC-seq peak calling and chromating accessibility on subsets
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-03-31 Thu 14:25]
 :END:
@@ -2927,7 +930,7 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
 - run ir48h vs sham
 - run ir6w vs sham
 
-**** Peak annotation
+***** Peak annotation
 - Snakemake
   #+begin_src snakemake
 rule peak_annotation:
@@ -2977,15 +980,15 @@ annotation = as_tibble(as.data.frame(chipseek))
 
 write.csv(annotation, row.names = F, file = annotation_file)
 #+end_src
-***** Dev
+****** Dev
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-***** Ideas
+****** Ideas
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-****** Make backgroud bins                                         :smk_rule:
+******* Make backgroud bins                                        :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_backgroud_bins:
@@ -3050,7 +1053,7 @@ bam_list = bam_list[names(bam_list) %in% filt_libs]
 binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
 
 #+end_src
-****** d
+******* d
 #+begin_src R
 library(csaw)
 library(edgeR)
@@ -3165,7 +1168,7 @@ summary(pca)
 
 #+end_src
 
-******* edgeR:smk_rule:
+******** edgeR:smk_rule:
 https://f1000research.com/articles/5-1438/v2
 
 lfcs are normally distributed, skewed way negative
@@ -3421,7 +1424,7 @@ pca_plot
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 #+end_src
-*** Ideas
+**** Ideas
   - full log to catch this error
     - - https://www.biostars.org/p/396538/
     - note- log didn't work [[file:/mnt/ris/jschwarz/cardiac-radiobiology/log/fastqc_log.txt]]
@@ -3429,22 +1432,22 @@ pca_plot
   - preamble
 
 
-**** Reference
+***** Reference
 - [[https://static-content.springer.com/esm/art%3A10.1186%2Fs13072-020-00342-y/MediaObjects/13072_2020_342_MOESM6_ESM.txt][reske csaw workflow]]
-**** Hold and dev
+***** Hold and dev
 :PROPERTIES:
 header-args:snakemake: :tangle no
 :END:
-**** Ideas
+***** Ideas
 :PROPERTIES:
 header-args:snakemake: :tangle no
 :END:
-*** Dev
+**** Dev
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
 
-**** [#Y] Make nucleosome positioning alignments
+***** [#Y] Make nucleosome positioning alignments
 :PROPERTIES:
 :CREATED:  [2021-09-02 Thu 11:22]
 :ID:       5acea857-b98c-473b-9b23-d430665cbb4d
@@ -3531,7 +1534,7 @@ save(gal_lib051,
 #+end_src
 - Reference
   - for split alignment conservation https://support.bioconductor.org/p/96226/ (works in docker)
-**** ATAC-seq QC:smk_rule:
+***** ATAC-seq QC:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule atac-seq_qc:
@@ -3557,7 +1560,7 @@ rule atac-seq_qc:
 
 #+end_src
 
-***** Transcription start sites occupancy
+****** Transcription start sites occupancy
 :PROPERTIES:
 :CREATED:  [2021-09-15 Wed 10:09]
 :ID:       eecd41c6-4f32-4d79-b7d5-40d666b8f85b
@@ -4015,12 +2018,12 @@ ir01 - 2.75
 #+caption: CAPTION label:fig-atac-tss
 [[file:results/imgs/atac_tss.pdf]]
 
-***** Aggregate
+****** Aggregate
 :PROPERTIES:
 :CREATED:  [2021-09-21 Tue 07:29]
 :ID:       a9426a9b-16e8-4356-8d98-314b4c7f8ec5
 :END:
-***** notes
+****** notes
 :PROPERTIES:
 :ID:       06f9345e-a489-4b5e-9f68-82e22e468096
 :END:
@@ -4028,7 +2031,7 @@ ir01 - 2.75
 - do not run R docker through docker_interactive function- unknown error
 - cite:liu2021 https://www.sciencedirect.com/science/article/pii/S1672022921001479
 
-**** MultiQC:smk_rule:
+***** MultiQC:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule multiqc:
@@ -4084,7 +2087,7 @@ multiqc_wrap()
 }
 
 #+end_src
-**** Make frag distribution mat:smk_rule:
+***** Make frag distribution mat:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_frag_distribution_mat:
@@ -4310,7 +2313,7 @@ fragsize %>%
 #+end_src
 
 
-*** Library complexity:smk_rule:
+**** Library complexity:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule library_complexity:
@@ -4448,7 +2451,7 @@ saveRDS(object = complex,
   save_plot("./results/imgs/lib_complex.pdf", library_complexity_plot)
 
   #+end_src
-*** Make fastq input symlinks
+**** Make fastq input symlinks
 #+begin_src snakemake
 rule symlink_fastqs:
     params:
@@ -4462,7 +2465,7 @@ rule symlink_fastqs:
         ln -sf --relative {config[fq_src_dir]}/{params.fastq}_R2.fastq.gz {output.r2}
         """
 #+end_src
-*** Dev
+**** Dev
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
@@ -4574,7 +2577,7 @@ saveRDS(object = final.merged.peaks,
 
 #+end_src
 
-**** Differential accessibility 6wk vs. sham                       :smk_rule:
+***** Differential accessibility 6wk vs. sham                      :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule differential_accessibility:
@@ -4675,7 +2678,7 @@ saveRDS(object = final.merged.peaks,
 
 #+end_src
 
-**** Differential accessibility 48h vs. sham                       :smk_rule:
+***** Differential accessibility 48h vs. sham                      :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule differential_accessibility:
@@ -4763,7 +2766,7 @@ saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
 #+end_src
-**** Peak annotation
+***** Peak annotation
 - is granges or rowRanges of a RSE
 #+begin_src R
 test=readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds")
@@ -4772,6 +2775,1785 @@ head(assays(test))
 head(rowData(test))
 head(rowRanges(test))
 #+end_src
+*** [[file:workflow/dca_and_annot.smk][Differential chromatin accessibility and annotation]]                 :smk:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/dca_and_annot.smk
+:END:
+:LOGBOOK:
+- State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
+:END:
+# Latest deepTools on bioconda does not contain alignmentSieve
+RUN conda install -c bioconda deeptools=3.4 --force
+
+**** Differential chromatin accessibility
+- Snakemake
+  #+begin_src snakemake
+rule diff_chrom_accessibility:
+    input:
+        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
+        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
+    params:
+        groups_str = "ir48h ir48h sham sham",
+        contrast = "ir48h-sham",
+        script = config["atac_scripts_dir"] + "/diff_chrom_accessibility.R",
+    output:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
+    log:
+        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.dge} \
+        "{params.groups_str}" \
+        "{params.contrast}" \
+        {input.norm_counts_rse} \
+        {output} \
+        >& {log}
+        """
+#+end_src
+- [[file:workflow/scripts/diff_chrom_accessibility.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/diff_chrom_accessibility.R
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###   Script to generate differential accessibility model with EdgeR         ###
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Setup
+
+## Arguements for testing
+dge_rds = "~/repos/atac-seq/test/csaw/dge_regfilt.rds"
+groups_str = "ir48h ir48h sham sham"
+contrast = "ir48h-sham"
+norm_counts_rds = "~/repos/atac-seq/test/csaw/norm_counts_rse_regfilt.rds"
+dca_granges_rds = "/tmp/test.rds"
+
+args = commandArgs(trailingOnly = TRUE)
+dge_rds = args[1]
+groups_str =args [2]
+contrast = args[3]
+norm_counts_rds = args[4]
+dca_granges_rds = args[5]
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+y = readRDS(dge_rds)
+groups = as.factor(unlist(strsplit(groups_str, " ")))
+
+design = model.matrix(~0 + groups, data=y$samples)
+colnames(design) = levels(groups)
+y = estimateDisp(y, design)
+fit = glmQLFit(y, design, robust=TRUE)
+results = glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
+
+# combine GRanges rowdata with DA statistics
+counts = readRDS(norm_counts_rds)
+rowData(counts) = cbind(rowData(counts), results$table)
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best = getBestTest(merged.peaks$id, results$table)
+
+# combine merged peaks window range with statistics
+final.merged.peaks = merged.peaks$region
+final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks,
+        file = dca_granges_rds)
+
+#+end_src
+**** Peak annotation                                               :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule peak_annotation:
+    input:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds",
+    params:
+        script = config["atac_scripts_dir"] + "/peak_annotation.R"
+    output:
+        csv = config["data_dir"] + "/dca/{bam_process}_dca.csv",
+        chipseek = config["data_dir"] + "/dca/{bam_process}_chipseek.rds"
+    log:
+        config["data_dir"] + "/logs/{bam_process}_peak_annotation.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.csv} \
+        {output.chipseek} \
+        >& {log}
+        """
+#+end_src
+- Base script
+  #+begin_src R :tangle ./workflow/scripts/peak_annotation.R
+# Arguements for testing
+## granges_rds = "/home/jeszyman/repos/atac-seq/test/dca/dca_granges_regfilt.rds"
+## annotation_csv = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_dca.csv"
+## chipseek_file = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_chipseek.rds"
+
+# Arguements for command line input
+args = commandArgs(trailingOnly = TRUE)
+granges_rds = args[1]
+annotation_csv = args[2]
+chipseek_file = args[3]
+
+peaks = readRDS(granges_rds)
+
+library(ChIPseeker)
+library(csaw)
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+library(tidyverse)
+
+txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
+
+chipseek = annotatePeak(peaks, TxDb = txdb, annoDb = "org.Mm.eg.db")
+
+annotation = as_tibble(as.data.frame(chipseek))
+
+write.csv(annotation, row.names = F, file = annotation_csv)
+
+saveRDS(object = chipseek,
+        file = chipseek_file)
+#+end_src
+- Reference
+  - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
+*** TODO Pathway analysis
+- GSEA
+  #+begin_src R
+library(msigdbr)
+library(fgsea)
+
+## Generate all msigdb mouse hallmark gene sets as list of lists
+msigdbr_df <- msigdbr(species = "mouse", category = "H")
+ms_path_list = split(x = msigdbr_df$ensembl_gene, f = msigdbr_df$gs_name)
+
+test = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/dca_ir84_sham_annot.RDS")
+
+str(annotation)
+
+
+sign = sign(annotation$logFC)
+logP = -log10(annotation$PValue)
+rank = logP/sign
+
+names(rank) = annotation$ENSEMBL
+
+gsea = as_tibble(fgseaMultilevel(ms_path_list, rank, maxSize = 500))
+
+min(gsea$padj, na.rm = T)
+
+gsea %>% arrange(pval)
+
+gsea = gsea[,1:7]
+
+gsea = as.data.frame(gsea)
+
+gsea
+write.csv(file = "/tmp/test.csv", gsea)
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Promoter only
+
+promoters = annotation %>%
+  filter(grepl("Promoter", annotation))
+
+nrow(promoters)
+
+sign = sign(promoters$logFC)
+logP = -log10(promoters$PValue)
+rank = logP/sign
+
+names(rank) = promoters$ENSEMBL
+
+gsea = as_tibble(fgseaMultilevel(ms_path_list, rank, maxSize = 500))
+
+min(gsea$padj, na.rm = T)
+
+gsea %>% arrange(pval)
+
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+str(annotation)
+
+annotation$pos = as.character(annotation$annotation)
+
+annotation %>% filter(FDR < 0.05, logFC > 1) %>% dplyr::select(pos)
+
+
+test =annotation %>% filter(FDR < 0.05, logFC < -1, grepl("Promoter", annotation)) %>% pull(SYMBOL)
+
+cat(test, file = "~/down.txt")
+annotation %>% filter()
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+library(biomaRt)
+
+
+ensembl <- useEnsembl(biomart = "ensembl")
+
+datasets <- listDatasets(ensembl)
+
+searchDatasets(mart = ensembl, pattern = "mmusculus")
+
+ensembl <- useDataset(dataset = "mmusculus_gene_ensembl", mart = ensembl)
+
+
+grep("entrez", filters, ignore.case = T, value = T)
+
+values = test$ENTREZID
+
+
+values = values[!is.na(values)]
+
+index = getBM(attributes = c('ensembl_gene_id','entrezgene_id'),
+              filters = 'entrezgene_id',
+              values = values,
+              mart = ensembl, useCache = F)
+
+nrow(index
+index$entrezgene_id = as.character(index$entrezgene_id)
+
+library(tidyverse)
+
+
+test2 = test %>% left_join(index, by = c("ENTREZID" = "entrezgene_id"))
+test2 = test2[!is.na(test2$ensembl_gene_id),]
+test2 = test2[grepl("Promoter", test2$annotation), ]
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+#enricher lists
+test = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/dca_ir48_sham.RDS")
+
+head(test)
+res = as.data.frame(test)
+ggplot(res, aes(x = logFC))+geom_density()
+
+ls()
+
+res %>% filter(rep.logFC > 2)
+str(res)
+#+end_src
+#+begin_src R
+annotation
+
+annotation %>% filter(logFC > 2)
+#+end_src
+
+**** Transcription factors
+**** Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours :sci_rep:
+:PROPERTIES:
+:export_latex_class: paper
+:export_latex_header: \usepackage{./latex/tex/report}
+:export_title: Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours
+:export_options: tags:nil todo:nil toc:2 \n:t ^:nil
+:export_file_name: ./results/reports/szymanski_ms_atac_48_report.pdf
+:ID:       70d78969-3820-4def-b6f3-ab3c7c3e5d87
+:END:
+***** LaTeX settings                                               :noexport:
+[[file:results/reports/szymanski_ms_atac_48_report.tex]]
+[[file:~/repos/latex/tex/report.sty]]
+\usepackage[T1]{fontenc}
+\usepackage{tgbonum}
+***** LaTeX Preamble                                                 :ignore:
+\setcounter{secnumdepth}{0}
+\vspace{5mm}
+\hfill Last compiled {{{time(%Y-%m-%d)}}}.
+\newpage
+***** Discussion
+Expect immune infiltrate at > 1 week supercite:colman2015
+***** References                                                     :ignore:
+\printbibliography
+***** External files
+**** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs
+Error in env[[as.character(i)]] <- value :
+  wrong args for environment subassignment
+Calls: regionCounts ... bploop -> bploop.iterate -> <Anonymous> -> add_inorder
+Execution halted
+
+
+install.packages("tidyverse")
+library(tidyverse)
+
+- base rscript
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/csaw_peak.R
+
+#############################################################################
+###              Script for csaw ATAC-seq local peak calling
+#############################################################################
+
+args = commandArgs(trailingOnly = TRUE)
+bam_dir = args[1]
+bam_pattern = args[2]
+filt_libs_str = args[3]
+threads = args[4]
+background_rds = args[5]
+counts_rds = args[6]
+
+filt_libs = unlist(strsplit(filt_libs_str, " "))
+
+library(BiocParallel)
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+surrounds = 2000
+standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
+param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
+
+bam_list = list.files(path = bam_dir,
+                      pattern = bam_pattern,
+                      full.names = TRUE)
+names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
+                                                   pattern = bam_pattern,
+                                                   full.names = FALSE))
+bam_list = bam_list[names(bam_list) %in% filt_libs]
+
+## Script-local functions
+csaw_choose_window = function(bam_list){
+  # Choose window width by fragment size distribution
+  frag_size = lapply(bam_list, getPESizes)
+  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
+  frag_vect_summary = summary(all_bam_frag_vect)
+  thirdq = frag_vect_summary[[5]]
+  return(thirdq)
+}
+
+window = csaw_choose_window(bam_list)
+
+counts = windowCounts(bam_list,
+                      width = window,
+                      param = param,
+                      BPPARAM = MulticoreParam(workers=threads))
+
+neighbor = suppressWarnings(resize(rowRanges(counts),
+                                   surrounds, fix = "center"))
+
+wider = regionCounts(bam_list,
+                     regions = neighbor,
+                     param = param,
+                     BPPARAM = MulticoreParam(workers=threads))
+
+dimnames(wider) = c()
+dimnames(counts) = c()
+
+filter_stat = filterWindowsLocal(counts, wider)
+
+filtered_counts = counts[filter_stat$filter > log2(3),]
+
+background = windowCounts(bam_list,
+                          bin = TRUE,
+                          width = 10000,
+                          param = param,
+                          BPPARAM = MulticoreParam(workers=threads))
+
+colnames(filtered_counts) = names(bam_list)
+
+saveRDS(object = filtered_counts,
+file = counts_rds)
+
+colnames(background) = names(bam_list)
+
+saveRDS(object = background,
+file = background_rds)
+#+end_src
+- [X] run test
+  #+begin_src bash
+lib_str="lib001 lib002"
+
+nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
+        "_regfilt_tn5.bam$" \
+        "${lib_str}" \
+        8 \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds
+#+end_src
+- [X] run for open
+  #+begin_src bash
+lib_str="lib001 lib002 lib003 lib004 lib005 lib006 lib007 lib008 lib009 lib010 lib011 lib012 lib013 lib015 lib016 lib017 lib018 lib019 lib020 lib021 lib022 lib023 lib024 lib025"
+
+nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
+        "_open_tn5.bam$" \
+        "${lib_str}" \
+        4 \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_background_counts.rds \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_open_counts.rds
+#+end_src
+- [-] run for full
+  #+begin_src bash
+lib_str="lib001 lib002 lib003 lib004 lib005 lib006 lib007 lib008 lib009 lib010 lib011 lib012 lib013 lib015 lib016 lib017 lib018 lib019 lib020 lib021 lib022 lib023 lib024 lib025"
+
+nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/bam \
+        "_regfilt_tn5.bam$" \
+        "${lib_str}" \
+        8 \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_background_counts.rds \
+        /mnt/ris/jschwarz/cardiac-radiobiology/atac/all_regfilt_counts.rds
+#+end_src
+
+
+
+***** Ideas and dev
+****** Description                                                   :ignore:
+ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
+
+Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
+
+****** ATAC-seq peak calling and chromatin accessibility, 6wks
+******* [[file:workflow/peak_calling.smk][Snakefile]]          :smk:noexport:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/peak_calling.smk
+:END:
+******** Smk preamble
+#+begin_src snakemake :noweb yes
+<<smk_preamble>>
+#+end_src
+******** All rule
+#+begin_src snakemake
+rule all:
+    input:
+        config["data_dir"] + "/atac/bk_rse.rds",
+        config["data_dir"] + "/atac/counts_rse.rds",
+#+end_src
+
+******** TEST Make peak counts                                     :smk_rule:
+:LOGBOOK:
+- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
+:END:
+- Snakemake
+  #+begin_src snakemake
+rule make_peak_counts:
+    params:
+        bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_regfilt_tn5.bam$",
+        lib_str = {lib_str}
+
+        expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
+
+        lib_str = config["IR48H_V_SHAM"],
+        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
+    output:
+        background_counts = config["data_dir"] + "/atac/{c}background_counts_rse.rds"
+        counts_rse = config["data_dir"] + "/atac/counts_rse.rds"
+    log:
+        config["data_dir"] + "/logs/make_peak_counts.log",
+    shell:
+        """
+        lib_str="{params.lib_str}"
+        Rscript {params.script} \
+        {params.bam_dir} \
+        {params.bam_pattern} \
+        "${{lib_str}}" \
+        {config.threads} \
+        {output.background_counts} \
+        {output.counts_rse} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/select_window_size.R][Base script]]
+
+
+******** TEST Make peak counts                                     :smk_rule:
+:LOGBOOK:
+- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
+:END:
+- Snakemake
+  #+begin_src snakemake
+rule make_peak_counts:
+    params:
+        bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_regfilt_tn5.bam$",
+        lib_str = config["IR48H_V_SHAM"],
+        script = config["repo"] + "/workflow/scripts/make_peak_counts.R",
+    output:
+        background_counts = config["data_dir"] + "/atac/background_counts_rse.rds"
+        counts_rse = config["data_dir"] + "/atac/counts_rse.rds"
+	window_size = config["data_dir"] + "/atac/window_size.rds",
+    log:
+        config["data_dir"] + "/logs/make_peak_counts.log",
+    shell:
+        """
+        lib_str="{params.lib_str}"
+        Rscript {params.script} \
+        {params.bam_dir} \
+        {params.bam_pattern} \
+        "${{lib_str}}" \
+        {config.threads} \
+        {output.background_counts} \
+        {output.counts_rse} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/select_window_size.R][Base script]]
+  #+begin_src R :noweb yes
+<<r_smk_preamble>>
+
+#############################################################################
+###              Script for csaw ATAC-seq local peak calling
+#############################################################################
+
+args = commandArgs(trailingOnly = TRUE)
+bam_dir = args[1]
+bam_pattern = args[2]
+filt_libs_str = args[3]
+threads = args[4]
+background_rds = args[5]
+rse_rds = args[6]
+
+filt_libs = unlist(strsplit(filt_libs_str, " "))
+
+library(BiocParallel)
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+surrounds = 2000
+standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
+param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
+
+bam_list = list.files(path = bam_dir,
+                      pattern = bam_pattern,
+                      full.names = TRUE)
+names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
+                                                   pattern = bam_pattern,
+                                                   full.names = FALSE))
+bam_list = bam_list[names(bam_list) %in% filt_libs]
+
+## Script-local functions
+csaw_choose_window = function(bam_list){
+  # Choose window width by fragment size distribution
+  frag_size = lapply(bam_list, getPESizes)
+  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
+  frag_vect_summary = summary(all_bam_frag_vect)
+  thirdq = frag_vect_summary[[5]]
+  return(thirdq)
+}
+
+window = csaw_choose_window(bam_list)
+
+counts = windowCounts(bam_list,
+                      width = window,
+                      param = param,
+                      BPPARAM = MulticoreParam(workers=threads))
+
+neighbor = suppressWarnings(resize(rowRanges(counts),
+                                   surrounds, fix = "center"))
+
+wider = regionCounts(bam_list,
+                     regions = neighbor,
+                     param = param,
+                     BPPARAM = MulticoreParam(workers=threads))
+
+filter_stat = filterWindowsLocal(counts, wider)
+
+filtered_counts = counts[filter_stat$filter > log2(3),]
+
+background = windowCounts(bam_list,
+                          bin = TRUE,
+                          width = 10000,
+                          param = param,
+                          BPPARAM = MulticoreParam(workers=threads))
+
+saveRDS(object = filtered_counts,
+file = counts_rds)
+
+saveRDS(object = background,
+file = background_rds)
+#+end_src
+******** TEST Differential accessibility                           :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule differential_accessibility:
+    input:
+        background_rds = config["data_dir"] + "/atac/background_counts_rse.rds"
+        counts_rds = config["data_dir"] + "/atac/counts_rse.rds",
+        data_model = config["data_dir"] + "/data_model/data_model.RData",
+    params:
+        script = config["repo"] + "/workflow/scripts/differential_accessibility.R",
+    output:
+        config["data_dir"] + "/atac/dca.rds",
+    log:
+        config["data_dir"] + "/logs/differential_accessibility.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.counts} \
+        {input.background} \
+	{input.data_model} \
+	{output}
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/differential_accessibility.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/differential_accessibility.R
+<<r_smk_preamble>>
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###   Script to generate differential accessibility model with EdgeR   ###
+###
+
+args = commandArgs(trailingOnly = TRUE)
+counts_rds = args[1]
+background_rds = args[2]
+data_model = args[3]
+dca_granges_file = args[4]
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+counts = readRDS(counts_rds)
+load(data_model)
+background = readRDS(background_rds)
+
+counts = normFactors(background, se.out = counts)
+
+y <- asDGEList(counts)
+colnames(y$counts) <- colnames(counts)
+rownames(y$samples) <- colnames(counts)
+
+groups =
+  data.frame(library_id = rownames(y$samples)) %>%
+  left_join(libraries_full, by = "library_id") %>%
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h")
+
+y$samples$group = groups
+
+design <- model.matrix(~0 + groups, data=y$samples)
+
+colnames(design) = levels(groups)
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+
+fit <- glmQLFit(y, design, robust=TRUE)
+
+# testing for differentially-accessible windows
+results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
+
+
+# combine GRanges rowdata with DA statistics
+rowData(working.windows) <- cbind(rowData(working.windows), results$table)
+#working.windows@rowRanges
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+merged.peaks <- mergeWindows(rowRanges(filtered_counts), tol=500L, max.width=5000L)
+
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+
+
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks,
+        file = dca_grange_file)
+
+#+end_src
+******** TEST Peak annotation                                      :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule peak_annotation:
+    input:
+        config["data_dir"] + "/atac/dca.rds"
+    params:
+        script = config["repo"] + "/workflow/scripts/peak_annotation.R"
+    output:
+        annotated_counts = config["data_dir"] + "/atac/annotated_counts.rds",
+    log:
+        config["data_dir"] + "/logs/peak_annotation.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.annot} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/peak_annotation.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/peak_annotation.R
+<<r_smk_preabmle>>
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###   Script to annotate csaw peaks   ###
+###
+
+args = commandArgs(trailingOnly = TRUE)
+peaks_rds = args[1]
+annotation_file = args[2]
+
+peaks = readRDS(peaks_rds)
+
+library(ChIPseeker)
+library(csaw)
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+library(tidyverse)
+
+txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
+
+peak_loc = peaks
+
+chipseek = annotatePeak(peak_loc, TxDb = txdb, annoDb = "org.Mm.eg.db")
+
+annotation = as_tibble(as.data.frame(chipseek))
+
+write.csv(annotation, row.names = F, file = annotation_file)
+#+end_src
+******** Dev
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+******** Ideas
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+********* Make backgroud bins                                      :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule make_backgroud_bins:
+    input:
+    params:
+        script = config["repo"] + "/workflow/scripts/make_backgroud_bins.R"
+    params:
+        script = config["repo"] + "/workflow/scripts/call_csaw_peaks.R",
+	bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_regfilt_tn5.bam$",
+        lib_str = config["IR48H_V_SHAM"],
+    output:
+    log:
+        config["data_dir"] + "/logs/make_backgroud_bins.log"
+    shell:
+        """
+        Rscript {params.script} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/make_backgroud_bins.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/make_backgroud_bins.R
+#!/usr/bin/env Rscript
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###   Script to make background bins for csaw TMM normalization   ###
+###
+
+# Setup
+##
+## Snakemake
+args = commandArgs(trailingOnly = TRUE)
+window_file =  args[1]
+bam_dir = args[2]
+bam_pattern = args[3]
+filt_libs_str = args[4]
+rse = args[4]
+bk = args[5]
+
+filt_libs = unlist(strsplit(filt_libs_str, " "))
+
+## Libraries
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+## Script-local variables
+surrounds = 2000
+standard_chr <- paste0("chr", c(1:19)) # only use standard chromosomes
+param = readParam(max.frag=1000, pe="both", restrict=standard_chr)
+
+bam_list = list.files(path = bam_dir,
+                  pattern = bam_pattern,
+                  full.names = TRUE)
+
+names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
+                                                   pattern = bam_pattern,
+                                                   full.names = FALSE))
+
+bam_list = bam_list[names(bam_list) %in% filt_libs]
+
+binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
+
+#+end_src
+********* d
+#+begin_src R
+library(csaw)
+library(edgeR)
+# DIFFERENTIAL ACCESSIBILITY ANALYSIS
+
+working.windows = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/norm/csaw_all_csaw_open_filt_tmm_rse.rds")
+
+# set working windows for the desired analysis
+working.windows <- peak.counts.tmm # MACS2 peaks only, standard TMM normalization based on binned counts
+# working.windows <- peak.counts.loess # MACS2 peaks only, for trended biases
+# working.windows <- counts.local.tmm # csaw de novo peaks by local enrichment, standard TMM normalization based on binned counts
+# working.windows <- counts.local.loess # csaw de novo peaks by local enrichment, for trended biases
+# SEE THE CSAW MANUAL FOR MORE INFO ON NORMALIZATION METHODS
+###########
+
+# setup design matrix
+# see edgeR manual for more information
+y <- asDGEList(working.windows)
+colnames(y$counts) <- colnames(working.windows)
+rownames(y$samples) <- colnames(working.windows)
+
+load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
+
+library(tidyverse)
+
+groups =
+  data.frame(library_id = rownames(y$samples)) %>%
+  left_join(libraries_full, by = "library_id") %>%
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h")
+groups
+
+y$samples$group = groups
+colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
+
+
+(design <- model.matrix(~0 + group, data=y$samples))
+
+colnames(design) = levels(groups)
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+fit <- glmQLFit(y, design, robust=TRUE)
+
+# testing for differentially-accessible windows
+results <- glmQLFTest(fit, contrast=makeContrasts(ir6w-sham, levels=design))
+# head(results$table)
+
+# combine GRanges rowdata with DA statistics
+rowData(working.windows) <- cbind(rowData(working.windows), results$table)
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+head(tab.best)
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+final.merged.peaks # all windows
+
+# filter by FDR threshold
+FDR.thresh <- 0.05 # set as desired
+final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
+final.merged.peaks.sig # significant differentially-accessible windows
+
+write.table(final.merged.peaks, "treat_vs_control_csaw_DA-windows_all.txt", sep="\t", quote=F, col.names=T, row.names=F)
+write.table(final.merged.peaks.sig, "treat_vs_control_csaw_DA-windows_significant.txt", sep="\t", quote=F, col.names=T, row.names=F)
+
+###########################################
+
+# Generate MA plot
+library(ggplot2)
+
+final.merged.peaks$sig <- "n.s."
+final.merged.peaks$sig[final.merged.peaks$FDR < FDR.thresh] <- "significant"
+
+ggplot(data=data.frame(final.merged.peaks),
+       aes(x = logCPM, y = logFC, col = factor(sig, levels=c("n.s.", "significant")))) +
+  geom_point() + scale_color_manual(values = c("black", "red")) +
+  geom_smooth(inherit.aes=F, aes(x = logCPM, y = logFC), method = "loess") + # smoothed loess fit; can add span=0.5 to reduce computation load/time
+  geom_hline(yintercept = 0) + labs(col = NULL)
+
+
+#+end_src
+
+#+begin_src R
+# Make logCPM counts of normalized data
+make_logcpm = function(in_norm){
+  dge = asDGEList(in_norm)
+  colnames(dge) = colnames(in_norm)
+  log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
+  return(log_cpm)
+}
+
+logcpm_all_csaw_open_filt_tmm = make_logcpm(tmm)
+logcpm_all_csaw_open_filt_loess = make_logcpm(loess)
+
+pca = prcomp(t(logcpm_all_csaw_open_filt_tmm))
+
+
+pca = prcomp(t(test2))
+
+summary(pca)
+
+#+end_src
+
+********** edgeR:smk_rule:
+https://f1000research.com/articles/5-1438/v2
+
+lfcs are normally distributed, skewed way negative
+https://support.bioconductor.org/p/57328/
+see for batch correction https://www.nature.com/articles/s41598-020-66998-4#Sec9
+- Snakemake
+#+begin_src snakemake
+rule edger:
+    input:
+        rse = config["data_dir"] + "/atac/counts/{counter}_all_{join}_{chrom_filt}_{width}_{norm}_rse.rds",
+    params:
+        script = config["repo"] + "/workflow/scripts/edger.R"
+    output:
+log:
+    config["data_dir"] + "/logs/edger.log"
+shell:
+    """
+    Rscript {params.script} \
+    >& {log}
+    """
+#+end_src
+- [[file:./workflow/scripts/edger.R][Base script]]
+#+begin_src R :noweb yes :tangle ./workflow/scripts/edger.R
+#!/usr/bin/env Rscript
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###   Do differential expression of ATAC-seq peaks through edgeR   ###
+###
+
+args = commandArgs(trailingOnly = TRUE)
+= args[1]
+
+library(csaw)
+library(DESeq2)
+library(edgeR)
+library(tidyverse)
+
+# Load counts as DGE list
+counts = readRDS(input)
+
+counts = readRDS("/mnt/ris/jschwarz/cardiac-radiobiology/atac/norm/macs2_all_union_open_narrow_tmm_rse.rds")
+load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
+
+# setup design matrix
+# see edgeR manual for more information
+y <- asDGEList(counts)
+colnames(y$counts) =
+rownames(y$samples) = names(counts$bam.files)
+groups =
+  data.frame(library_id = names(counts$bam.files)) %>%
+  left_join(libraries_full, by = "library_id") %>%
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h")
+y$samples$group = groups
+colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
+
+plotMDS(y, col = colors, gene.selection = "common", top = 1000000)
+
+test
+
+test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004")))
+test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004","lib013","lib018")))
+counts = test
+
+# setup design matrix
+# see edgeR manual for more information
+y <- asDGEList(counts)
+colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
+groups =
+  data.frame(library_id = names(counts$bam.files)) %>%
+  left_join(libraries_full, by = "library_id") %>%
+  droplevels() %>%
+  pull(cohort_id)
+groups = fct_relevel(groups, "sham", "ir48h")
+groups
+y$samples$group = groups
+colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
+
+pdf("/tmp/pca.pdf")
+plotMDS(y, col = colors, gene.selection = "common", top = 80)
+dev.off()
+
+plotMDS(y, col = colors, top = 100)
+
+design <- model.matrix(~group, data=y$samples)
+colnames(design) = levels(groups)
+
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+fit <- glmQLFit(y, design, robust=TRUE)
+
+summary(fit$df.prior)
+
+fit <- glmQLFit(y, design)
+
+class(design)
+# testing for differentially-accessible windows
+results <- glmQLFTest(fit, contrast=makeContrasts(sham-ir6w, levels=design))
+# head(results$table)
+
+topTags(results)
+
+# combine GRanges rowdata with DA statistics
+rowData(counts) <- cbind(rowData(counts), results$table)
+
+res = as.data.frame(topTags(results, n = Inf))
+
+ggplot(res, aes(x = logFC)) + geom_density()
+summary(as.data.frame(topTags(results, n = Inf))$FDR)
+
+test = as_tibble(as.data.frame(topTags(results, n = Inf)))
+
+max(test$FDR)
+
+summary(results$table$PValue)
+
+head(results$table$PValue)
+
+fit = glmFit(y, design, contrast = makeContrasts(ir48h-sham, levels = design))
+
+fit
+lrt = glmLRT(fit, contrast = makeContrasts(ir48h-sham, levels = design))
+test=as.data.frame(topTags(lrt, n = 10000))
+class(test)
+summary(test$FDR)
+lrt
+head(lrt$table)
+et = exactTest(y)
+topTags(et)
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
+# summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+head(tab.best)
+min(tab.best$PValue)
+min(tab.best$FDR)
+
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+final.merged.peaks # all windows
+
+# filter by FDR threshold
+FDR.thresh <- 0.05 # set as desired
+final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
+final.merged.peaks.sig # significant differentially-accessible windows
+
+
+
+
+colnames(design) = levels(counts$samples$group)
+
+test = rlog(assays(counts)$counts)
+rld = test
+
+class(rld)
+mat = t(rld)
+pca = prcomp(mat)
+
+summary(pca)
+
+head(counts$counts)
+rownames(counts$counts)
+
+class(working.windows)
+
+working.windows
+
+# stabilize dispersion estimates with empirical bayes
+y <- estimateDisp(y, design)
+fit <- glmQLFit(y, design, robust=TRUE)
+
+# testing for differentially-accessible windows
+#results <- glmQLFTest(fit, contrast=makeContrasts(treat-control, levels=design))
+
+results <- glmQLFTest(fit, contrast=makeContrasts(ir48h-sham, levels=design))
+# head(results$table)
+
+test = results$table
+min(test$PValue)
+
+class(working.windows)
+
+test = working.windows[,8:15]
+
+
+# combine GRanges rowdata with DA statistics
+#rowData(working.windows) <- cbind(rowData(working.windows), results$table)
+rowData(test) = cbind(rowData(test), results$table)
+
+test@rowRanges
+working.windows = test
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(working.windows), tol=500L, max.width=5000L)
+summary(width(merged.peaks$region))
+# should merge some peaks; change as desired
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best <- getBestTest(merged.peaks$id, results$table)
+head(tab.best)
+# combine merged peaks window range with statistics
+final.merged.peaks <- merged.peaks$region
+final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+final.merged.peaks # all windows
+
+# filter by FDR threshold
+#FDR.thresh <- 0.05 # set as desired
+#final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$FDR < FDR.thresh, ]
+#final.merged.peaks.sig # significant differentially-accessible windows
+
+
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+library(DESeq2)
+
+test = subset(counts, select = !(colnames(counts) %in% c("lib001", "lib002","lib007","lib005", "lib006", "lib003", "lib004","lib013","lib018", "lib023", "lib014")))
+counts = test
+
+
+test = rlog(assays(counts)$counts)
+rld = test
+
+rld = vst(assays(counts)$counts)
+mat = t(rld)
+pca = prcomp(mat)
+
+summary(pca)
+
+pca_plot = as.data.frame(pca$x) %>%
+  rownames_to_column(var = "library_id") %>%
+  left_join(libraries_full, by = "library_id") %>%
+  ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
+  geom_point(size = 4)
+pca_plot
+
+
+
+#lowdate = as.character(data.frame(library_id = colnames(y)) %>% left_join(libraries_full, by = "library_id") %>% pull(flow_date))
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+#+end_src
+
+******* Description                                                  :ignore:
+ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
+
+Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
+
+
+**** All count logcpms for QC
+:LOGBOOK:
+- State "WAITING"    from "TODO"       [2022-03-31 Thu 14:24]
+:END:
+
+- [X] Functions and test
+  #+begin_src R :tangle ./workflow/scripts/counts_to_logcpm.R
+args = commandArgs(trailingOnly = TRUE)
+counts_rds = args[1]
+background_rds = args[2]
+logcpm_file = args[3]
+
+background = readRDS(background_rds)
+counts = readRDS(counts_rds)
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+counts = normFactors(background, se.out = counts)
+
+make_logcpm = function(in_norm){
+  dge = asDGEList(in_norm)
+  colnames(dge) = colnames(in_norm)
+  log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
+  return(log_cpm)
+}
+
+logcpm = make_logcpm(counts)
+
+saveRDS(object = logcpm,
+        file = logcpm_file)
+#+end_src
+  #+begin_src bash
+Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R \
+	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_counts.rds \
+	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_background_counts.rds \
+	/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_logcpm.rds
+#+end_src
+
+- All sample PCA
+  #+begin_src bash
+
+#+end_src
+- Filtered PCA
+- Reference
+  - PCA of mislabeled samples
+    #+begin_src R
+  load("/mnt/ris/jschwarz/cardiac-radiobiology/atac/ir48_v_sham_tmp.rdata")
+
+  load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
+
+  participants$cohort_id[which(participants$part_id == "ms015")] = "ir48h"
+
+  libraries_full$cohort_id[which(libraries_full$library_id == "lib009")] = "ir48h"
+
+  libraries_full$cohort_id[which(libraries_full$library_id == "lib016")] = "sham"
+
+  library(csaw)
+
+  make_logcpm = function(in_norm){
+    dge = asDGEList(in_norm)
+    colnames(dge) = colnames(in_norm)
+    log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
+    return(log_cpm)
+  }
+
+  logcpm = make_logcpm(filtered_counts)
+
+  pca = prcomp(t(logcpm))
+  summary(pca)
+
+  library(tidyverse)
+  library(ggrepel)
+
+  make_pca_plots = function(in_pca, full_libs){
+    pve_pc1=round(100*summary(in_pca)$importance[2,1])
+    pve_pc2=round(100*summary(in_pca)$importance[2,2])
+
+    pca_plot = as.data.frame(in_pca$x) %>%
+      rownames_to_column(var = "library_id") %>%
+      left_join(full_libs, by = "library_id") %>%
+      ggplot(., aes(x = PC1, y = PC2, color = cohort_id, label = library_id)) +
+      geom_point(size = 4) +
+      geom_text_repel() +
+      xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+      ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+      guides(color="none")
+    return(pca_plot)
+  }
+
+
+
+  test =make_pca_plots(pca, libraries_full)
+
+
+  in_pca = pca
+  pve_pc1=round(100*summary(in_pca)$importance[2,1])
+  pve_pc2=round(100*summary(in_pca)$importance[2,2])
+
+  pca_plot = as.data.frame(in_pca$x) %>%
+    rownames_to_column(var = "library_id") %>%
+    left_join(libraries_full, by = "library_id") %>%
+    ggplot(., aes(x = PC1, y = PC2, color = cohort_id, label = library_id)) +
+    geom_point(size = 4) +
+    geom_text_repel(force = 10) +
+    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+    guides(color="none")
+
+
+  ggsave(pca_plot, filename = "/mnt/ris/jschwarz/cardiac-radiobiology/tmp/pca2.pdf")
+
+  ggsave(pca_plot, filename = "~/repos/cardradbio-atac/results/imgs/ir48h_v_sham_full_pca.pdf")
+  #+end_src
+
+**** Read processing and alignment
+***** Description                                                    :ignore:
+Sequencing read adapters were removed and reads were quality trimmed using flexbar.
+
+Processed reads were aligned to mm10 using bowtie2.
+
+PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
+
+
+***** DONE [[file:workflow/preprocess_align.smk][Snakefile]]            :smk:
+CLOSED: [2022-03-11 Fri 12:19]
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/preprocess_align.smk
+:CUSTOM_ID: readp
+:END:
+:LOGBOOK:
+- State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:19]
+:END:
+****** Smk preamble
+#+begin_src snakemake
+container: config["container"]
+RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
+#+end_src
+****** Smk rules
+******* All rule
+#+begin_src snakemake
+rule all:
+    input:
+        expand(config["data_dir"] + "/atac/bam/{library_id}.bam", library_id=RUNSAMPLES),
+        config["data_dir"] + "/ref/keep.bed",
+        expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam", library_id=RUNSAMPLES),
+        expand(config["data_dir"] + "/atac/bam/{library_id}_open.bam", library_id=RUNSAMPLES),
+        expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam", library_id=RUNSAMPLES),
+        expand(config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam", library_id=RUNSAMPLES),
+#+end_src
+******* Read trim                                                  :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule read_trim:
+    input:
+        r1 = config["data_dir"] + "/atac/fastq/{library_id}_R1.fastq.gz",
+        r2 = config["data_dir"] + "/atac/fastq/{library_id}_R2.fastq.gz",
+    params:
+        outdir = config["data_dir"] + "/atac/fastq",
+        threads = config["threads"],
+    output:
+        config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
+        config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
+    resources:
+        mem_mb=5000
+    shell:
+        """
+        workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
+        """
+#+end_src
+- Script [[file:workflow/scripts/read_trim.sh]]
+  #+begin_src bash :noweb yes :tangle ./workflow/scripts/read_trim.sh
+#########1#########2#########3#########4#########5#########6#########7#########8
+#
+# Function for flexbar processing
+flexbar_atac() {
+    base=$(basename -s _R1.fastq.gz $1)
+    flexbar \
+        --adapter-pair-overlap ON \
+        --adapter-preset Nextera \
+        --pre-trim-right 1 \
+        --reads "${1}" \
+        --reads2 "${2}" \
+        --target "${3}/${base}_flex" \
+        --threads ${4} \
+        --zip-output GZ
+}
+
+# Snakemake parameters
+input_r1="$1"
+input_r2="$2"
+params_outdir="$3"
+params_threads="$4"
+
+# Run
+flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
+#+end_src
+******* Make bowtie index                                          :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule make_bowtie_index:
+    input:
+        fa = config["data_dir"] + "/ref/mm10.fa",
+    params:
+        prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
+        threads = config["threads"]
+    output:
+        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",
+    shell:
+        """
+        workflow/scripts/make_bowtie_index.sh {input.fa} {params.prefix} {params.threads}
+        """
+#+end_src
+- [[file:./workflow/scripts/make_bowtie_index.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Function
+make_bt2_index(){
+    index_dir=$(dirname $3)
+    mkdir -p $index_dir
+    bowtie2-build -f \
+                  --threads $1 \
+                  $2 \
+                  $3
+}
+
+# Snakemake variables
+input_fa="$1"
+params_prefix="$2"
+params_threads="$3"
+
+# Run
+make_bt2_index $params_threads $input_fa $params_prefix
+#+end_src
+******* Align BT2                                                  :smk_rule:
+:LOGBOOK:
+- State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
+:END:
+- Snakemake
+  #+begin_src snakemake
+rule align_bt2:
+    input:
+        r1 = config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
+        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
+    params:
+        prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
+        threads = config["threads"],
+    output:
+        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
+    shell:
+        """
+        workflow/scripts/align_bt2.sh {input.r1} {input.r2} {params.prefix} {params.threads} {output.bam}
+        """
+#+end_src
+- [[file:./workflow/scripts/align_bt2.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/align_bt2.sh
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Function
+bt2_align(){
+    bowtie2 --maxins 2000 --threads $1 --very-sensitive -x $2 -1 $3 -2 $4 | samtools view -bS - > $5
+}
+
+# Snakemake variables
+input_r1="$1"
+input_r2="$2"
+params_prefix="$3"
+params_threads="$4"
+output_bam="$5"
+
+# Run
+bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
+#+end_src
+******* Make keep bed                                              :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule make_keep_bed:
+    input:
+        autosome_bed = config["data_dir"] + "/ref/grcm38_primary_assembly_chr.bed",
+        blacklist_bed = config["data_dir"] + "/ref/mm10-blacklist.v2_ENSEMBL_chr.bed",
+    output:
+        keep_bed = config["data_dir"] + "/ref/keep.bed",
+    shell:
+        """
+        bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed} > {output.keep_bed}
+        """
+#+end_src
+******* Filter and dedup                                           :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule filter_and_dedup:
+    input:
+        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
+    params:
+        keep_bed = config["data_dir"] + "/ref/keep.bed",
+        threads = config["threads"],
+    output:
+        dedup_bam = config["data_dir"] + "/atac/bam/{library_id}_dedup.bam",
+        qfilt_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_qfilt.bam"),
+        regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
+        regfilt_index = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam.bai",
+    resources:
+        mem_mb=5000
+    shell:
+        """
+        workflow/scripts/filter_and_dedup.sh {input.bam} \
+	                                     {params.keep_bed} \
+	                                     {params.threads} \
+	                                     {output.dedup_bam} \
+	                                     {output.qfilt_bam} \
+	                                     {output.regfilt_bam}
+        """
+#+end_src
+- [[file:./workflow/scripts/filter_and_dedup.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/filter_and_dedup.sh
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Function
+
+atac_bam_processing(){
+    #
+    # Dedup
+    samtools sort -@ $1 -n -o - $2 |
+    samtools fixmate -m - - |
+    samtools sort -@ $1 -o - - |
+    samtools markdup -@ $1 -r - $3
+    #
+    # Filter to aligned, properly paired reads
+    samtools view -@ $1 -b -f 3 -h -o $4 $3
+    #
+    # Filter to autosomes and remove blacklisted regions
+    samtools view -@ $1 -b -h -L $5 -o - $4 |
+    samtools sort -@ $1 -n -o - - |
+    samtools fixmate -m - - |
+    samtools sort -@ $1 -o $6 -
+    samtools index $6
+}
+
+# Snakemake variables
+input_bam="$1"
+params_keep_bed="$2"
+params_threads="$3"
+output_dedup_bam="$4"
+output_qfilt_bam="$5"
+output_regfilt_bam="$6"
+
+# Run command
+atac_bam_processing "$params_threads" \
+                    "$input_bam" \
+                    "$output_dedup_bam" \
+                    "$output_qfilt_bam" \
+                    "$params_keep_bed" \
+                    "$output_regfilt_bam"
+samtools index "$output_regfilt_bam"
+#+end_src
+******* Get open chrom                                             :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule get_open_chrom:
+    input:
+        regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
+    output:
+        unsort_open_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_unsort_open.bam"),
+        open_bam = config["data_dir"] + "/atac/bam/{library_id}_open.bam",
+    shell:
+        """
+        workflow/scripts/get_open_chrom.sh {input.regfilt_bam} \
+                                           {config[threads]} \
+                                           {output.unsort_open_bam} \
+                                           {output.open_bam}
+        """
+#+end_src
+- [[file:./workflow/scripts/get_open_chrom.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/get_open_chrom.sh
+#########1#########2#########3#########4#########5#########6#########7#########8
+alignmentSieve --bam $1 \
+               --maxFragmentLength 150 \
+               --numberOfProcessors $2 \
+               --outFile $3
+samtools sort -@ $2 -o $4 $3
+samtools index -@ $2 $4
+#+end_src
+******* Tn5 shift                                                  :smk_rule:
+:LOGBOOK:
+- State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
+- State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
+- State "DONE"       from "RUN"        [2022-02-11 Fri 16:40]
+- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
+  add to next run
+:END:
+- Snakemake
+  #+begin_src snakemake
+rule tn5_shift_and_open:
+    input:
+        atac_bam =         config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
+    output:
+        tmp_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tmp.bam"),
+        tn5_bam =      config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam",
+    log:
+        config["data_dir"] + "/logs/tn5_shift_and_open_{library_id}_regfilt.log",
+    shell:
+        """
+        workflow/scripts/tn5_shift.sh {input.atac_bam} \
+	                              {config[threads]} \
+	                              {output.tmp_bam} \
+                                      {output.tn5_bam} > {log} 2>&1
+        """
+#+end_src
+- [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
+alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
+
+samtools sort -@ $2 -o $4 $3
+
+samtools index -@ $2 $4
+#+end_src
+******* Tn5 open shift                                             :smk_rule:
+:LOGBOOK:
+- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
+  add to next run
+:END:
+- Snakemake
+  #+begin_src snakemake
+rule tn5_shift_open:
+    input:
+        atac_bam =         config["data_dir"] + "/atac/bam/{library_id}_open.bam",
+    output:
+        tmp_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_open_tmp.bam"),
+        tn5_bam =      config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam",
+    log:
+        config["data_dir"] + "/logs/tn5_shift_and_open_{library_id}_open.log",
+    shell:
+        """
+        workflow/scripts/tn5_shift.sh {input.atac_bam} \
+	                              {config[threads]} \
+	                              {output.tmp_bam} \
+                                      {output.tn5_bam} > {log} 2>&1
+        """
+#+end_src
+- [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
+alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
+
+samtools sort -@ $2 -o $4 $3
+
+samtools index -@ $2 $4
+#+end_src
+
+****** Ideas
+- redefine samtools tmp dir outside repo
+
+
+
+
+*** TODO Motif analysis
+- Get gene list- Takes annotated edger results as table
+  #+begin_src R
+library(tidyverse)
+test = as_tibble(read.csv("/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_de.csv", header = T))
+
+motifs_down_ensembl = test %>%
+  filter(grepl("promoter", annotation, ignore.case = T)) %>%
+  filter(FDR < 0.05) %>%
+  filter(logFC < 0) %>%
+  pull(geneId)
+
+motifs_up_ensembl = test %>%
+  filter(grepl("promoter", annotation, ignore.case = T)) %>%
+  filter(FDR < 0.05) %>%
+  filter(logFC > 0) %>%
+  pull(geneId)
+
+writeLines(as.character(motifs_down_ensembl), "/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt")
+writeLines(as.character(motifs_up_ensembl), "/mnt/ris/jschwarz/cardiac-radiobiology/atac/test_up.txt")
+
+#+end_src
+
+- Find motifs
+  #+begin_src bash
+mkdir -p /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/
+
+nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
+
+# try
+
+
+
+Number of CPUs to use ("-p <#>", default 1)
+HOMER is now multicore compliant.  It's not perfectly parallelized, however, certain types of analysis can benefit.  In general, the longer the length of the motif, the better the speed-up you'll see.
+
+Number of motifs to find ("-S <#>", default 25)
+Specifies the number of motifs of each length to find.  25 is already quite a bit.  If anything, I'd recommend reducing this number, particularly for long motifs to reduce the total execution time.
+perl /opt/miniconda/share/homer/.//configureHomer.pl -list
+
+perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
+
+#+end_src
+
+- Extract gene names
+  #+begin_src bash
+
+#+end_src
+
+
+**** Snakefile                                                 :smk:noexport:
+:PROPERTIES:
+:header-args:snakemake:  :tangle ./workflow/motifs.smk
+:END:
+***** Smk preamble
+#+begin_src snakemake :noweb yes
+<<smk_preamble>>
+#+end_src
+***** All rule
+#+begin_src snakemake
+rule all:
+    input:
+#+end_src
+***** Extract gene list                                            :smk_rule:
+
+extract ensembl ID lists from csaw-EdgeR DCA workflow
+
+- Snakemake
+  #+begin_src snakemake
+rule extract_gene_list:
+    input:
+    params:
+        script = config["repo"] + "/workflow/scripts/extract_gene_list.R"
+    output:
+    log:
+        config["data_dir"] + "/logs/extract_gene_list.log"
+    shell:
+        """
+        Rscript {params.script} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/extract_gene_list.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/extract_gene_list.R
+#!/usr/bin/env Rscript
+#########1#########2#########3#########4#########5#########6#########7#########8
+###
+###    SCRIPT TITLE   ###
+###
+
+args = commandArgs(trailingOnly = TRUE)
+dca_tbl = args[1]
+
+#+end_src
+***** Find motifs for gene list promoters
+#+begin_src bash
+#nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
+
+findMotifs.pl test/homer/open_48hr-sham_down_genelist.txt \
+              mouse \
+              test/homer/open_ir48h-sham_less -fdr10 -p 4
+
+#+end_src
+- Find motifs by gene list
+  #+begin_src bash
+# TODO install homer w/ mouse-p promoter set
+
+source ~/repos/cardradbio-atac/config/${HOSTNAME}.sh
+
+# Fake gene list from peak annotation output, is ensembl IDs
+#
+
+# Install mouse homer promotor set
+perl /home/jeszyman/homer/.//configureHomer.pl -install mouse-p
+
+mkdir -p /tmp/out
+
+findMotifs.pl /tmp/test.txt mouse /tmp/out
+
+perl /opt/miniconda/share/homer/.//configureHomer.pl -list
+
+perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
+
+#+end_src
+**** Description                                                     :ignore:
 ** README
 currently only for mouse for macs2
 *** Prerequisites to run repository local integration testing

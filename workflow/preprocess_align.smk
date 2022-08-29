@@ -1,4 +1,4 @@
-container: config["container"]            
+container: config["container"]
 RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
 
 rule all:
@@ -20,7 +20,7 @@ rule read_trim:
     output:
         config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
         config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -34,7 +34,7 @@ rule make_bowtie_index:
         prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
         threads = config["threads"]
     output:
-        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",	
+        config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2.1.bt2",
     shell:
         """
         workflow/scripts/make_bowtie_index.sh {input.fa} {params.prefix} {params.threads}
@@ -43,7 +43,7 @@ rule make_bowtie_index:
 rule align_bt2:
     input:
         r1 = config["data_dir"] + "/atac/fastq/{library_id}_flex_1.fastq.gz",
-        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",	
+        r2 = config["data_dir"] + "/atac/fastq/{library_id}_flex_2.fastq.gz",
     params:
         prefix = config["data_dir"] + "/ref/ucsc_mm10_bt2/ucsc_mm10_bt2",
         threads = config["threads"],
@@ -70,13 +70,13 @@ rule filter_and_dedup:
         bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
     params:
         keep_bed = config["data_dir"] + "/ref/keep.bed",
-        threads = config["threads"],	
+        threads = config["threads"],
     output:
         dedup_bam = config["data_dir"] + "/atac/bam/{library_id}_dedup.bam",
         qfilt_bam = temp(config["data_dir"] + "/atac/bam/{library_id}_qfilt.bam"),
         regfilt_bam = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam",
         regfilt_index = config["data_dir"] + "/atac/bam/{library_id}_regfilt.bam.bai",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -85,7 +85,7 @@ rule filter_and_dedup:
 	                                     {params.threads} \
 	                                     {output.dedup_bam} \
 	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam} 
+	                                     {output.regfilt_bam}
         """
 
 rule get_open_chrom:

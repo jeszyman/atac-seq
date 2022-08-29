@@ -1,5 +1,5 @@
 #############################################################################
-###              Script for csaw ATAC-seq local peak calling 
+###              Script for csaw ATAC-seq local peak calling
 #############################################################################
 
 args = commandArgs(trailingOnly = TRUE)
@@ -69,10 +69,10 @@ background = windowCounts(bam_list,
 
 colnames(filtered_counts) = names(bam_list)
 
-saveRDS(object = filtered_counts, 
+saveRDS(object = filtered_counts,
 file = counts_rds)
 
 colnames(background) = names(bam_list)
 
-saveRDS(object = background, 
+saveRDS(object = background,
 file = background_rds)

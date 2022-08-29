@@ -8,7 +8,7 @@ rule read_trim:
     output:
         config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
         config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -18,7 +18,7 @@ rule read_trim:
 rule align_bt2:
     input:
         r1 = config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",	
+        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
     params:
         prefix = config["bowtie_prefix"],
         threads = config["threads"],
@@ -37,7 +37,7 @@ rule filter_and_dedup:
         qfilt_bam = temp(config["bam_dir"] + "/{library_id}_qfilt.bam"),
         regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
         regfilt_index = config["bam_dir"] + "/{library_id}_regfilt.bam.bai",
-    resources: 
+    resources:
         mem_mb=5000
     shell:
         """
@@ -46,7 +46,7 @@ rule filter_and_dedup:
 	                                     {config[threads]} \
 	                                     {output.dedup_bam} \
 	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam} 
+	                                     {output.regfilt_bam}
         """
 
 rule get_open_chrom:
@@ -101,7 +101,7 @@ rule fastqc:
     output:
         raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
     log:
-        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",	
+        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
     shell:
         """
         fastqc --outdir {config[qc_dir]} \

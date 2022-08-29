@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to make background bins for csaw TMM normalization   ###                
+###   Script to make background bins for csaw TMM normalization   ###
 ###
 
 # Setup
@@ -42,7 +42,7 @@ binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to make background bins for csaw TMM normalization   ###                
+###   Script to make background bins for csaw TMM normalization   ###
 ###
 
 # Setup

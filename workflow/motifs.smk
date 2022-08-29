@@ -1,4 +1,4 @@
-
+<<smk_preamble>>
 
 rule all:
     input:

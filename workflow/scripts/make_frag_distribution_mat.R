@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   R Script to make fragment size distribution matrix   ###                
+###   R Script to make fragment size distribution matrix   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]                
+bam_dir = args[1]
 rds = args[2]
 
 library(preseqR)
@@ -45,7 +45,7 @@ fragSizeDist <- function(bamFiles, bamFiles.labels, index=bamFiles, ylim=NULL,
   on.exit(par(opar))
   pe <- mapply(testPairedEndBam, bamFiles, index)
   if(any(!pe)){
-    stop(paste(bamFiles[!pe], collapse = ", "), 
+    stop(paste(bamFiles[!pe], collapse = ", "),
          "is not Paired-End file.")
   }
   summaryFunction <- function(seqname, seqlength, bamFile, ind, ...) {
@@ -55,7 +55,7 @@ fragSizeDist <- function(bamFiles, bamFiles.labels, index=bamFiles, ylim=NULL,
                    flag=scanBamFlag(isSecondaryAlignment = FALSE,
                                     isUnmappedQuery=FALSE,
                                     isNotPassingQualityControls = FALSE))
-    table(abs(unlist(sapply(scanBam(bamFile, index=ind, ..., param=param), 
+    table(abs(unlist(sapply(scanBam(bamFile, index=ind, ..., param=param),
                             `[[`, "isize"), use.names = FALSE)))
   }
 }
@@ -64,7 +64,7 @@ idxstats <- unique(do.call(rbind, mapply(function(.ele, .ind)
     idxstatsBam(.ele, index = .ind)[, c("seqnames", "seqlength")], bamFiles, index, SIMPLIFY=FALSE)))
   seqnames <- as.character(idxstats[, "seqnames"])
   seqlen <- as.numeric(idxstats[, "seqlength"])
-  fragment.len <- mapply(function(bamFile, ind) summaryFunction(seqname=seqnames, seqlength=seqlen, bamFile, ind), 
+  fragment.len <- mapply(function(bamFile, ind) summaryFunction(seqname=seqnames, seqlength=seqlen, bamFile, ind),
                          bamFiles, index, SIMPLIFY=FALSE)
 
   names(fragment.len) <- bamFiles.labels

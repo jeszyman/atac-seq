@@ -103,3 +103,7 @@ x dplyr::lag()        masks stats::lag()
 x purrr::reduce()     masks GenomicRanges::reduce(), IRanges::reduce()
 x dplyr::rename()     masks S4Vectors::rename()
 x dplyr::slice()      masks IRanges::slice()
+Error in fitFDistRobustly(var, df1 = df, covariate = covariate, winsor.tail.p = winsor.tail.p) : 
+  statmod package required but is not installed
+Calls: glmQLFit ... glmQLFit -> glmQLFit.default -> squeezeVar -> fitFDistRobustly
+Execution halted

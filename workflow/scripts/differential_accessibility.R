@@ -2,7 +2,7 @@
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-### Script to generate ATAC-seq differential accessibility model with EdgeR  ###                
+### Script to generate ATAC-seq differential accessibility model with EdgeR  ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -15,12 +15,12 @@ background_rds = args[2]
 data_model = args[3]
 dca_granges_file = args[4]
 
-## Load libraries 
+## Load libraries
 library(csaw)
 library(edgeR)
 library(tidyverse)
 
-## Load data 
+## Load data
 counts = readRDS(counts_rds)
 background = readRDS(background_rds)
 load(data_model)
@@ -34,10 +34,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -76,13 +76,13 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
+saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
-#!/usr/bin/env Rscript
+<<r_smk_preamble>>
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to generate differential accessibility model with EdgeR   ###                
+###   Script to generate differential accessibility model with EdgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -107,10 +107,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -149,7 +149,7 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
+saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
 # needs to be part of counts step
@@ -158,7 +158,7 @@ colnames(counts) = c("lib001","lib002","lib003","lib004")
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###                
+###   Script to generate differential accessibility model with EdgeR         ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -209,13 +209,13 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
+saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
-#!/usr/bin/env Rscript
+<<r_smk_preamble>>
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Script to generate differential accessibility model with EdgeR   ###                
+###   Script to generate differential accessibility model with EdgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -240,10 +240,10 @@ rownames(y$samples) <- colnames(counts)
 
 groups =
   data.frame(library_id = rownames(y$samples)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 
 y$samples$group = groups
 
@@ -282,5 +282,5 @@ final.merged.peaks <- merged.peaks$region
 final.merged.peaks@elementMetadata <- cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
+saveRDS(object = final.merged.peaks,
         file = dca_grange_file)

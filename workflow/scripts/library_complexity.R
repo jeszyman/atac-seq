@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   R Script to assess ATAC-seq library complexity by fragment length   ###                
+###   R Script to assess ATAC-seq library complexity by fragment length   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
@@ -19,5 +19,5 @@ libCompWrap = function(dup_bam){
 
 complex = libCompWrap("/mnt/ris/jschwarz/cardiac-radiobiology/inputs/Rentschler_s5469_MGI2048/lc-08.TCGTGATCAG-ACACTACGTA/lc-08.TCGTGATCAG-ACACTACGTA.genome_accepted_hits.bam")
 
-saveRDS(object = complex, 
+saveRDS(object = complex,
         file = rds)

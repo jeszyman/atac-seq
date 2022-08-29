@@ -1,0 +1,209 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+align_bt2                4              1              1
+all                      1              1              1
+call_macs2_broad         8              1              1
+call_macs2_narrow        8              1              1
+fastqc                   8              1              1
+filter_and_dedup         4              1              1
+get_open_chrom           4              1              1
+open_genome              4              1              1
+read_trim                4              1              1
+samstats                 4              1              1
+tn5_shift                4              1              1
+tn5_shift_open           4              1              1
+total                   57              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (12):
+	fastqc
+	read_trim
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	read_trim
+	read_trim
+	fastqc
+	fastqc
+	read_trim
+	fastqc
+Select jobs to execute...
+Selected jobs (4):
+	read_trim
+	read_trim
+	fastqc
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Mon Aug 29 12:37:35 2022]
+rule read_trim:
+    input: test/fastq/atac4_R1.fastq.gz, test/fastq/atac4_R2.fastq.gz
+    output: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    jobid: 4
+    wildcards: library_id=atac4
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+
+[Mon Aug 29 12:37:35 2022]
+rule read_trim:
+    input: test/fastq/atac3_R1.fastq.gz, test/fastq/atac3_R2.fastq.gz
+    output: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    jobid: 3
+    wildcards: library_id=atac3
+    resources: tmpdir=/tmp, mem_mb=5000
+
+
+        workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Mon Aug 29 12:37:35 2022]
+rule fastqc:
+    input: test/fastq/atac1_R1.fastq.gz
+    output: test/qc/atac1_R1_fastqc.html
+    log: test/logs/fastqc_raw_atac1_R1.log
+    jobid: 25
+    wildcards: library_id=atac1, read=R1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac1_R1.fastq.gz &> test/logs/fastqc_raw_atac1_R1.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac1_R1.fastq.gz &> test/logs/fastqc_raw_atac1_R1.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+[Mon Aug 29 12:37:35 2022]
+rule fastqc:
+    input: test/fastq/atac4_R1.fastq.gz
+    output: test/qc/atac4_R1_fastqc.html
+    log: test/logs/fastqc_raw_atac4_R1.log
+    jobid: 31
+    wildcards: library_id=atac4, read=R1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac4_R1.fastq.gz &> test/logs/fastqc_raw_atac4_R1.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'fastqc --outdir test/qc         --quiet         --threads 4 test/fastq/atac4_R1.fastq.gz &> test/logs/fastqc_raw_atac4_R1.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.sif
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 30, in __rule_read_trim
+    """
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+
+[Mon Aug 29 12:37:35 2022]
+Error in rule read_trim:
+    jobid: 4
+    output: test/fastq/atac4_flex_1.fastq.gz, test/fastq/atac4_flex_2.fastq.gz
+    shell:
+        
+        workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 30, in __rule_read_trim
+    """
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 14 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 14, in __rule_read_trim
+
+RuleException:
+CalledProcessError in line 14 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac4_R1.fastq.gz test/fastq/atac4_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 14, in __rule_read_trim
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 30, in __rule_read_trim
+    """
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+
+[Mon Aug 29 12:37:35 2022]
+Error in rule read_trim:
+    jobid: 3
+    output: test/fastq/atac3_flex_1.fastq.gz, test/fastq/atac3_flex_2.fastq.gz
+    shell:
+        
+        workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 30, in __rule_read_trim
+    """
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 14 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 14, in __rule_read_trim
+
+RuleException:
+CalledProcessError in line 14 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.sif bash -c 'workflow/scripts/read_trim.sh test/fastq/atac3_R1.fastq.gz test/fastq/atac3_R2.fastq.gz test/fastq 4'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 14, in __rule_read_trim
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+[Mon Aug 29 12:37:40 2022]
+Finished job 25.
+1 of 57 steps (2%) done
+[Mon Aug 29 12:37:40 2022]
+Finished job 31.
+2 of 57 steps (4%) done
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-29T123735.305848.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

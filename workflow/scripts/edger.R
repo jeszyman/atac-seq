@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Do differential expression of ATAC-seq peaks through edgeR   ###                
+###   Do differential expression of ATAC-seq peaks through edgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-= args[1]                
+= args[1]
 
 library(csaw)
 library(DESeq2)
@@ -21,14 +21,14 @@ load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
 # setup design matrix
 # see edgeR manual for more information
 y <- asDGEList(counts)
-colnames(y$counts) = 
+colnames(y$counts) =
 rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
 
@@ -46,10 +46,10 @@ y <- asDGEList(counts)
 colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
@@ -61,7 +61,7 @@ dev.off()
 plotMDS(y, col = colors, top = 100)
 
 design <- model.matrix(~group, data=y$samples)
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 
 # stabilize dispersion estimates with empirical bayes
@@ -132,7 +132,7 @@ final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$
 final.merged.peaks.sig # significant differentially-accessible windows
 
 
-  
+
 
 colnames(design) = levels(counts$samples$group)
 
@@ -175,7 +175,7 @@ test = working.windows[,8:15]
 rowData(test) = cbind(rowData(test), results$table)
 
 test@rowRanges
-working.windows = test 
+working.windows = test
 
 # merge nearby windows
 # up to "tol" distance apart: 500 bp in this case
@@ -221,7 +221,7 @@ pca_plot = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library_id") %>%
   left_join(libraries_full, by = "library_id") %>%
   ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
-  geom_point(size = 4) 
+  geom_point(size = 4)
 pca_plot
 
 
@@ -233,11 +233,11 @@ pca_plot
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
-###   Do differential expression of ATAC-seq peaks through edgeR   ###                
+###   Do differential expression of ATAC-seq peaks through edgeR   ###
 ###
 
 args = commandArgs(trailingOnly = TRUE)
-= args[1]                
+= args[1]
 
 library(csaw)
 library(DESeq2)
@@ -253,14 +253,14 @@ load("/mnt/ris/jschwarz/cardiac-radiobiology/data_model/data_model.RData")
 # setup design matrix
 # see edgeR manual for more information
 y <- asDGEList(counts)
-colnames(y$counts) = 
+colnames(y$counts) =
 rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
 
@@ -278,10 +278,10 @@ y <- asDGEList(counts)
 colnames(y$counts) = rownames(y$samples) = names(counts$bam.files)
 groups =
   data.frame(library_id = names(counts$bam.files)) %>%
-  left_join(libraries_full, by = "library_id") %>%  
+  left_join(libraries_full, by = "library_id") %>%
   droplevels() %>%
   pull(cohort_id)
-groups = fct_relevel(groups, "sham", "ir48h") 
+groups = fct_relevel(groups, "sham", "ir48h")
 groups
 y$samples$group = groups
 colors = as.character(factor(y$samples$group, levels = c("sham", "ir48h", "ir6w"), labels = c("darkgreen", "red", "blue")))
@@ -293,7 +293,7 @@ dev.off()
 plotMDS(y, col = colors, top = 100)
 
 design <- model.matrix(~group, data=y$samples)
-colnames(design) = levels(groups)  
+colnames(design) = levels(groups)
 
 
 # stabilize dispersion estimates with empirical bayes
@@ -364,7 +364,7 @@ final.merged.peaks.sig <- final.merged.peaks[final.merged.peaks@elementMetadata$
 final.merged.peaks.sig # significant differentially-accessible windows
 
 
-  
+
 
 colnames(design) = levels(counts$samples$group)
 
@@ -407,7 +407,7 @@ test = working.windows[,8:15]
 rowData(test) = cbind(rowData(test), results$table)
 
 test@rowRanges
-working.windows = test 
+working.windows = test
 
 # merge nearby windows
 # up to "tol" distance apart: 500 bp in this case
@@ -453,7 +453,7 @@ pca_plot = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library_id") %>%
   left_join(libraries_full, by = "library_id") %>%
   ggplot(., aes(x = PC1, y = PC2, color = cohort_id)) +
-  geom_point(size = 4) 
+  geom_point(size = 4)
 pca_plot
 
 

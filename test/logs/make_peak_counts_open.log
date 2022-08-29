@@ -103,12 +103,3 @@ x dplyr::lag()        masks stats::lag()
 x purrr::reduce()     masks GenomicRanges::reduce(), IRanges::reduce()
 x dplyr::rename()     masks S4Vectors::rename()
 x dplyr::slice()      masks IRanges::slice()
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam/atac3_open_tn5.bam.bai

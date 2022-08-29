@@ -1,6 +1,6 @@
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###                
+###   Script to generate differential accessibility model with EdgeR         ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -50,5 +50,5 @@ final.merged.peaks = merged.peaks$region
 final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
 final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
 
-saveRDS(object = final.merged.peaks, 
+saveRDS(object = final.merged.peaks,
         file = dca_granges_rds)

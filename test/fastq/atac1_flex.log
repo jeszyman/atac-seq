@@ -11,7 +11,7 @@ Developed with SeqAn, the library for sequence analysis
 Available on github.com/seqan/flexbar
 
 
-Local time:            Sun May 22 13:25:29 2022
+Local time:            Mon Aug 29 12:42:03 2022
 
 Number of threads:     4
 Bundled fragments:     256
@@ -41,8 +41,8 @@ Nextera-TruSight       CTGTCTCTTATACACATCT
 
 Processing reads ...done.
 
-Elapsed time:       1 min 25 sec
-Processing speed:   5882 reads/s
+Elapsed time:       20 sec
+Processing speed:   25000 reads/s
 
 
 Min, max, mean and median overlap of paired reads: 40 / 150 / 87 / 84

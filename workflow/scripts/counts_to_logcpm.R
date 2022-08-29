@@ -14,12 +14,12 @@ counts = normFactors(background, se.out = counts)
 
 make_logcpm = function(in_norm){
   dge = asDGEList(in_norm)
-  colnames(dge) = colnames(in_norm)  
+  colnames(dge) = colnames(in_norm)
   log_cpm = cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
   return(log_cpm)
 }
 
 logcpm = make_logcpm(counts)
 
-saveRDS(object = logcpm, 
+saveRDS(object = logcpm,
         file = logcpm_file)

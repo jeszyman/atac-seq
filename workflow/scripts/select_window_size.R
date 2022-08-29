@@ -88,7 +88,7 @@ groups = as.factor(unlist(strsplit(groups_str, " ")))
 y$samples$group = groups
 
 # Save outputs
-saveRDS(object = filtered_counts, 
+saveRDS(object = filtered_counts,
         file = out_rse_rds)
 saveRDS(object = y,
         file = out_dge_rds)
