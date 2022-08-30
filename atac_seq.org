@@ -2,10 +2,44 @@
 :PROPERTIES:
 :header-args:bash: :tangle-mode (identity #o555)
 :header-args:snakemake: :tangle-mode (identity #o555)
+:header-args+h: :noweb yes
 :logging: nil
 :END:
 ** Setup
-*** Integration testing setup
+*** Bash preamble
+#+name: bash_preamble
+#+begin_src bash
+
+#  Note: This script is tangled from code blocks in the Emacs Org-mode file at
+#  https://github.com/jeszyman/atac-seq/blob/master/atac-seq.org. Changes
+#  made directly to this file will be overwritten upon tangle from Org-mode.
+
+#+end_src
+*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
+*** Integration testing Snakemake YAML
+:PROPERTIES:
+:header-args:snakemake: :tangle ./config/int_test.yaml
+:END:
+#+begin_src bash
+
+# Common names across repositories and snakefiles
+datadir: "test"
+logdir: "test/logs"
+threads: 4
+
+# Repository and snakefile-specific names
+container:
+  atac: "~/sing_containers/atac.2.0.0sif"
+scriptdir:
+  atac: "workflow/scripts"
+
+
+bowtie_prefix: "test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19"
+keep_bed: "resources/keep.bed"
+
+#+end_src
+
+*** Integration testing inputs setup
 - Make reference fasta from mm10 chr 19
   #+begin_src bash
 mkdir -p "test/inputs"
@@ -53,43 +87,7 @@ for file in test/inputs/*.fastq.gz; do
     ln -sf --relative $file test/fastq/
 done
 #+end_src
-bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
 
-\rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
-
-*** Snakemake YAML
-#+begin_src bash :tangle ./config/int_test.yaml
-container: "~/sing_containers/atac.sif"
-threads: 4
-bam_dir: "test/bam"
-bowtie_prefix: "test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19"
-keep_bed: "resources/keep.bed"
-log_dir: "test/logs"
-qc_dir: "test/qc"
-atac_scripts_dir: "workflow/scripts"
-dca_dir: "test/dca"
-data_dir: "test"
-fq_sym_dir: "test/fastq"
-fq_src_dir: "test/inputs"
-#+end_src
-- common
-  #+begin_src bash :tangle config/common.yaml
-
-
-CHROM_FILT:
-  - "open"
-  - "regfilt"
-
-JOIN:
-  - "union"
-  - "intersect"
-  - "naive"
-
-WIDTH:
-  - "broad"
-  - "narrow"
-
-#+end_src
 ** [[file:workflow/atac_read_process.smk][ATAC-seq read processing and alignment]]                               :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac_read_process.smk
@@ -738,6 +736,8 @@ basecamp/src/smk_forced_run.sh config/int_test.yaml workflow/int_test.smk
 :header-args:snakemake: :tangle no
 :header-args:bash: :tangle no
 :END:
+*** TODO Update via biopipe mod
+*** TODO ATAC-seq QC
 - add bowtie index step
   #+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
 cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
@@ -761,8 +761,40 @@ params_threads="$3"
 # Run
 make_bt2_index $params_threads $input_fa $params_prefix
 #+end_src
-- atac-seq qc
+bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
+
+#+begin_src R
+# need to index bams first
+
+library(ATACseqQC)
+
+bamfile = "test/bam/atac1_open.bam"
+freq = readsDupFreq("test/bam/atac1.bam")
+
+test=estimateLibComplexity(
+  readsDupFreq(bamfile)
+)
+test
+#+end_src
 *** ideas
+- common
+  #+begin_src bash :tangle config/common.yaml
+
+
+CHROM_FILT:
+  - "open"
+  - "regfilt"
+
+JOIN:
+  - "union"
+  - "intersect"
+  - "naive"
+
+WIDTH:
+  - "broad"
+  - "narrow"
+
+#+end_src
 #+begin_src bash
 git add -A
 git commit -m "feat: initial dev"
@@ -2773,157 +2805,7 @@ head(assays(test))
 head(rowData(test))
 head(rowRanges(test))
 #+end_src
-*** [[file:workflow/dca_and_annot.smk][Differential chromatin accessibility and annotation]]                 :smk:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/dca_and_annot.smk
-:END:
-:LOGBOOK:
-- State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
-:END:
-# Latest deepTools on bioconda does not contain alignmentSieve
-RUN conda install -c bioconda deeptools=3.4 --force
-
-**** Differential chromatin accessibility
-- Snakemake
-  #+begin_src snakemake
-rule diff_chrom_accessibility:
-    input:
-        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
-        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
-    params:
-        groups_str = "ir48h ir48h sham sham",
-        contrast = "ir48h-sham",
-        script = config["atac_scripts_dir"] + "/diff_chrom_accessibility.R",
-    output:
-        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
-    log:
-        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
-    shell:
-        """
-        Rscript {params.script} \
-        {input.dge} \
-        "{params.groups_str}" \
-        "{params.contrast}" \
-        {input.norm_counts_rse} \
-        {output} \
-        >& {log}
-        """
-#+end_src
-- [[file:workflow/scripts/diff_chrom_accessibility.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/diff_chrom_accessibility.R
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-###                                                                          ###
-###   Script to generate differential accessibility model with EdgeR         ###
-###                                                                          ###
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Setup
-
-## Arguements for testing
-dge_rds = "~/repos/atac-seq/test/csaw/dge_regfilt.rds"
-groups_str = "ir48h ir48h sham sham"
-contrast = "ir48h-sham"
-norm_counts_rds = "~/repos/atac-seq/test/csaw/norm_counts_rse_regfilt.rds"
-dca_granges_rds = "/tmp/test.rds"
-
-args = commandArgs(trailingOnly = TRUE)
-dge_rds = args[1]
-groups_str =args [2]
-contrast = args[3]
-norm_counts_rds = args[4]
-dca_granges_rds = args[5]
-
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-y = readRDS(dge_rds)
-groups = as.factor(unlist(strsplit(groups_str, " ")))
-
-design = model.matrix(~0 + groups, data=y$samples)
-colnames(design) = levels(groups)
-y = estimateDisp(y, design)
-fit = glmQLFit(y, design, robust=TRUE)
-results = glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
-
-# combine GRanges rowdata with DA statistics
-counts = readRDS(norm_counts_rds)
-rowData(counts) = cbind(rowData(counts), results$table)
-
-# merge nearby windows
-# up to "tol" distance apart: 500 bp in this case
-# max merged window width: 5000 bp
-merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
-
-# use most significant window as statistical representation for p-value and FDR for merged windows
-tab.best = getBestTest(merged.peaks$id, results$table)
-
-# combine merged peaks window range with statistics
-final.merged.peaks = merged.peaks$region
-final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
-final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
-
-saveRDS(object = final.merged.peaks,
-        file = dca_granges_rds)
-
-#+end_src
-**** Peak annotation                                               :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule peak_annotation:
-    input:
-        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds",
-    params:
-        script = config["atac_scripts_dir"] + "/peak_annotation.R"
-    output:
-        csv = config["data_dir"] + "/dca/{bam_process}_dca.csv",
-        chipseek = config["data_dir"] + "/dca/{bam_process}_chipseek.rds"
-    log:
-        config["data_dir"] + "/logs/{bam_process}_peak_annotation.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.csv} \
-        {output.chipseek} \
-        >& {log}
-        """
-#+end_src
-- Base script
-  #+begin_src R :tangle ./workflow/scripts/peak_annotation.R
-# Arguements for testing
-## granges_rds = "/home/jeszyman/repos/atac-seq/test/dca/dca_granges_regfilt.rds"
-## annotation_csv = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_dca.csv"
-## chipseek_file = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_chipseek.rds"
-
-# Arguements for command line input
-args = commandArgs(trailingOnly = TRUE)
-granges_rds = args[1]
-annotation_csv = args[2]
-chipseek_file = args[3]
-
-peaks = readRDS(granges_rds)
-
-library(ChIPseeker)
-library(csaw)
-library(TxDb.Mmusculus.UCSC.mm10.ensGene)
-library(tidyverse)
-
-txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
-
-chipseek = annotatePeak(peaks, TxDb = txdb, annoDb = "org.Mm.eg.db")
-
-annotation = as_tibble(as.data.frame(chipseek))
-
-write.csv(annotation, row.names = F, file = annotation_csv)
-
-saveRDS(object = chipseek,
-        file = chipseek_file)
-#+end_src
-- Reference
-  - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
-*** TODO Pathway analysis
+**** Pathway analysis
 - GSEA
   #+begin_src R
 library(msigdbr)
@@ -3047,8 +2929,8 @@ annotation
 annotation %>% filter(logFC > 2)
 #+end_src
 
-**** Transcription factors
-**** Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours :sci_rep:
+***** Transcription factors
+***** Mouse Ventricle Radiation-induced Chromatin Remodeling at 48 Hours :sci_rep:
 :PROPERTIES:
 :export_latex_class: paper
 :export_latex_header: \usepackage{./latex/tex/report}
@@ -3057,22 +2939,22 @@ annotation %>% filter(logFC > 2)
 :export_file_name: ./results/reports/szymanski_ms_atac_48_report.pdf
 :ID:       70d78969-3820-4def-b6f3-ab3c7c3e5d87
 :END:
-***** LaTeX settings                                               :noexport:
+****** LaTeX settings                                              :noexport:
 [[file:results/reports/szymanski_ms_atac_48_report.tex]]
 [[file:~/repos/latex/tex/report.sty]]
 \usepackage[T1]{fontenc}
 \usepackage{tgbonum}
-***** LaTeX Preamble                                                 :ignore:
+****** LaTeX Preamble                                                :ignore:
 \setcounter{secnumdepth}{0}
 \vspace{5mm}
 \hfill Last compiled {{{time(%Y-%m-%d)}}}.
 \newpage
-***** Discussion
+****** Discussion
 Expect immune infiltrate at > 1 week supercite:colman2015
-***** References                                                     :ignore:
+****** References                                                    :ignore:
 \printbibliography
-***** External files
-**** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs
+****** External files
+***** ATAC-seq peak calling and chromatin accessibility run 1 for PCAs
 Error in env[[as.character(i)]] <- value :
   wrong args for environment subassignment
 Calls: regionCounts ... bploop -> bploop.iterate -> <Anonymous> -> add_inorder
@@ -3203,22 +3085,22 @@ nohup Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/csaw_peak.R 
 
 
 
-***** Ideas and dev
-****** Description                                                   :ignore:
+****** Ideas and dev
+******* Description                                                  :ignore:
 ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
 
 Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
 
-****** ATAC-seq peak calling and chromatin accessibility, 6wks
-******* [[file:workflow/peak_calling.smk][Snakefile]]          :smk:noexport:
+******* ATAC-seq peak calling and chromatin accessibility, 6wks
+******** [[file:workflow/peak_calling.smk][Snakefile]]         :smk:noexport:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/peak_calling.smk
 :END:
-******** Smk preamble
+********* Smk preamble
 #+begin_src snakemake :noweb yes
 <<smk_preamble>>
 #+end_src
-******** All rule
+********* All rule
 #+begin_src snakemake
 rule all:
     input:
@@ -3226,7 +3108,7 @@ rule all:
         config["data_dir"] + "/atac/counts_rse.rds",
 #+end_src
 
-******** TEST Make peak counts                                     :smk_rule:
+********* TEST Make peak counts                                    :smk_rule:
 :LOGBOOK:
 - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
 :END:
@@ -3263,7 +3145,7 @@ rule make_peak_counts:
 - [[file:./workflow/scripts/select_window_size.R][Base script]]
 
 
-******** TEST Make peak counts                                     :smk_rule:
+********* TEST Make peak counts                                    :smk_rule:
 :LOGBOOK:
 - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
 :END:
@@ -3370,7 +3252,7 @@ file = counts_rds)
 saveRDS(object = background,
 file = background_rds)
 #+end_src
-******** TEST Differential accessibility                           :smk_rule:
+********* TEST Differential accessibility                          :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule differential_accessibility:
@@ -3470,7 +3352,7 @@ saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
 #+end_src
-******** TEST Peak annotation                                      :smk_rule:
+********* TEST Peak annotation                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule peak_annotation:
@@ -3520,15 +3402,15 @@ annotation = as_tibble(as.data.frame(chipseek))
 
 write.csv(annotation, row.names = F, file = annotation_file)
 #+end_src
-******** Dev
+********* Dev
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-******** Ideas
+********* Ideas
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-********* Make backgroud bins                                      :smk_rule:
+********** Make backgroud bins                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_backgroud_bins:
@@ -3593,7 +3475,7 @@ bam_list = bam_list[names(bam_list) %in% filt_libs]
 binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
 
 #+end_src
-********* d
+********** d
 #+begin_src R
 library(csaw)
 library(edgeR)
@@ -3708,7 +3590,7 @@ summary(pca)
 
 #+end_src
 
-********** edgeR:smk_rule:
+*********** edgeR:smk_rule:
 https://f1000research.com/articles/5-1438/v2
 
 lfcs are normally distributed, skewed way negative
@@ -3965,13 +3847,13 @@ pca_plot
 #########1#########2#########3#########4#########5#########6#########7#########8
 #+end_src
 
-******* Description                                                  :ignore:
+******** Description                                                 :ignore:
 ATAC-seq peaks were counted by /de novo/ enriched local windows using csaw. Peak counts were normalized by the trimmed mean of M values method in EdgeR. Normalized peak counts were used to test differential chromatin accessibility in EdgeR.
 
 Peaks were annotated from the UCSC mm10 ensGene table using ChIPseeker.
 
 
-**** All count logcpms for QC
+***** All count logcpms for QC
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-03-31 Thu 14:24]
 :END:
@@ -4087,8 +3969,8 @@ Rscript /home/jeszyman/repos/cardradbio-atac/workflow/scripts/counts_to_logcpm.R
   ggsave(pca_plot, filename = "~/repos/cardradbio-atac/results/imgs/ir48h_v_sham_full_pca.pdf")
   #+end_src
 
-**** Read processing and alignment
-***** Description                                                    :ignore:
+***** Read processing and alignment
+****** Description                                                   :ignore:
 Sequencing read adapters were removed and reads were quality trimmed using flexbar.
 
 Processed reads were aligned to mm10 using bowtie2.
@@ -4096,7 +3978,7 @@ Processed reads were aligned to mm10 using bowtie2.
 PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
 
 
-***** DONE [[file:workflow/preprocess_align.smk][Snakefile]]            :smk:
+****** DONE [[file:workflow/preprocess_align.smk][Snakefile]]           :smk:
 CLOSED: [2022-03-11 Fri 12:19]
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/preprocess_align.smk
@@ -4105,13 +3987,13 @@ CLOSED: [2022-03-11 Fri 12:19]
 :LOGBOOK:
 - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:19]
 :END:
-****** Smk preamble
+******* Smk preamble
 #+begin_src snakemake
 container: config["container"]
 RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
 #+end_src
-****** Smk rules
-******* All rule
+******* Smk rules
+******** All rule
 #+begin_src snakemake
 rule all:
     input:
@@ -4122,7 +4004,7 @@ rule all:
         expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam", library_id=RUNSAMPLES),
         expand(config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam", library_id=RUNSAMPLES),
 #+end_src
-******* Read trim                                                  :smk_rule:
+******** Read trim                                                 :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule read_trim:
@@ -4169,7 +4051,7 @@ params_threads="$4"
 # Run
 flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 #+end_src
-******* Make bowtie index                                          :smk_rule:
+******** Make bowtie index                                         :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_bowtie_index:
@@ -4207,7 +4089,7 @@ params_threads="$3"
 # Run
 make_bt2_index $params_threads $input_fa $params_prefix
 #+end_src
-******* Align BT2                                                  :smk_rule:
+******** Align BT2                                                 :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
 :END:
@@ -4246,7 +4128,7 @@ output_bam="$5"
 # Run
 bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
 #+end_src
-******* Make keep bed                                              :smk_rule:
+******** Make keep bed                                             :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule make_keep_bed:
@@ -4260,7 +4142,7 @@ rule make_keep_bed:
         bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed} > {output.keep_bed}
         """
 #+end_src
-******* Filter and dedup                                           :smk_rule:
+******** Filter and dedup                                          :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule filter_and_dedup:
@@ -4328,7 +4210,7 @@ atac_bam_processing "$params_threads" \
                     "$output_regfilt_bam"
 samtools index "$output_regfilt_bam"
 #+end_src
-******* Get open chrom                                             :smk_rule:
+******** Get open chrom                                            :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule get_open_chrom:
@@ -4355,7 +4237,7 @@ alignmentSieve --bam $1 \
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
-******* Tn5 shift                                                  :smk_rule:
+******** Tn5 shift                                                 :smk_rule:
 :LOGBOOK:
 - State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
 - State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
@@ -4389,7 +4271,7 @@ samtools sort -@ $2 -o $4 $3
 
 samtools index -@ $2 $4
 #+end_src
-******* Tn5 open shift                                             :smk_rule:
+******** Tn5 open shift                                            :smk_rule:
 :LOGBOOK:
 - State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
   add to next run
@@ -4421,13 +4303,13 @@ samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
 #+end_src
 
-****** Ideas
+******* Ideas
 - redefine samtools tmp dir outside repo
 
 
 
 
-*** TODO Motif analysis
+**** Motif analysis
 - Get gene list- Takes annotated edger results as table
   #+begin_src R
 library(tidyverse)
@@ -4477,20 +4359,20 @@ perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
 #+end_src
 
 
-**** Snakefile                                                 :smk:noexport:
+***** Snakefile                                                :smk:noexport:
 :PROPERTIES:
 :header-args:snakemake:  :tangle ./workflow/motifs.smk
 :END:
-***** Smk preamble
+****** Smk preamble
 #+begin_src snakemake :noweb yes
 <<smk_preamble>>
 #+end_src
-***** All rule
+****** All rule
 #+begin_src snakemake
 rule all:
     input:
 #+end_src
-***** Extract gene list                                            :smk_rule:
+****** Extract gene list                                           :smk_rule:
 
 extract ensembl ID lists from csaw-EdgeR DCA workflow
 
@@ -4521,7 +4403,7 @@ args = commandArgs(trailingOnly = TRUE)
 dca_tbl = args[1]
 
 #+end_src
-***** Find motifs for gene list promoters
+****** Find motifs for gene list promoters
 #+begin_src bash
 #nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/atac/test_down.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/atac/homer/ir48h_v_sham_less_access/ -fdr 10 -p 12
 
@@ -4551,21 +4433,157 @@ perl /opt/miniconda/share/homer/.//configureHomer.pl -list
 perl /opt/miniconda/share/homer/.//configureHomer.pl -install mm10 --keepScript
 
 #+end_src
-**** Description                                                     :ignore:
-*** TODO ATAC-seq QC
-#+begin_src R
-# need to index bams first
+***** Description                                                    :ignore:
+**** [[file:workflow/dca_and_annot.smk][Differential chromatin accessibility and annotation]]                :smk:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/dca_and_annot.smk
+:END:
+:LOGBOOK:
+- State "WAITING"    from "TEST"       [2022-03-31 Thu 14:33]
+:END:
+# Latest deepTools on bioconda does not contain alignmentSieve
+RUN conda install -c bioconda deeptools=3.4 --force
 
-library(ATACseqQC)
-
-bamfile = "test/bam/atac1_open.bam"
-freq = readsDupFreq("test/bam/atac1.bam")
-
-test=estimateLibComplexity(
-  readsDupFreq(bamfile)
-)
-test
+***** Differential chromatin accessibility
+- Snakemake
+  #+begin_src snakemake
+rule diff_chrom_accessibility:
+    input:
+        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
+        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
+    params:
+        groups_str = "ir48h ir48h sham sham",
+        contrast = "ir48h-sham",
+        script = config["atac_scripts_dir"] + "/diff_chrom_accessibility.R",
+    output:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
+    log:
+        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.dge} \
+        "{params.groups_str}" \
+        "{params.contrast}" \
+        {input.norm_counts_rse} \
+        {output} \
+        >& {log}
+        """
 #+end_src
+- [[file:workflow/scripts/diff_chrom_accessibility.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/diff_chrom_accessibility.R
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###   Script to generate differential accessibility model with EdgeR         ###
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+# Setup
+
+## Arguements for testing
+dge_rds = "~/repos/atac-seq/test/csaw/dge_regfilt.rds"
+groups_str = "ir48h ir48h sham sham"
+contrast = "ir48h-sham"
+norm_counts_rds = "~/repos/atac-seq/test/csaw/norm_counts_rse_regfilt.rds"
+dca_granges_rds = "/tmp/test.rds"
+
+args = commandArgs(trailingOnly = TRUE)
+dge_rds = args[1]
+groups_str =args [2]
+contrast = args[3]
+norm_counts_rds = args[4]
+dca_granges_rds = args[5]
+
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+y = readRDS(dge_rds)
+groups = as.factor(unlist(strsplit(groups_str, " ")))
+
+design = model.matrix(~0 + groups, data=y$samples)
+colnames(design) = levels(groups)
+y = estimateDisp(y, design)
+fit = glmQLFit(y, design, robust=TRUE)
+results = glmQLFTest(fit, contrast=makeContrasts(contrast, levels=design))
+
+# combine GRanges rowdata with DA statistics
+counts = readRDS(norm_counts_rds)
+rowData(counts) = cbind(rowData(counts), results$table)
+
+# merge nearby windows
+# up to "tol" distance apart: 500 bp in this case
+# max merged window width: 5000 bp
+merged.peaks <- mergeWindows(rowRanges(counts), tol=500L, max.width=5000L)
+
+# use most significant window as statistical representation for p-value and FDR for merged windows
+tab.best = getBestTest(merged.peaks$id, results$table)
+
+# combine merged peaks window range with statistics
+final.merged.peaks = merged.peaks$region
+final.merged.peaks@elementMetadata = cbind(final.merged.peaks@elementMetadata, tab.best[,-1])
+final.merged.peaks = final.merged.peaks[order(final.merged.peaks@elementMetadata$FDR), ] # sort by FDR
+
+saveRDS(object = final.merged.peaks,
+        file = dca_granges_rds)
+
+#+end_src
+***** Peak annotation                                              :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule peak_annotation:
+    input:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds",
+    params:
+        script = config["atac_scripts_dir"] + "/peak_annotation.R"
+    output:
+        csv = config["data_dir"] + "/dca/{bam_process}_dca.csv",
+        chipseek = config["data_dir"] + "/dca/{bam_process}_chipseek.rds"
+    log:
+        config["data_dir"] + "/logs/{bam_process}_peak_annotation.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.csv} \
+        {output.chipseek} \
+        >& {log}
+        """
+#+end_src
+- Base script
+  #+begin_src R :tangle ./workflow/scripts/peak_annotation.R
+# Arguements for testing
+## granges_rds = "/home/jeszyman/repos/atac-seq/test/dca/dca_granges_regfilt.rds"
+## annotation_csv = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_dca.csv"
+## chipseek_file = "/home/jeszyman/repos/atac-seq/test/dca/regfilt_chipseek.rds"
+
+# Arguements for command line input
+args = commandArgs(trailingOnly = TRUE)
+granges_rds = args[1]
+annotation_csv = args[2]
+chipseek_file = args[3]
+
+peaks = readRDS(granges_rds)
+
+library(ChIPseeker)
+library(csaw)
+library(TxDb.Mmusculus.UCSC.mm10.ensGene)
+library(tidyverse)
+
+txdb = TxDb.Mmusculus.UCSC.mm10.ensGene
+
+chipseek = annotatePeak(peaks, TxDb = txdb, annoDb = "org.Mm.eg.db")
+
+annotation = as_tibble(as.data.frame(chipseek))
+
+write.csv(annotation, row.names = F, file = annotation_csv)
+
+saveRDS(object = chipseek,
+        file = chipseek_file)
+#+end_src
+- Reference
+  - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
 ** README
 currently only for mouse for macs2
 *** Prerequisites to run repository local integration testing
