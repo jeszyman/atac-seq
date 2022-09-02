@@ -1,0 +1,279 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job           count    min threads    max threads
+----------  -------  -------------  -------------
+all               1              1              1
+filter_bam        4              1              1
+total             5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	filter_bam
+	filter_bam
+	filter_bam
+	filter_bam
+Select jobs to execute...
+Selected jobs (4):
+	filter_bam
+	filter_bam
+	filter_bam
+	filter_bam
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Thu Sep  1 13:51:40 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib001_dedup.bam
+    output: test/bam_atac_filt/lib001_filt.bam
+    log: test/logs/lib001_atac_filter_bam.log
+    jobid: 18
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Thu Sep  1 13:51:40 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib004_dedup.bam
+    output: test/bam_atac_filt/lib004_filt.bam
+    log: test/logs/lib004_atac_filter_bam.log
+    jobid: 21
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Thu Sep  1 13:51:40 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib003_dedup.bam
+    output: test/bam_atac_filt/lib003_filt.bam
+    log: test/logs/lib003_atac_filter_bam.log
+    jobid: 20
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Thu Sep  1 13:51:40 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib002_dedup.bam
+    output: test/bam_atac_filt/lib002_filt.bam
+    log: test/logs/lib002_atac_filter_bam.log
+    jobid: 19
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'' returned non-zero exit status 126.
+
+[Thu Sep  1 13:51:40 2022]
+Error in rule filter_bam:
+    jobid: 18
+    output: test/bam_atac_filt/lib001_filt.bam
+    log: test/logs/lib001_atac_filter_bam.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+
+RuleException:
+CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac_filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'' returned non-zero exit status 126.
+
+[Thu Sep  1 13:51:40 2022]
+Error in rule filter_bam:
+    jobid: 21
+    output: test/bam_atac_filt/lib004_filt.bam
+    log: test/logs/lib004_atac_filter_bam.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+
+RuleException:
+CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac_filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'' returned non-zero exit status 126.
+
+[Thu Sep  1 13:51:40 2022]
+Error in rule filter_bam:
+    jobid: 20
+    output: test/bam_atac_filt/lib003_filt.bam
+    log: test/logs/lib003_atac_filter_bam.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+
+RuleException:
+CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac_filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'' returned non-zero exit status 126.
+
+[Thu Sep  1 13:51:40 2022]
+Error in rule filter_bam:
+    jobid: 19
+    output: test/bam_atac_filt/lib002_filt.bam
+    log: test/logs/lib002_atac_filter_bam.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 229, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'' returned non-zero exit status 126.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+
+RuleException:
+CalledProcessError in line 112 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac_filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'' returned non-zero exit status 126.
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 112, in __rule_filter_bam
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-01T135140.000714.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

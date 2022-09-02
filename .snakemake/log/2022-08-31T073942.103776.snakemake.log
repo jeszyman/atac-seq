@@ -1,0 +1,72 @@
+Building DAG of jobs...
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 1597, in collect_potential_dependencies
+    yield PotentialDependency(file, known_producers[file], True)
+KeyError: 'test/fastq_atac_proc/lib001_flex_1.fastq.gz'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 107, in new
+    obj = self.cache[key]
+KeyError: ('read_trim', ('library', 'lib001'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/io.py", line 911, in format_match
+    value = wildcards[name]
+KeyError: 'library_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/rules.py", line 833, in expand_input
+    self._apply_wildcards(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/rules.py", line 797, in _apply_wildcards
+    concrete = concretize(item_, wildcards, _is_callable)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/rules.py", line 819, in concretize_iofile
+    return f.apply_wildcards(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/io.py", line 692, in apply_wildcards
+    apply_wildcards(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/io.py", line 923, in apply_wildcards
+    return _wildcard_regex.sub(format_match, pattern)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/io.py", line 921, in format_match
+    raise WildcardError(str(ex))
+snakemake.exceptions.WildcardError: 'library_id'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/workflow.py", line 763, in execute
+    dag.init()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 179, in init
+    job = self.update([job], progress=progress, create_inventory=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 801, in update
+    raise exceptions[0]
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 759, in update
+    self.update_(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 852, in update_
+    for res in potential_dependencies:
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 1607, in collect_potential_dependencies
+    yield PotentialDependency(file, file2jobs(file), False)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 1695, in file2jobs
+    jobs.append(self.new_job(rule, targetfile=targetfile))
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 1431, in new_job
+    job = self.job_factory.new(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 109, in new
+    obj = Job(rule, dag, wildcards_dict, format_wildcards, targetfile)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 168, in __init__
+    self.input, input_mapping, self.dependencies = self.rule.expand_input(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/rules.py", line 843, in expand_input
+    raise WildcardError(
+snakemake.exceptions.WildcardError: Wildcards in input files cannot be determined from output files:
+'library_id'
+
+WildcardError in line 1 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+Wildcards in input files cannot be determined from output files:
+'library_id'
+unlocking
+removed all locks

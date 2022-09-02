@@ -1,0 +1,5 @@
+library	basename
+lib001	atac1_R1.fastq.gz
+lib002	atac2_R1.fastq.gz
+lib003	atac3_R1.fastq.gz
+lib004	atac4_R1.fastq.gz

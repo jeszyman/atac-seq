@@ -18,28 +18,34 @@
 *** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
 *** Integration testing Snakemake YAML
 :PROPERTIES:
-:header-args:snakemake: :tangle ./config/int_test.yaml
+:header-args:bash: :tangle ./config/int_test.yaml
 :END:
 #+begin_src bash
 
 # Common names across repositories and snakefiles
 datadir: "test"
+fasta: "test/inputs/chr19.fa"
 logdir: "test/logs"
 threads: 4
 
 # Repository and snakefile-specific names
 container:
-  atac: "~/sing_containers/atac.2.0.0sif"
+  atac: "~/sing_containers/atac.1.1.0.sif"
 scriptdir:
   atac: "workflow/scripts"
 
 
-bowtie_prefix: "test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19"
 keep_bed: "resources/keep.bed"
 
 #+end_src
-
 *** Integration testing inputs setup
+- Sample sheet
+  | library | basename          |
+  |---------+-------------------|
+  | lib001  | atac1_R1.fastq.gz |
+  | lib002  | atac2_R1.fastq.gz |
+  | lib003  | atac3_R1.fastq.gz |
+  | lib004  | atac4_R1.fastq.gz |
 - Make reference fasta from mm10 chr 19
   #+begin_src bash
 mkdir -p "test/inputs"
@@ -60,37 +66,57 @@ zcat "test/inputs/chr19.fa.gz" > test/inputs/chr19.fa
 \rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
 
 #+end_src
+- Make reference gtf
+  #+begin_src bash
+wget --directory-prefix test/inputs https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/genes/mm10.ensGene.gtf.gz
+zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
+\rm test/inputs/mm10.ensGene.gtf.gz
+#+end_src
+- Make reference chromosome bed file
+  https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
+  | chr1  | 1 | 195471971 |
+  | chr2  | 1 | 182113224 |
+  | chr3  | 1 | 160039680 |
+  | chr4  | 1 | 156508116 |
+  | chr5  | 1 | 151834684 |
+  | chr6  | 1 | 149736546 |
+  | chr7  | 1 | 145441459 |
+  | chr10 | 1 | 130694993 |
+  | chr8  | 1 | 129401213 |
+  | chr14 | 1 | 124902244 |
+  | chr9  | 1 | 124595110 |
+  | chr11 | 1 | 122082543 |
+  | chr13 | 1 | 120421639 |
+  | chr12 | 1 | 120129022 |
+  | chr15 | 1 | 104043685 |
+  | chr16 | 1 |  98207768 |
+  | chr17 | 1 |  94987271 |
+  | chr18 | 1 |  90702639 |
+  | chr19 | 1 |  61431566 |
 - Get sample fastqs
   #+begin_src bash
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1000000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R2.fastq.gz | head -n 1500000 > test/inputs/atac1_R2.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R2.fastq.gz | head -n 1000000 > test/inputs/atac1_R2.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R1.fastq.gz | head -n 1500000 > test/inputs/atac2_R1.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R1.fastq.gz | head -n 1000000 > test/inputs/atac2_R1.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R2.fastq.gz | head -n 1500000 > test/inputs/atac2_R2.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R2.fastq.gz | head -n 1000000 > test/inputs/atac2_R2.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R1.fastq.gz | head -n 1500000 > test/inputs/atac3_R1.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R1.fastq.gz | head -n 1000000 > test/inputs/atac3_R1.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R2.fastq.gz | head -n 1500000 > test/inputs/atac3_R2.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R2.fastq.gz | head -n 1000000 > test/inputs/atac3_R2.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R1.fastq.gz | head -n 1500000 > test/inputs/atac4_R1.fastq
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R1.fastq.gz | head -n 1000000 > test/inputs/atac4_R1.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R2.fastq.gz | head -n 1000000 > test/inputs/atac4_R2.fastq
+zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R2.fastq.gz | head -n 1500000 > test/inputs/atac4_R2.fastq
 
 for file in "test/inputs/*.fastq"; do gzip -f $file; done
 
-mkdir -p test/fastq
-
-for file in test/inputs/*.fastq.gz; do
-    ln -sf --relative $file test/fastq/
-done
 #+end_src
-
-** [[file:workflow/atac_read_process.smk][ATAC-seq read processing and alignment]]                               :smk:
+** INPROCESS [[file:workflow/atac_read_process.smk][ATAC-seq read processing and alignment]]                     :smk:
 :PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/atac_read_process.smk
+:header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
 *** Description
 Sequencing read adapters were removed and reads were quality trimmed using flexbar.
@@ -98,31 +124,40 @@ Sequencing read adapters were removed and reads were quality trimmed using flexb
 Processed reads were aligned to mm10 using bowtie2.
 
 PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
-
-*** DONE Read trim                                                    :smk_rule:
+*** DONE Read trimming                                                :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule read_trim:
+# Uses flexbar to trim and quality-filter fastq reads
+rule trim:
+    container:
+        atac_container,
     input:
-        r1 = config["fq_sym_dir"] + "/{library_id}_R1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_R2.fastq.gz",
-    params:
-        outdir = config["fq_sym_dir"],
-        threads = config["threads"],
+        r1 = atac_fastq_raw + "/{library}_R1.fastq.gz",
+        r2 = atac_fastq_raw + "/{library}_R2.fastq.gz",
+    log:
+        config["logdir"] + "/{library}_atac_trim.log",
     output:
-        config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
+        atac_fastq_proc + "/{library}_flex_1.fastq.gz",
+        atac_fastq_proc + "/{library}_flex_2.fastq.gz",
+    params:
+        outdir = atac_fastq_proc,
+        script = config["scriptdir"]["atac"] + "/trim.sh",
+        threads = config["threads"],
     resources:
-        mem_mb=5000
+        mem_mb=5000,
     shell:
         """
-        workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
+        {params.script} \
+        {input.r1} \
+        {input.r2} \
+        {params.outdir} \
+        {params.threads} &> {log}
         """
 #+end_src
-- Script [[file:workflow/scripts/read_trim.sh]]
-  #+begin_src bash :noweb yes :tangle ./workflow/scripts/read_trim.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-#
+- [[file:./workflow/scripts/trim.sh][Shell script]]
+  #+begin_src bash :tangle ./workflow/scripts/trim.sh
+#!/usr/bin/env bash
+
 # Function for flexbar processing
 flexbar_atac() {
     base=$(basename -s _R1.fastq.gz $1)
@@ -145,26 +180,72 @@ params_threads="$4"
 
 # Run
 flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
+
+#+end_src
+*** DONE Make bowtie2 index                                           :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+# Make bowtie2 index
+rule atac_index:
+    input:
+        config["fasta"]
+    params:
+        base = atac_bowtie2_index,
+        script = config["scriptdir"]["atac"] + "/index.sh",
+    output:
+        directory(atac_bowtie2_dir),
+    log:
+        config["logdir"] + "/atac_index.log",
+    container:
+        atac_container,
+    shell:
+        """
+        {params.script} \
+        {input} \
+        {params.base} \
+        {output} &> {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/index.sh][Shell script]]
+  #+begin_src bash :tangle ./workflow/scripts/index.sh
+#!/usr/bin/env bash
+reference=$1
+bt2_index_base=$2
+output=$3
+
+mkdir -p $output
+bowtie2-build \
+    $reference \
+    $bt2_index_base
+
 #+end_src
 
-*** DONE Align BT2                                                    :smk_rule:
-:LOGBOOK:
-- State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
-:END:
+*** DONE Align trimmed reads using bowtie2                            :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule align_bt2:
+    container:
+        atac_container,
     input:
-        r1 = config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
+        r1 = atac_fastq_proc + "/{library}_flex_1.fastq.gz",
+        r2 = atac_fastq_proc + "/{library}_flex_2.fastq.gz",
+        index = atac_bowtie2_index + ".1.bt2",
+    log:
+        config["logdir"] + "/{library}_align_bt2.log",
     params:
-        prefix = config["bowtie_prefix"],
+        prefix = atac_bowtie2_index,
+        script = config["scriptdir"]["atac"] + "/align_bt2.sh",
         threads = config["threads"],
     output:
-        bam = config["bam_dir"] + "/{library_id}.bam",
+        atac_bam_raw + "/{library}.bam",
     shell:
         """
-        workflow/scripts/align_bt2.sh {input.r1} {input.r2} {params.prefix} {params.threads} {output.bam}
+        {params.script} \
+        {input.r1} \
+        {input.r2} \
+        {params.prefix} \
+        {params.threads} \
+        {output}
         """
 #+end_src
 - [[file:./workflow/scripts/align_bt2.sh][Base script]]
@@ -173,7 +254,10 @@ rule align_bt2:
 
 # Function
 bt2_align(){
-    bowtie2 --maxins 2000 --threads $1 --very-sensitive -x $2 -1 $3 -2 $4 | samtools view -bS - > $5
+    bowtie2 --maxins 2000 --threads $1 --very-sensitive -x $2 -1 $3 -2 $4 |
+        samtools view -@ $4 -bS - |
+        samtools sort -@ $4 -o $5 -
+    samtools index -@ $4 $5
 }
 
 # Snakemake variables
@@ -185,185 +269,319 @@ output_bam="$5"
 
 # Run
 bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
+samtools index $output_bam
 #+end_src
-*** DONE Filter and dedup                                             :smk_rule:
+*** DONE De-duplicate alignments                                      :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule filter_and_dedup:
+# De-duplicate alignments
+rule dedup:
+    container:
+        atac_container,
     input:
-        bam = config["bam_dir"] + "/{library_id}.bam",
+        atac_bam_raw + "/{library}.bam",
+    log:
+        config["logdir"] + "/{library}_atac_dedup.log",
     output:
-        dedup_bam = config["bam_dir"] + "/{library_id}_dedup.bam",
-        qfilt_bam = temp(config["bam_dir"] + "/{library_id}_qfilt.bam"),
-        regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
-        regfilt_index = config["bam_dir"] + "/{library_id}_regfilt.bam.bai",
+        atac_bam_dedup + "/{library}_dedup.bam",
+    params:
+        script = config["scriptdir"]["atac"] + "/dedup.sh",
+	threads = config["threads"],
     resources:
         mem_mb=5000
     shell:
         """
-        workflow/scripts/filter_and_dedup.sh {input.bam} \
-	                                     {config[keep_bed]} \
-	                                     {config[threads]} \
-	                                     {output.dedup_bam} \
-	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam}
+        {params.script} \
+        {input} \
+        {params.threads} \
+        {output} &> {log}
         """
 #+end_src
-- [[file:./workflow/scripts/filter_and_dedup.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/filter_and_dedup.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-
-atac_bam_processing(){
-    #
-    # Dedup
-    samtools sort -@ $1 -n -o - $2 |
+- [[file:workflow/scripts/dedup.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/dedup.sh
+raw_bam="${1}"
+threads="${2}"
+dedup_bam="${3}"
+samtools sort -@ $threads -n -o - $raw_bam |
     samtools fixmate -m - - |
-    samtools sort -@ $1 -o - - |
-    samtools markdup -@ $1 -r - $3
-    #
-    # Filter to aligned, properly paired reads
-    samtools view -@ $1 -b -f 3 -h -o $4 $3
-    #
-    # Filter to autosomes and remove blacklisted regions
-    samtools view -@ $1 -b -h -L $5 -o - $4 |
-    samtools sort -@ $1 -n -o - - |
-    samtools fixmate -m - - |
-    samtools sort -@ $1 -o $6 -
-    samtools index $6
-}
-
-# Snakemake variables
-input_bam="$1"
-params_keep_bed="$2"
-params_threads="$3"
-output_dedup_bam="$4"
-output_qfilt_bam="$5"
-output_regfilt_bam="$6"
-
-# Run command
-atac_bam_processing "$params_threads" \
-                    "$input_bam" \
-                    "$output_dedup_bam" \
-                    "$output_qfilt_bam" \
-                    "$params_keep_bed" \
-                    "$output_regfilt_bam"
-samtools index "$output_regfilt_bam"
+    samtools sort -@ $threads -o - - |
+    samtools markdup -@ $threads -r - $dedup_bam
+samtools index $dedup_bam
 #+end_src
-*** DONE Get open chrom                                               :smk_rule:
+
+*** DONE Filter de-duplicated alignments                              :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule get_open_chrom:
+# Filter alignments by quality and reference position
+rule filter_bam:
+    container:
+        atac_container,
     input:
-        regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
+        atac_bam_dedup + "/{library}_dedup.bam",
+    log:
+        config["logdir"] + "/{library}_atac_filter_bam.log",
     output:
-        unsort_open_bam = temp(config["bam_dir"] + "/{library_id}_unsort_open.bam"),
-        open_bam = config["bam_dir"] + "/{library_id}_open.bam",
+        atac_bam_filt + "/{library}_filt.bam",
+    params:
+        keep_bed = atac_keep_bed,
+        script = config["scriptdir"]["atac"] + "/filter_bam.sh",
+	threads = config["threads"],
     shell:
         """
-        workflow/scripts/get_open_chrom.sh {input.regfilt_bam} \
-                                           {config[threads]} \
-                                           {output.unsort_open_bam} \
-                                           {output.open_bam}
+        {params.script} \
+        {input} \
+        {output} \
+        {params.keep_bed} \
+        {params.threads} &> {log}
         """
 #+end_src
-- [[file:./workflow/scripts/get_open_chrom.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/get_open_chrom.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
-alignmentSieve --bam $1 \
-               --maxFragmentLength 150 \
-               --numberOfProcessors $2 \
-               --outFile $3
-samtools sort -@ $2 -o $4 $3
-samtools index -@ $2 $4
+- [[file:./workflow/scripts/filter_bam.sh][Shell script]]
+  #+begin_src bash :tangle ./workflow/scripts/filter_bam.sh
+#!/usr/bin/env bash
+
+inbam="${1}"
+outbam="${2}"
+bed="${3}"
+threads="${4}"
+samtools view -@ $threads -b -f 3 -h -L $bed -M -q 20 -o $outbam $inbam
+samtools index $outbam
+
 #+end_src
-*** DONE Tn5 shift                                                    :smk_rule:
-:LOGBOOK:
-- State "DONE"       from "DELEGATED"  [2022-02-11 Fri 16:40]
-- State "DONE"       from "CLOSEOUT"   [2022-02-11 Fri 16:40]
-- State "DONE"       from "RUN"        [2022-02-11 Fri 16:40]
-- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
-  add to next run
-:END:
+*** DONE Tn5 shift filtered alignments                                :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule tn5_shift:
+    container:
+        atac_container,
     input:
-        config["bam_dir"] + "/{library_id}_regfilt.bam",
-    output:
-        tmp_bam = temp(config["bam_dir"] + "/{library_id}_regfilt_tmp.bam"),
-        tn5_bam =      config["bam_dir"] + "/{library_id}_regfilt_tn5.bam",
+        atac_bam_filt + "/{library}_filt.bam",
     log:
-        config["log_dir"] + "/tn5_shift_and_open_{library_id}_regfilt.log",
+        config["logdir"] + "/{library}_tn5_shift.log",
+    output:
+        tmp = temp(atac_bam_tn5 + "/{library}_tn5_tmp.bam"),
+        tn5 =      atac_bam_tn5 + "/{library}_tn5.bam",
+    params:
+        script = config["scriptdir"]["atac"] + "/tn5_shift.sh",
+        threads = config["threads"],
     shell:
         """
-        workflow/scripts/tn5_shift.sh {input} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
+        {params.script} \
+        {input} \
+        {output.tmp} \
+        {output.tn5} \
+        {params.threads} &> {log}
         """
 #+end_src
 - [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
   #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
-alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
+inbam=$1
+outtmp=$2
+outbam=$3
+threads=$4
 
-samtools sort -@ $2 -o $4 $3
+alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $4 --outFile "$2"
 
-samtools index -@ $2 $4
+samtools sort -@ $4 -o $3 $2
+samtools index -@ $4 $3
 #+end_src
-*** DONE Tn5 open shift                                               :smk_rule:
-:LOGBOOK:
-- State "WAITING"    from "TODO"       [2022-01-06 Thu 09:09] \\
-  add to next run
-:END:
+*** DONE Get Tn5-shifted alignments to open chromatin                 :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule tn5_shift_open:
+rule open_chrom:
+    container:
+        atac_container,
     input:
-        config["bam_dir"] + "/{library_id}_open.bam",
-    output:
-        tmp_bam = temp(config["bam_dir"] + "/{library_id}_open_tmp.bam"),
-        tn5_bam =      config["bam_dir"] + "/{library_id}_open_tn5.bam",
+        atac_bam_tn5 + "/{library}_tn5.bam",
     log:
-        config["log_dir"] + "/tn5_shift_and_open_{library_id}_open.log",
+        config["logdir"] + "/{library}_open_chrom.log",
+    output:
+        tmp = temp(atac_bam_open + "/{library}_open_tmp.bam"),
+        open = atac_bam_open + "/{library}_open.bam",
+    params:
+        script = config["scriptdir"]["atac"] + "/open_chrom.sh",
+        threads = config["threads"],
     shell:
         """
-        workflow/scripts/tn5_shift.sh {input} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
+        {params.script} \
+        {input} \
+        {output.tmp} \
+        {output.open} \
+        {params.threads} &> {log}
         """
 #+end_src
-- [[file:./workflow/scripts/todo_tn5_shift.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/tn5_shift.sh
-alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $2 --outFile "$3"
+- [[file:workflow/scripts/open_chrom.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/open_chrom.sh
+  input=$1
+    tmp=$2
+   open=$3
+threads=$4
 
-samtools sort -@ $2 -o $4 $3
-
-samtools index -@ $2 $4
+alignmentSieve --bam $input \
+               --maxFragmentLength 150 \
+               --numberOfProcessors $threads \
+               --outFile $tmp
+samtools sort -@ $threads -o $open $tmp
+samtools index -@ $threads $open
 #+end_src
-*** DONE FastQC                                                       :smk_rule:
+** INPROCESS ATAC-seq QC
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+**** TODO ATAC-seq QC:smk_rule:
+#+begin_src R
+duplicated = "test/bam_atac_raw/lib002.bam"
+processed = "test/bam_atac_tn5/lib002_tn5.bam"
+gtf = "test/inputs/chr19.gtf"
+organism = "Mus musculus"
+
+library(ATACseqQC)
+library(GenomicFeatures)
+
+freq = readsDupFreq(duplicated)
+libcomp = estimateLibComplexity(freq)
+
+bamfile.labels <- gsub(".bam", "", basename(bamfile))
+fragSize = fragSizeDist(bamfile, bamfile.labels)
+
+txdb = makeTxDbFromGFF(gtf,
+                       format = "gtf",
+                       organism = organism)
+txs = transcripts(txdb)
+gal = readBamFile(bamfile)
+tsse = TSSEscore(gal, txs)
+
+#+end_src
+
+- Snakemake
+  #+begin_src snakemake
+rule atac-seq_qc:
+    input:
+    params:
+        script = config["repo"] + "workflow/scripts/atac-seq_qc.R"
+    output:
+    log:
+        config["data_dir"] + "/logs/atac-seq_qc.log"
+    shell:
+        """
+        Rscript {params.script} \
+        >& {log}
+        """
+#+end_src
+
+
+
+***** notes
+:PROPERTIES:
+:ID:       06f9345e-a489-4b5e-9f68-82e22e468096
+:END:
+- run on server, run launch_atac to load docker with ATACseqQC package
+- do not run R docker through docker_interactive function- unknown error
+
+
+**** TODO Samstats:smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule samstats:
+    input:
+        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
+    output:
+        stat = config["data_dir"] + "/qc/{library_id}_stat.txt",
+        flagstat = config["data_dir"] + "/qc/{library_id}_flagstat.txt",
+    log:
+        config["data_dir"] + "/logs/{library_id}_samstats.log",
+    shell:
+        """
+        "workflow/scripts/samstats.sh" {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/samstats.sh][Base script]]
+  #+begin_src bash
+#########1#########2#########3#########4#########5#########6#########7#########8
+samtools stats -@ $1 $2 > $3
+samtools flagstat -@ $1 $2 > $4
+#+end_src
+**** TODO FastQC:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule fastqc:
     input:
-        raw = config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz",
     output:
-        raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
-    log:
-        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
     shell:
         """
-        fastqc --outdir {config[qc_dir]} \
-        --quiet \
-        --threads {config[threads]} {input.raw} &> {log}
+        scripts/fastqc.sh
         """
 #+end_src
 - [[file:./workflow/scripts/fastqc.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/fastqc.sh
-fastqc --quiet --outdir=$1 $2 &>> $3
+  #+begin_src bash
+# Snakemake variables
+# Function
+# Run command
+for file in $data_dir}/atac/atac-fastq/*.fastq.gz;
+do
+    fastqc --outdir=$data_dir}/results/qc $file &>> "$data_dir}/log/fastqc_log.txt"
+done
+
+
 #+end_src
+**** TODO MultiQC:smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule multiqc:
+    input:
+    output:
+    shell:
+        """
+        scripts/multiqc.sh
+        """
+#+end_src
+- [[file:./workflow/scripts/multiqc.sh][Base script]]
+  #+begin_src bash
+multiqc_wrap()
+    # Check for parameters, return usage if empty
+    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
+           \n Wrapper for multiqc, see options in function
+           \n $1 = input_dir
+           \n $2 = output_dir
+           \n $3 = output_dir_prefix
+           \n "
+    else
+        multiqc $1 \
+        --force \
+        --dirs \
+        --dirs-depth 1 \
+        --outdir $2 \
+        --filename atac_qc
+    fi
+}
+
+# Snakemake variables
+# Function
+# Run command
+#########1#########2#########3#########4#########5#########6#########7#########8
+multiqc_wrap()
+    # Check for parameters, return usage if empty
+    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
+           \n Wrapper for multiqc, see options in function
+           \n $1 = input_dir
+           \n $2 = output_dir
+           \n $3 = output_dir_prefix
+           \n "
+    else
+        multiqc $1 \
+        --force \
+        --dirs \
+        --dirs-depth 1 \
+        --outdir $2 \
+        --filename atac_qc
+    fi
+}
+
+#+end_src
+**** ?
+
+- ? cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
 *** DONE Samstats                                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
@@ -387,398 +605,133 @@ samtools stats -@ $1 $2 > $3
 samtools flagstat -@ $1 $2 > $4
 
 #+end_src
-** [[file:workflow/peak_call_and_norm.smk][Peak calling and normalization]] :smk:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/peak_call_and_norm.smk
-:END:
-*** DONE Call MACS2 narrow                                            :smk_rule:
+*** DONE FastQC                                                       :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule call_macs2_narrow:
+rule fastqc:
     input:
-        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
+        raw = config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz",
     output:
-        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_NARROW_EXT)
-    shell:
-        """
-        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
-        workflow/scripts/call_macs2_narrow.sh {input} ${{base}} "{config[data_dir]}/macs2"
-        """
-#+end_src
-- Script
-  #+begin_src bash :tangle ./workflow/scripts/call_macs2_narrow.sh
-#!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-# Check for parameters, return usage if empty
-if [[ "$#" -ne 3 ]];
-then
-    printf "\n usage: call_macs2_broad <BAM FILE> <OUTPUT BASENAME> <OUTPUT DIRECTORY>
-    \n Wrapper function for calling broad beaks from ATAC-seq data with MACS2
-    \n "
-elif
-    [[ ! -f "${1}.bai" ]]; then echo "No index for $1"
-else
-    macs2 callpeak \
-          --bdg \
-          --call-summits \
-          --extsize 150 \
-          --format BAMPE \
-          --gsize mm \
-          --keep-dup all \
-          --name $2 \
-          --nolambda \
-          --nomodel \
-          --outdir $3 \
-          --SPMR \
-          --treatment $1
-fi
-#+end_src
-*** DONE Call MACS2 broad                                             :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule call_macs2_broad:
-    input:
-        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
-    output:
-        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_BROAD_EXT)
-    shell:
-        """
-        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
-        workflow/scripts/call_macs2_broad.sh {input} ${{base}} "{config[data_dir]}/macs2"
-        """
-#+end_src
-- [[file:workflow/scripts/call_macs2_broad.sh][Script]]
-  #+begin_src bash :tangle ./workflow/scripts/call_macs2_broad.sh
-#!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-# Check for parameters, return usage if empty
-if [[ "$#" -ne 3 ]];
-then
-    printf "\n usage: call_macs2_broad <BAM FILE> <OUTPUT BASENAME> <OUTPUT DIRECTORY>
-    \n Wrapper function for calling broad beaks from ATAC-seq data with MACS2
-    \n "
-elif
-    [[ ! -f "${1}.bai" ]]; then echo "No index for $1"
-else
-    macs2 callpeak \
-          --broad \
-          --broad-cutoff 0.05 \
-          --format BAMPE \
-          --gsize mm \
-          --keep-dup all \
-          --name $2 \
-          --outdir $3 \
-          --treatment $1
-fi
-#+end_src
-- Function- Broadpeak as in  cite:corces2018 and cite:hendrickson2017
-*** DONE Peak calling, all samples                                    :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule make_peak_counts:
-    input:
-        expand(config["bam_dir"] + "/{library_id}_{{bam_process}}_tn5.bam", library_id = LIBRARY_IDS)
-    params:
-        script = config["atac_scripts_dir"] + "/select_window_size.R",
-	groups_str = "ir48h ir48h sham sham"
-    output:
-        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
-        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
+        raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
     log:
-        config["log_dir"] + "/make_peak_counts_{bam_process}.log",
+        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
     shell:
         """
-        Rscript {params.script} \
-        "{input}" \
-        {config[threads]} \
-        {output.norm_counts_rse} \
-        {output.dge} \
-        {params.groups_str} \
-        >& {log}
+        fastqc --outdir {config[qc_dir]} \
+        --quiet \
+        --threads {config[threads]} {input.raw} &> {log}
         """
 #+end_src
-- [[file:./workflow/scripts/select_window_size.R][Base script]]
-  #+begin_src R :noweb yes :tangle ./workflow/scripts/select_window_size.R
-
-#############################################################################
-###            Script for csaw ATAC-seq local peak calling                ###
-#############################################################################
-
-# Setup
-
-## Test arguements
-## groups_str = "ir48h ir48h sham sham"
-## library_ids_str = "/home/jeszyman/repos/atac-seq/test/bam/atac1_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac2_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac3_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac4_open_tn5.bam"
-## out_rse_rds = "/home/jeszyman/repos/atac-seq/test/csaw/norm_counts_rse.rds"
-## out_dge_rds = "/home/jeszyman/repos/atac-seq/test/csaw/dge.rds"
-## threads = 4
-
-## Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-library_ids_str = args[1]
-threads = args[2]
-out_rse_rds = args[3]
-out_dge_rds = args[4]
-groups_str = args[5]
-
-## Load packages
-library(BiocParallel)
-library(csaw)
-library(edgeR)
-library(tidyverse)
-
-# Specify csaw window parameters
-surrounds = 2000
-autosomes <- paste0("chr", c(1:19)) # only use autosomes
-param = readParam(max.frag=1000, pe="both", restrict=autosomes)
-
-# Make bam file list
-bam_list = unlist(strsplit(library_ids_str, " "))
-names(bam_list) = gsub("^.*/","",bam_list)
-
-# Filter per Reske JJ, et al. 2021. https://doi.org/10.1186/s13072-020-00342-y
-
-## Choose window width by fragment size distribution
-csaw_choose_window = function(bam_list){
-  frag_size = lapply(bam_list, getPESizes)
-  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
-  frag_vect_summary = summary(all_bam_frag_vect)
-  thirdq = frag_vect_summary[[5]]
-  return(thirdq)
-}
-
-window = csaw_choose_window(bam_list)
-
-counts = windowCounts(bam_list,
-                      width = window,
-                      param = param,
-                      BPPARAM = MulticoreParam(workers=threads))
-
-neighbor = suppressWarnings(resize(rowRanges(counts),
-                                   surrounds, fix = "center"))
-
-wider = regionCounts(bam_list,
-                     regions = neighbor,
-                     param = param,
-                     BPPARAM = MulticoreParam(workers=threads))
-
-# Remove dimnames to avoid SummarizedExperiment error in window filtering
-dimnames(wider) = NULL
-dimnames(counts) = NULL
-
-filter_stat = filterWindowsLocal(counts, wider, assay.data = "counts")
-
-filtered_counts = counts[filter_stat$filter > log2(3),]
-
-background = windowCounts(bam_list,
-                          bin = TRUE,
-                          width = 10000,
-                          param = param,
-                          BPPARAM = MulticoreParam(workers=threads))
-
-# Return library names
-colnames(filtered_counts) = names(bam_list)
-colnames(background) = names(bam_list)
-
-filtered_counts = normFactors(background, se.out = filtered_counts)
-
-y = asDGEList(filtered_counts)
-colnames(y$counts) = colnames(filtered_counts)
-rownames(y$samples) = colnames(filtered_counts)
-
-groups = as.factor(unlist(strsplit(groups_str, " ")))
-y$samples$group = groups
-
-# Save outputs
-saveRDS(object = filtered_counts,
-        file = out_rse_rds)
-saveRDS(object = y,
-        file = out_dge_rds)
-#+end_src
-*** DONE Percent of genome open
-- Snakemake
-  #+begin_src snakemake
-rule open_genome:
-    input:
-        config["data_dir"] + "/bam/{library_id}_open_tn5.bam",
-    params:
-        genome_bed = "resources/mm10.bed",
-    output:
-        config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt"
-    shell:
-        """
-        bedmap --echo --bases-uniq --delim '\t' {params.genome_bed} {input} | awk 'BEGIN {{ genome_length = 0; masked_length = 0; }} {{ genome_length += ($3 - $2); masked_length += $4; }} END {{ print (masked_length / genome_length); }}' > {output}
-        """
-#+end_src
-- https://www.biostars.org/p/219099/
-  #+begin_src bash
-singularity shell --help
-singularity shell --bind /mnt/:/mnt/ ~/sing_containers/atac.sif
-
-fract(){
-    bedmap --echo --bases-uniq --delim '\t' ~/repos/atac-seq/resources/mm10.bed $1 | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'
-}
-
-if [ -f /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt ]; then
-    \rm -rf /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
-fi
-
-touch /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
-
-for file in /mnt/ris/jschwarz/cardiac-radiobiology/atac/macs2/lib*open*narrowPeak; do
-    echo "$(basename $file) $(fract $file)" >> /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
-done
-
-head /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
-
-cp /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
+- [[file:./workflow/scripts/fastqc.sh][Base script]]
+  #+begin_src bash :tangle ./workflow/scripts/fastqc.sh
+fastqc --quiet --outdir=$1 $2 &>> $3
 #+end_src
 ** INPROCESS Integration testing :smk:
-#+begin_src bash
-results_dirs=("bam"
-              "csaw"
-              "dca"
-              "fastq"
-              "logs"
-              "macs2"
-              "open_chrom"
-              "qc")
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/int_test.smk :tangle-mode (identity #o555)
+:END:
+*** Preamble, variable naming, etc
+#+begin_src snakemake
+atac_fastq_raw =     config["datadir"] + "/fastq_atac_raw"
+atac_fastq_proc =    config["datadir"] + "/fastq_atac_proc"
+logdir =             config["logdir"]
+atac_container =     config["container"]["atac"]
+atac_bowtie2_index = config["datadir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
+atac_bowtie2_dir =   config["datadir"] + "/ref/ucsc_mm10_chr19"
+atac_bam_raw =       config["datadir"] + "/bam_atac_raw"
+atac_bam_dedup =     config["datadir"] + "/bam_atac_dedup"
+atac_bam_filt =      config["datadir"] + "/bam_atac_filt"
+atac_keep_bed =      config["datadir"] + "/inputs/mm10chrs.bed"
+atac_bam_tn5 =       config["datadir"] + "/bam_atac_tn5"
+atac_bam_open =      config["datadir"] + "/bam_atac_open"
 
-for dir in "${results_dirs[@]}";
-do
-    \rm -rf $dir
-done
+import pandas as pd
+import re
+import numpy as np
+
+libraries = pd.read_table("test/inputs/libraries.tsv")
+libraries["r1_path"]="test/inputs/" + libraries["basename"]
+
+readable = []
+for x in libraries.r1_path:
+    readable.append(os.access(x, os.R_OK))
+libraries['readable']=readable
+
+libraries = libraries[libraries.readable == True]
+
+library_indict = libraries["library"].tolist()
+file_indict = libraries["r1_path"].tolist()
+lib_dict = dict(zip(library_indict, file_indict))
+
+LIBRARIES = list(lib_dict.keys())
 #+end_src
-*** [[file:workflow/int_test.smk][Snakefile]]                                                           :smk:
-#+begin_src snakemake :tangle ./workflow/int_test.smk
-container: config["container"]
-
-MACS_BROAD_EXT = ["peaks.broadPeak", "peaks.gappedPeak", "peaks.xls"]
-
-MACS_NARROW_EXT = ["peaks.narrowPeak", "summits.bed"]
-
-BAM_PROCESS = ["regfilt", "open"]
-
-LIBRARY_IDS = ["atac1", "atac2", "atac3", "atac4"]
+*** All rule
+#+begin_src snakemake
 
 rule all:
     input:
-        expand(config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
-        expand(config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz", library_id = LIBRARY_IDS),
-        expand(config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}.bam", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_dedup.bam", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_regfilt.bam", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_regfilt.bam.bai", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_open.bam", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_regfilt_tn5.bam", library_id = LIBRARY_IDS),
-        expand(config["bam_dir"] + "/{library_id}_open_tn5.bam", library_id = LIBRARY_IDS),
-        expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
-        expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
-        expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
-        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_broad}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_broad = MACS_BROAD_EXT),
-        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_narrow}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_narrow = MACS_NARROW_EXT),
-        expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt", library_id = LIBRARY_IDS),
+        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = LIBRARIES),
+        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = LIBRARIES),
+	atac_bowtie2_dir,
+        expand(atac_bam_raw + "/{library}.bam",	library = LIBRARIES),
+        expand(atac_bam_dedup + "/{library}_dedup.bam", library = LIBRARIES),
+        expand(atac_bam_filt + "/{library}_filt.bam", library = LIBRARIES),
+        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = LIBRARIES),
+        expand(atac_bam_open + "/{library}_open.bam", library = LIBRARIES),
+        #expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
+        #expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
+        #expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
+        #expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_broad}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_broad = MACS_BROAD_EXT),
+        #expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_narrow}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_narrow = MACS_NARROW_EXT),
+        #expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
+        #expand(config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt", library_id = LIBRARY_IDS),
 	#expand(config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds", bam_process = BAM_PROCESS),
         #expand(config["data_dir"] + "/csaw/dge_{bam_process}.rds", bam_process = BAM_PROCESS),
         #expand(config["data_dir"] + "/dca/dca_granges_{bam_process}.rds", bam_process = BAM_PROCESS),
         #expand(config["data_dir"] + "/dca/{bam_process}_dca.csv", bam_process = BAM_PROCESS),
         #expand(config["data_dir"] + "/dca/{bam_process}_chipseek.rds", bam_process = BAM_PROCESS),
-
-
-include: "atac_read_process.smk"
-include: "peak_call_and_norm.smk"
-include: "dca_and_annot.smk"
 #+end_src
-**** [[file:workflow/int_test_peaks.smk][Peak calling and differential accessibility]]
-#+begin_src snakemake :tangle ./workflow/int_test_peaks.smk
 
-
-rule all:
+*** Symlink input fastqs                                           :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule symlink:
+    container:
+        atac_container,
     input:
-
-
+        lambda wildcards: lib_dict[wildcards.library],
+    output:
+        r1 = atac_fastq_raw + "/{library}_R1.fastq.gz",
+        r2 = atac_fastq_raw + "/{library}_R2.fastq.gz",
+    shell:
+        """
+        r2=$(echo {input} | sed "s/_R1/_R2/g")
+        ln -sf --relative {input} {output.r1}
+        ln -sf --relative $r2 {output.r2}
+        """
 #+end_src
 
-#+begin_src snakemake :tangle ./workflow/int_test_peaks.smk
-container: config["container"]
+*** Includes statements
+#+begin_src snakemake
 
-MACS_BROAD_EXT = ["peaks.broadPeak", "peaks.gappedPeak", "peaks.xls"]
-
-MACS_NARROW_EXT = ["peaks.narrowPeak", "summits.bed"]
-
-LIBRARY_IDS = ["atac1","atac2","atac3","atac4"]
-
-BAM_PROCESS = ["regfilt", "open"]
-
-rule all:
-    input:
-        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_broad}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_broad = MACS_BROAD_EXT),
-        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_narrow}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_narrow = MACS_NARROW_EXT),
-        expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-        expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-
-include: "peak_call_and_dif.smk"
-#+end_src
-
-*** Bash run scripts
-#+begin_src bash
-basecamp/src/smk_dry_run.sh config/int_test.yaml workflow/int_test.smk
-basecamp/src/smk_run.sh config/int_test.yaml workflow/int_test.smk
-basecamp/src/smk_forced_run.sh config/int_test.yaml workflow/int_test.smk
+include: "atac.smk"
 
 #+end_src
-
 ** :dev:
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :header-args:bash: :tangle no
 :END:
-*** TODO Update via biopipe mod
-*** TODO ATAC-seq QC
-- add bowtie index step
-  #+begin_src bash :tangle ./workflow/scripts/make_bowtie_index.sh
-cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-# Function
-make_bt2_index(){
-    index_dir=$(dirname $3)
-    mkdir -p $index_dir
-    bowtie2-build -f \
-                  --threads $1 \
-                  $2 \
-                  $3
-}
-
-# Snakemake variables
-input_fa="$1"
-params_prefix="$2"
-params_threads="$3"
-
-# Run
-make_bt2_index $params_threads $input_fa $params_prefix
-#+end_src
-bowtie2-build /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa /home/jeszyman//repos/atac-seq/test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19
-
-#+begin_src R
-# need to index bams first
-
-library(ATACseqQC)
-
-bamfile = "test/bam/atac1_open.bam"
-freq = readsDupFreq("test/bam/atac1.bam")
-
-test=estimateLibComplexity(
-  readsDupFreq(bamfile)
-)
-test
-#+end_src
 *** ideas
+- cite:liu2021 https://www.sciencedirect.com/science/article/pii/S1672022921001479
+- for split alignment conservation https://support.bioconductor.org/p/96226/ (works in docker)
+- lib complexity w/ preseq http://smithlabresearch.org/software/preseq/ https://github.com/smithlabcode/preseq
+
 - common
-  #+begin_src bash :tangle config/common.yaml
+  #+begin_src bash
 
 
 CHROM_FILT:
@@ -822,7 +775,7 @@ chmod 777 .git/hooks/precommit
 #+end_src
 
 - startup script
-  #+begin_src bash :tangle
+  #+begin_src bash
 #!/usr/bin/env bash
 repo=$1
 mntpt=$2
@@ -4584,6 +4537,285 @@ saveRDS(object = chipseek,
 #+end_src
 - Reference
   - https://bioconductor.org/packages/release/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html#peak-annotation
+**** Update via biopipe mod
+*** [[file:workflow/int_test_peaks.smk][Peak calling and differential accessibility]]
+#+begin_src snakemake :tangle ./workflow/int_test_peaks.smk
+
+
+rule all:
+    input:
+
+
+#+end_src
+
+#+begin_src snakemake :tangle ./workflow/int_test_peaks.smk
+container: config["container"]
+
+MACS_BROAD_EXT = ["peaks.broadPeak", "peaks.gappedPeak", "peaks.xls"]
+
+MACS_NARROW_EXT = ["peaks.narrowPeak", "summits.bed"]
+
+LIBRARY_IDS = ["atac1","atac2","atac3","atac4"]
+
+BAM_PROCESS = ["regfilt", "open"]
+
+rule all:
+    input:
+        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_broad}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_broad = MACS_BROAD_EXT),
+        expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_narrow}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_narrow = MACS_NARROW_EXT),
+        expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
+        expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
+
+include: "peak_call_and_dif.smk"
+#+end_src
+
+
+*** [[file:workflow/peak_call_and_norm.smk][Peak calling and normalization]]                                      :smk:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/peak_call_and_norm.smk
+:END:
+**** DONE Call MACS2 narrow                                           :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule call_macs2_narrow:
+    input:
+        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
+    output:
+        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_NARROW_EXT)
+    shell:
+        """
+        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_narrow.sh {input} ${{base}} "{config[data_dir]}/macs2"
+        """
+#+end_src
+- Script
+  #+begin_src bash :tangle ./workflow/scripts/call_macs2_narrow.sh
+#!/usr/bin/env bash
+#########1#########2#########3#########4#########5#########6#########7#########8
+# Check for parameters, return usage if empty
+if [[ "$#" -ne 3 ]];
+then
+    printf "\n usage: call_macs2_broad <BAM FILE> <OUTPUT BASENAME> <OUTPUT DIRECTORY>
+    \n Wrapper function for calling broad beaks from ATAC-seq data with MACS2
+    \n "
+elif
+    [[ ! -f "${1}.bai" ]]; then echo "No index for $1"
+else
+    macs2 callpeak \
+          --bdg \
+          --call-summits \
+          --extsize 150 \
+          --format BAMPE \
+          --gsize mm \
+          --keep-dup all \
+          --name $2 \
+          --nolambda \
+          --nomodel \
+          --outdir $3 \
+          --SPMR \
+          --treatment $1
+fi
+#+end_src
+**** DONE Call MACS2 broad                                            :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule call_macs2_broad:
+    input:
+        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
+    output:
+        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_BROAD_EXT)
+    shell:
+        """
+        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
+        workflow/scripts/call_macs2_broad.sh {input} ${{base}} "{config[data_dir]}/macs2"
+        """
+#+end_src
+- [[file:workflow/scripts/call_macs2_broad.sh][Script]]
+  #+begin_src bash :tangle ./workflow/scripts/call_macs2_broad.sh
+#!/usr/bin/env bash
+#########1#########2#########3#########4#########5#########6#########7#########8
+# Check for parameters, return usage if empty
+if [[ "$#" -ne 3 ]];
+then
+    printf "\n usage: call_macs2_broad <BAM FILE> <OUTPUT BASENAME> <OUTPUT DIRECTORY>
+    \n Wrapper function for calling broad beaks from ATAC-seq data with MACS2
+    \n "
+elif
+    [[ ! -f "${1}.bai" ]]; then echo "No index for $1"
+else
+    macs2 callpeak \
+          --broad \
+          --broad-cutoff 0.05 \
+          --format BAMPE \
+          --gsize mm \
+          --keep-dup all \
+          --name $2 \
+          --outdir $3 \
+          --treatment $1
+fi
+#+end_src
+- Function- Broadpeak as in  cite:corces2018 and cite:hendrickson2017
+**** DONE Peak calling, all samples                                   :smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule make_peak_counts:
+    input:
+        expand(config["bam_dir"] + "/{library_id}_{{bam_process}}_tn5.bam", library_id = LIBRARY_IDS)
+    params:
+        script = config["atac_scripts_dir"] + "/select_window_size.R",
+	groups_str = "ir48h ir48h sham sham"
+    output:
+        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
+        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
+    log:
+        config["log_dir"] + "/make_peak_counts_{bam_process}.log",
+    shell:
+        """
+        Rscript {params.script} \
+        "{input}" \
+        {config[threads]} \
+        {output.norm_counts_rse} \
+        {output.dge} \
+        {params.groups_str} \
+        >& {log}
+        """
+#+end_src
+- [[file:./workflow/scripts/select_window_size.R][Base script]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/select_window_size.R
+
+#############################################################################
+###            Script for csaw ATAC-seq local peak calling                ###
+#############################################################################
+
+# Setup
+
+## Test arguements
+## groups_str = "ir48h ir48h sham sham"
+## library_ids_str = "/home/jeszyman/repos/atac-seq/test/bam/atac1_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac2_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac3_open_tn5.bam /home/jeszyman/repos/atac-seq/test/bam/atac4_open_tn5.bam"
+## out_rse_rds = "/home/jeszyman/repos/atac-seq/test/csaw/norm_counts_rse.rds"
+## out_dge_rds = "/home/jeszyman/repos/atac-seq/test/csaw/dge.rds"
+## threads = 4
+
+## Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+library_ids_str = args[1]
+threads = args[2]
+out_rse_rds = args[3]
+out_dge_rds = args[4]
+groups_str = args[5]
+
+## Load packages
+library(BiocParallel)
+library(csaw)
+library(edgeR)
+library(tidyverse)
+
+# Specify csaw window parameters
+surrounds = 2000
+autosomes <- paste0("chr", c(1:19)) # only use autosomes
+param = readParam(max.frag=1000, pe="both", restrict=autosomes)
+
+# Make bam file list
+bam_list = unlist(strsplit(library_ids_str, " "))
+names(bam_list) = gsub("^.*/","",bam_list)
+
+# Filter per Reske JJ, et al. 2021. https://doi.org/10.1186/s13072-020-00342-y
+
+## Choose window width by fragment size distribution
+csaw_choose_window = function(bam_list){
+  frag_size = lapply(bam_list, getPESizes)
+  all_bam_frag_vect = frag_size %>% map(1) %>% as_vector()
+  frag_vect_summary = summary(all_bam_frag_vect)
+  thirdq = frag_vect_summary[[5]]
+  return(thirdq)
+}
+
+window = csaw_choose_window(bam_list)
+
+counts = windowCounts(bam_list,
+                      width = window,
+                      param = param,
+                      BPPARAM = MulticoreParam(workers=threads))
+
+neighbor = suppressWarnings(resize(rowRanges(counts),
+                                   surrounds, fix = "center"))
+
+wider = regionCounts(bam_list,
+                     regions = neighbor,
+                     param = param,
+                     BPPARAM = MulticoreParam(workers=threads))
+
+# Remove dimnames to avoid SummarizedExperiment error in window filtering
+dimnames(wider) = NULL
+dimnames(counts) = NULL
+
+filter_stat = filterWindowsLocal(counts, wider, assay.data = "counts")
+
+filtered_counts = counts[filter_stat$filter > log2(3),]
+
+background = windowCounts(bam_list,
+                          bin = TRUE,
+                          width = 10000,
+                          param = param,
+                          BPPARAM = MulticoreParam(workers=threads))
+
+# Return library names
+colnames(filtered_counts) = names(bam_list)
+colnames(background) = names(bam_list)
+
+filtered_counts = normFactors(background, se.out = filtered_counts)
+
+y = asDGEList(filtered_counts)
+colnames(y$counts) = colnames(filtered_counts)
+rownames(y$samples) = colnames(filtered_counts)
+
+groups = as.factor(unlist(strsplit(groups_str, " ")))
+y$samples$group = groups
+
+# Save outputs
+saveRDS(object = filtered_counts,
+        file = out_rse_rds)
+saveRDS(object = y,
+        file = out_dge_rds)
+#+end_src
+**** DONE Percent of genome open
+- Snakemake
+  #+begin_src snakemake
+rule open_genome:
+    input:
+        config["data_dir"] + "/bam/{library_id}_open_tn5.bam",
+    params:
+        genome_bed = "resources/mm10.bed",
+    output:
+        config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt"
+    shell:
+        """
+        bedmap --echo --bases-uniq --delim '\t' {params.genome_bed} {input} | awk 'BEGIN {{ genome_length = 0; masked_length = 0; }} {{ genome_length += ($3 - $2); masked_length += $4; }} END {{ print (masked_length / genome_length); }}' > {output}
+        """
+#+end_src
+- https://www.biostars.org/p/219099/
+  #+begin_src bash
+singularity shell --help
+singularity shell --bind /mnt/:/mnt/ ~/sing_containers/atac.sif
+
+fract(){
+    bedmap --echo --bases-uniq --delim '\t' ~/repos/atac-seq/resources/mm10.bed $1 | awk 'BEGIN { genome_length = 0; masked_length = 0; } { genome_length += ($3 - $2); masked_length += $4; } END { print (masked_length / genome_length); }'
+}
+
+if [ -f /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt ]; then
+    \rm -rf /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
+fi
+
+touch /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
+
+for file in /mnt/ris/jschwarz/cardiac-radiobiology/atac/macs2/lib*open*narrowPeak; do
+    echo "$(basename $file) $(fract $file)" >> /mnt/ris/jschwarz/cardiac-radiobiology/atac/fract_open.txt
+done
+
+head /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
+
+cp /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
+#+end_src
 ** README
 currently only for mouse for macs2
 *** Prerequisites to run repository local integration testing

@@ -1,0 +1,219 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job           count    min threads    max threads
+----------  -------  -------------  -------------
+all               1              1              1
+filter_bam        4              1              1
+total             5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	filter_bam
+	filter_bam
+	filter_bam
+	filter_bam
+Select jobs to execute...
+Selected jobs (4):
+	filter_bam
+	filter_bam
+	filter_bam
+	filter_bam
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Thu Sep  1 13:25:59 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib002_dedup.bam
+    output: test/bam_atac/filt/lib002_filt.bam
+    log: test/logs/lib002_atac_filter_bam.log
+    jobid: 19
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac/filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib002_dedup.bam         test/bam_atac/filt/lib002_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib002_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Thu Sep  1 13:25:59 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib001_dedup.bam
+    output: test/bam_atac/filt/lib001_filt.bam
+    log: test/logs/lib001_atac_filter_bam.log
+    jobid: 18
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac/filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib001_dedup.bam         test/bam_atac/filt/lib001_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib001_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Thu Sep  1 13:25:59 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib003_dedup.bam
+    output: test/bam_atac/filt/lib003_filt.bam
+    log: test/logs/lib003_atac_filter_bam.log
+    jobid: 20
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac/filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib003_dedup.bam         test/bam_atac/filt/lib003_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib003_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Thu Sep  1 13:25:59 2022]
+rule filter_bam:
+    input: test/bam_atac_dedup/lib004_dedup.bam
+    output: test/bam_atac/filt/lib004_filt.bam
+    log: test/logs/lib004_atac_filter_bam.log
+    jobid: 21
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac/filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/filter_bam.sh         test/bam_atac_dedup/lib004_dedup.bam         test/bam_atac/filt/lib004_filt.bam         test/inputs/mm10chrs.bed         4 &> test/logs/lib004_atac_filter_bam.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/bam_atac/filt/lib002_filt.bam
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/bam_atac/filt/lib002_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 19 completed successfully, but some output files are missing. 19
+
+MissingOutputException in line 98 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Job Missing files after 5 seconds:
+test/bam_atac/filt/lib002_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 19 completed successfully, but some output files are missing. 19
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/bam_atac/filt/lib001_filt.bam
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/bam_atac/filt/lib001_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 18 completed successfully, but some output files are missing. 18
+
+MissingOutputException in line 98 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Job Missing files after 5 seconds:
+test/bam_atac/filt/lib001_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 18 completed successfully, but some output files are missing. 18
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/bam_atac/filt/lib004_filt.bam
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/bam_atac/filt/lib004_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 21 completed successfully, but some output files are missing. 21
+
+MissingOutputException in line 98 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Job Missing files after 5 seconds:
+test/bam_atac/filt/lib004_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 21 completed successfully, but some output files are missing. 21
+Waiting at most 5 seconds for missing files.
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 493, in check_and_touch_output
+    wait_for_files(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/io.py", line 825, in wait_for_files
+    raise IOError(
+OSError: Missing files after 5 seconds:
+test/bam_atac/filt/lib003_filt.bam
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/scheduler.py", line 552, in _proceed
+    self.get_executor(job).handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 607, in handle_job_success
+    super().handle_job_success(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 265, in handle_job_success
+    job.postprocess(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/jobs.py", line 994, in postprocess
+    self.dag.check_and_touch_output(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/dag.py", line 500, in check_and_touch_output
+    raise MissingOutputException(
+snakemake.exceptions.MissingOutputException: Job Missing files after 5 seconds:
+test/bam_atac/filt/lib003_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 20 completed successfully, but some output files are missing. 20
+
+MissingOutputException in line 98 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Job Missing files after 5 seconds:
+test/bam_atac/filt/lib003_filt.bam
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 20 completed successfully, but some output files are missing. 20
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-01T132559.520534.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

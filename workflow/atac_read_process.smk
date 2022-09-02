@@ -1,123 +1,71 @@
-rule read_trim:
+# Uses flexbar to trim and quality-filter fastq reads
+rule trim:
+    container:
+        atac_container,
     input:
-        r1 = config["fq_sym_dir"] + "/{library_id}_R1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_R2.fastq.gz",
-    params:
-        outdir = config["fq_sym_dir"],
-        threads = config["threads"],
+        r1 = atac_fastq_raw + "/{library}_R1.fastq.gz",
+        r2 = atac_fastq_raw + "/{library}_R2.fastq.gz",
+    log:
+        config["logdir"] + "/{library}_atac_trim.log",
     output:
-        config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
+        atac_fastq_proc + "/{library}_flex_1.fastq.gz",
+        atac_fastq_proc + "/{library}_flex_2.fastq.gz",
+    params:
+        outdir = atac_fastq_proc,
+        script = config["scriptdir"]["atac"] + "/trim.sh",
+        threads = config["threads"],
     resources:
-        mem_mb=5000
+        mem_mb=5000,
     shell:
         """
-        workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
+        {params.script} \
+        {input.r1} \
+        {input.r2} \
+        {params.outdir} \
+        {params.threads} &> {log}
+        """
+
+# Make bowtie2 index
+rule atac_index:
+    input:
+        config["fasta"]
+    params:
+        base = atac_bowtie2_index,
+        script = config["scriptdir"]["atac"] + "/index.sh",
+    output:
+        directory(atac_bowtie2_dir),
+    log:
+        config["logdir"] + "/atac_index.log",
+    container:
+        atac_container,
+    shell:
+        """
+        {params.script} \
+        {input} \
+        {params.base} \
+        {output} &> {log}
         """
 
 rule align_bt2:
+    container:
+        atac_container,
     input:
-        r1 = config["fq_sym_dir"] + "/{library_id}_flex_1.fastq.gz",
-        r2 = config["fq_sym_dir"] + "/{library_id}_flex_2.fastq.gz",
+        r1 = atac_fastq_proc + "/{library}_flex_1.fastq.gz",
+        r2 = atac_fastq_proc + "/{library}_flex_2.fastq.gz",
+    log:
+        config["logdir"] + "/{library}_align_bt2.log",
     params:
-        prefix = config["bowtie_prefix"],
+        prefix = atac_bowtie2_index,
+        script = config["scriptdir"]["atac"] + "/align_bt2.sh",
         threads = config["threads"],
     output:
-        bam = config["bam_dir"] + "/{library_id}.bam",
+        atac_bam_raw + "/{library}.bam",
     shell:
         """
-        workflow/scripts/align_bt2.sh {input.r1} {input.r2} {params.prefix} {params.threads} {output.bam}
-        """
-
-rule filter_and_dedup:
-    input:
-        bam = config["bam_dir"] + "/{library_id}.bam",
-    output:
-        dedup_bam = config["bam_dir"] + "/{library_id}_dedup.bam",
-        qfilt_bam = temp(config["bam_dir"] + "/{library_id}_qfilt.bam"),
-        regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
-        regfilt_index = config["bam_dir"] + "/{library_id}_regfilt.bam.bai",
-    resources:
-        mem_mb=5000
-    shell:
-        """
-        workflow/scripts/filter_and_dedup.sh {input.bam} \
-	                                     {config[keep_bed]} \
-	                                     {config[threads]} \
-	                                     {output.dedup_bam} \
-	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam}
-        """
-
-rule get_open_chrom:
-    input:
-        regfilt_bam = config["bam_dir"] + "/{library_id}_regfilt.bam",
-    output:
-        unsort_open_bam = temp(config["bam_dir"] + "/{library_id}_unsort_open.bam"),
-        open_bam = config["bam_dir"] + "/{library_id}_open.bam",
-    shell:
-        """
-        workflow/scripts/get_open_chrom.sh {input.regfilt_bam} \
-                                           {config[threads]} \
-                                           {output.unsort_open_bam} \
-                                           {output.open_bam}
-        """
-
-rule tn5_shift:
-    input:
-        config["bam_dir"] + "/{library_id}_regfilt.bam",
-    output:
-        tmp_bam = temp(config["bam_dir"] + "/{library_id}_regfilt_tmp.bam"),
-        tn5_bam =      config["bam_dir"] + "/{library_id}_regfilt_tn5.bam",
-    log:
-        config["log_dir"] + "/tn5_shift_and_open_{library_id}_regfilt.log",
-    shell:
-        """
-        workflow/scripts/tn5_shift.sh {input} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
-        """
-
-rule tn5_shift_open:
-    input:
-        config["bam_dir"] + "/{library_id}_open.bam",
-    output:
-        tmp_bam = temp(config["bam_dir"] + "/{library_id}_open_tmp.bam"),
-        tn5_bam =      config["bam_dir"] + "/{library_id}_open_tn5.bam",
-    log:
-        config["log_dir"] + "/tn5_shift_and_open_{library_id}_open.log",
-    shell:
-        """
-        workflow/scripts/tn5_shift.sh {input} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
-                                      {output.tn5_bam} > {log} 2>&1
-        """
-
-rule fastqc:
-    input:
-        raw = config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz",
-    output:
-        raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
-    log:
-        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
-    shell:
-        """
-        fastqc --outdir {config[qc_dir]} \
-        --quiet \
-        --threads {config[threads]} {input.raw} &> {log}
-        """
-
-rule samstats:
-    input:
-        bam = config["bam_dir"] + "/{library_id}.bam",
-    output:
-        stat = config["qc_dir"] + "/{library_id}_stat.txt",
-        flagstat = config["qc_dir"] + "/{library_id}_flagstat.txt",
-    log:
-        config["log_dir"] + "/{library_id}_samstats.log",
-    shell:
-        """
-        workflow/scripts/samstats.sh {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
+        {params.script} \
+        {input.r1} \
+        {input.r2} \
+        {params.prefix} \
+        {params.threads} \
+        {output}
         """

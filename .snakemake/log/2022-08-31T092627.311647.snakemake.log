@@ -1,0 +1,178 @@
+Building DAG of jobs...
+Forcing incomplete files:
+	testbam_atac_raw/lib001.bam
+	testbam_atac_raw/lib002.bam
+	testbam_atac_raw/lib003.bam
+	testbam_atac_raw/lib004.bam
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+align_bt2        4              1              1
+all              1              1              1
+symlink          4              1              1
+trim             4              1              1
+total           13              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Select jobs to execute...
+Selected jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Wed Aug 31 09:26:28 2022]
+rule symlink:
+    input: test/inputs/atac2_R1.fastq.gz
+    output: test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz
+    jobid: 2
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Wed Aug 31 09:26:28 2022]
+rule symlink:
+    input: test/inputs/atac3_R1.fastq.gz
+    output: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz
+    jobid: 3
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz
+        
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'
+[Wed Aug 31 09:26:28 2022]
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+rule symlink:
+    input: test/inputs/atac1_R1.fastq.gz
+    output: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz
+    jobid: 1
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Wed Aug 31 09:26:28 2022]
+rule symlink:
+    input: test/inputs/atac4_R1.fastq.gz
+    output: test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz
+    jobid: 4
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Wed Aug 31 09:26:28 2022]
+Finished job 3.
+1 of 13 steps (8%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	trim
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	trim
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Wed Aug 31 09:26:28 2022]
+rule trim:
+    input: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz
+    output: test/fastq_atac_proc/lib003_flex_1.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz
+    log: test/logs/lib003_atac_trim.log
+    jobid: 7
+    wildcards: library=lib003
+    resources: tmpdir=/tmp, mem_mb=5000
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 418, in shellcmd
+    self.format_wildcards(self.rule.shellcmd)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 869, in format_wildcards
+    return format(string, **_variables)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/utils.py", line 430, in format
+    return fmt.format(_pattern, *args, **variables)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 161, in format
+    return self.vformat(format_string, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 165, in vformat
+    result, _ = self._vformat(format_string, args, kwargs, used_args, 2)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 205, in _vformat
+    obj, arg_used = self.get_field(field_name, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 276, in get_field
+    obj = getattr(obj, i)
+AttributeError: 'Params' object has no attribute 'outdir'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/workflow.py", line 1069, in execute
+    success = self.scheduler.schedule()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/scheduler.py", line 516, in schedule
+    self.run(runjobs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/scheduler.py", line 563, in run
+    executor.run_jobs(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 149, in run_jobs
+    self.run(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 463, in run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 243, in _run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 169, in _run
+    self.printjob(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 175, in printjob
+    job.log_info(skip_dynamic=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 950, in log_info
+    logger.shellcmd(self.shellcmd, indent=indent)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 423, in shellcmd
+    raise RuleException(str(ex), rule=self.rule)
+snakemake.exceptions.RuleException: 'Params' object has no attribute 'outdir'
+
+RuleException in line 2 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+'Params' object has no attribute 'outdir'
+unlocking
+removing lock
+removing lock
+removed all locks

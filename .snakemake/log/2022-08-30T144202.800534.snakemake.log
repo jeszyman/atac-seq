@@ -1,0 +1,16 @@
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/__init__.py", line 591, in snakemake
+    workflow.include(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1173, in include
+    exec(compile(code, snakefile, "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 94, in <module>
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/workflow.py", line 1173, in include
+    exec(compile(code, snakefile, "exec"), self.globals)
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 39, in <module>
+    """
+NameError: name 'fasta' is not defined
+
+NameError in line 21 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+name 'fasta' is not defined
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 71, in <module>
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 21, in <module>

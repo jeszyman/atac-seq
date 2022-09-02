@@ -1,0 +1,130 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job        count    min threads    max threads
+-------  -------  -------------  -------------
+all            1              1              1
+symlink        4              1              1
+total          5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Select jobs to execute...
+Selected jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Aug 30 14:29:24 2022]
+rule symlink:
+    input: test/inputs/atac1_R1.fastq.gz
+    output: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz
+    jobid: 1
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz
+        
+
+[Tue Aug 30 14:29:24 2022]
+rule symlink:
+    input: test/inputs/atac2_R1.fastq.gz
+    output: test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz
+    jobid: 2
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Aug 30 14:29:24 2022]
+rule symlink:
+    input: test/inputs/atac4_R1.fastq.gz
+    output: test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz
+    jobid: 4
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Aug 30 14:29:24 2022]
+rule symlink:
+    input: test/inputs/atac3_R1.fastq.gz
+    output: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz
+    jobid: 3
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Aug 30 14:29:24 2022]
+Finished job 1.
+1 of 5 steps (20%) done
+[Tue Aug 30 14:29:24 2022]
+Finished job 2.
+2 of 5 steps (40%) done
+[Tue Aug 30 14:29:24 2022]
+Finished job 4.
+3 of 5 steps (60%) done
+[Tue Aug 30 14:29:24 2022]
+Finished job 3.
+4 of 5 steps (80%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue Aug 30 14:29:24 2022]
+localrule all:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue Aug 30 14:29:24 2022]
+Finished job 0.
+5 of 5 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-30T142923.838325.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

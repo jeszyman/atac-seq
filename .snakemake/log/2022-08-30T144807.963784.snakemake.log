@@ -1,0 +1,60 @@
+The flag 'directory' used in rule all is only valid for outputs, not inputs.
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job           count    min threads    max threads
+----------  -------  -------------  -------------
+all               1              1              1
+atac_index        1              1              1
+total             2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	atac_index
+Select jobs to execute...
+Selected jobs (1):
+	atac_index
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue Aug 30 14:48:08 2022]
+rule atac_index:
+    input: test/inputs/chr19.fa
+    output: test/ref/ucsc_mm10_chr19
+    log: test/logs/atac_index.log
+    jobid: 5
+    resources: tmpdir=/tmp
+
+
+        mkdir -p test/ref/ucsc_mm10_chr19
+        workflow/scripts/index.sh         test/inputs/chr19.fa         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19 &> test/logs/atac_index.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'mkdir -p test/ref/ucsc_mm10_chr19
+        workflow/scripts/index.sh         test/inputs/chr19.fa         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19 &> test/logs/atac_index.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Aug 30 14:49:02 2022]
+Finished job 5.
+1 of 2 steps (50%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue Aug 30 14:49:02 2022]
+localrule all:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz, test/ref/ucsc_mm10_chr19
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue Aug 30 14:49:02 2022]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-30T144807.963784.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

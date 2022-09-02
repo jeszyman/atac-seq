@@ -1,0 +1,206 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+align_bt2        4              1              1
+all              1              1              1
+total            5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	align_bt2
+	align_bt2
+	align_bt2
+	align_bt2
+Select jobs to execute...
+Selected jobs (4):
+	align_bt2
+	align_bt2
+	align_bt2
+	align_bt2
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Wed Aug 31 11:29:23 2022]
+rule align_bt2:
+    input: test/fastq_atac_proc/lib002_flex_1.fastq.gz, test/fastq_atac_proc/lib002_flex_2.fastq.gz
+    output: test/bam_atac_raw/lib002.bam
+    log: test/logs/lib002_align_bt2.log
+    jobid: 11
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib002_flex_1.fastq.gz         test/fastq_atac_proc/lib002_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib002.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib002_flex_1.fastq.gz         test/fastq_atac_proc/lib002_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib002.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Wed Aug 31 11:29:23 2022]
+rule align_bt2:
+    input: test/fastq_atac_proc/lib001_flex_1.fastq.gz, test/fastq_atac_proc/lib001_flex_2.fastq.gz
+    output: test/bam_atac_raw/lib001.bam
+    log: test/logs/lib001_align_bt2.log
+    jobid: 10
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib001_flex_1.fastq.gz         test/fastq_atac_proc/lib001_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib001.bam
+        
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib001_flex_1.fastq.gz         test/fastq_atac_proc/lib001_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib001.bam'
+[Wed Aug 31 11:29:23 2022]
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+rule align_bt2:
+    input: test/fastq_atac_proc/lib003_flex_1.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz
+    output: test/bam_atac_raw/lib003.bam
+    log: test/logs/lib003_align_bt2.log
+    jobid: 12
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib003_flex_1.fastq.gz         test/fastq_atac_proc/lib003_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib003.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib003_flex_1.fastq.gz         test/fastq_atac_proc/lib003_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib003.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Wed Aug 31 11:29:23 2022]
+rule align_bt2:
+    input: test/fastq_atac_proc/lib004_flex_1.fastq.gz, test/fastq_atac_proc/lib004_flex_2.fastq.gz
+    output: test/bam_atac_raw/lib004.bam
+    log: test/logs/lib004_align_bt2.log
+    jobid: 13
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib004_flex_1.fastq.gz         test/fastq_atac_proc/lib004_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib004.bam
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib004_flex_1.fastq.gz         test/fastq_atac_proc/lib004_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib004.bam'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+Terminating processes on user request, this might take some time.
+[Wed Aug 31 11:40:37 2022]
+Error in rule align_bt2:
+    jobid: 11
+    output: test/bam_atac_raw/lib002.bam
+    log: test/logs/lib002_align_bt2.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib002_flex_1.fastq.gz         test/fastq_atac_proc/lib002_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib002.bam
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 133, in __rule_align_bt2
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib002_flex_1.fastq.gz         test/fastq_atac_proc/lib002_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib002.bam'' returned non-zero exit status 130.
+
+[Wed Aug 31 11:40:37 2022]
+[Wed Aug 31 11:40:37 2022]
+Error in rule align_bt2:
+Error in rule align_bt2:
+[Wed Aug 31 11:40:37 2022]
+    jobid: 13
+    jobid: 10
+Error in rule align_bt2:
+    output: test/bam_atac_raw/lib004.bam
+    log: test/logs/lib004_align_bt2.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib004_flex_1.fastq.gz         test/fastq_atac_proc/lib004_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib004.bam
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 133, in __rule_align_bt2
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib004_flex_1.fastq.gz         test/fastq_atac_proc/lib004_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib004.bam'' returned non-zero exit status 130.
+
+    jobid: 12
+    output: test/bam_atac_raw/lib003.bam
+    log: test/logs/lib003_align_bt2.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib003_flex_1.fastq.gz         test/fastq_atac_proc/lib003_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib003.bam
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 133, in __rule_align_bt2
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib003_flex_1.fastq.gz         test/fastq_atac_proc/lib003_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib003.bam'' returned non-zero exit status 130.
+
+    output: test/bam_atac_raw/lib001.bam
+    log: test/logs/lib001_align_bt2.log (check log file(s) for error message)
+    shell:
+        
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib001_flex_1.fastq.gz         test/fastq_atac_proc/lib001_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib001.bam
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 133, in __rule_align_bt2
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        workflow/scripts/align_bt2.sh         test/fastq_atac_proc/lib001_flex_1.fastq.gz         test/fastq_atac_proc/lib001_flex_2.fastq.gz         test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19         4         test/bam_atac_raw/lib001.bam'' returned non-zero exit status 130.
+
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-31T112923.072842.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

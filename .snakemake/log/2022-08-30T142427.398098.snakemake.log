@@ -1,0 +1,327 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job        count    min threads    max threads
+-------  -------  -------------  -------------
+all            1              1              1
+symlink        4              1              1
+total          5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Select jobs to execute...
+Selected jobs (4):
+	symlink
+	symlink
+	symlink
+	symlink
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Aug 30 14:24:27 2022]
+rule symlink:
+    input: test/inputs/atac1_R1.fastq.gz
+    output: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz
+    jobid: 1
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.2.0.0sif
+
+[Tue Aug 30 14:24:27 2022]
+rule symlink:
+    input: test/inputs/atac3_R1.fastq.gz
+    output: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz
+    jobid: 3
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.2.0.0sif
+
+[Tue Aug 30 14:24:27 2022]
+rule symlink:
+    input: test/inputs/atac4_R1.fastq.gz
+    output: test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz
+    jobid: 4
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz
+        
+
+[Tue Aug 30 14:24:27 2022]
+rule symlink:
+    input: test/inputs/atac2_R1.fastq.gz
+    output: test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz
+    jobid: 2
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+
+
+        r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.2.0.0sif
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.2.0.0sif
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'' returned non-zero exit status 255.
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'' returned non-zero exit status 255.
+
+[Tue Aug 30 14:24:27 2022]
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'' returned non-zero exit status 255.
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'' returned non-zero exit status 255.
+
+Error in rule symlink:
+    jobid: 3
+[Tue Aug 30 14:24:27 2022]
+    output: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz
+Error in rule symlink:
+[Tue Aug 30 14:24:27 2022]
+    shell:
+        
+        r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    jobid: 1
+Error in rule symlink:
+
+[Tue Aug 30 14:24:27 2022]
+    output: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz
+    jobid: 4
+Error in rule symlink:
+    shell:
+        
+        r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    output: test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz
+    jobid: 2
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'' returned non-zero exit status 255.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+
+    shell:
+        
+        r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+    output: test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'' returned non-zero exit status 255.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+
+RuleException:
+CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac3_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac3_R1.fastq.gz test/fastq_atac_raw/lib003_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib003_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+
+    shell:
+        
+        r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+RuleException:
+CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac1_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac1_R1.fastq.gz test/fastq_atac_raw/lib001_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib001_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'' returned non-zero exit status 255.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2372, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 85, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/shell.py", line 263, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'' returned non-zero exit status 255.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 592, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 578, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/site-packages/snakemake/executors/__init__.py", line 2405, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+
+RuleException:
+CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac4_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac4_R1.fastq.gz test/fastq_atac_raw/lib004_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib004_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+RuleException:
+CalledProcessError in line 63 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.2.0.0sif bash -c 'r2=$(echo test/inputs/atac2_R1.fastq.gz | sed "s/_R1/_R2/g")
+        ln -sf --relative test/inputs/atac2_R1.fastq.gz test/fastq_atac_raw/lib002_R1.fastq.gz
+        ln -sf --relative $r2 test/fastq_atac_raw/lib002_R2.fastq.gz'' returned non-zero exit status 255.
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 63, in __rule_symlink
+  File "/opt/miniconda3/envs/snakemake/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-30T142427.398098.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

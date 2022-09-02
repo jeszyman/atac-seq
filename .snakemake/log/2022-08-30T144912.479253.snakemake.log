@@ -1,0 +1,8 @@
+The flag 'directory' used in rule all is only valid for outputs, not inputs.
+Building DAG of jobs...
+Nothing to be done.
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-08-30T144912.479253.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

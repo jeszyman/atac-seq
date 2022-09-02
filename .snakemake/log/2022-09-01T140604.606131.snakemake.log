@@ -1,0 +1,122 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job           count    min threads    max threads
+----------  -------  -------------  -------------
+all               1              1              1
+open_chrom        4              1              1
+total             5              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (4):
+	open_chrom
+	open_chrom
+	open_chrom
+	open_chrom
+Select jobs to execute...
+Selected jobs (4):
+	open_chrom
+	open_chrom
+	open_chrom
+	open_chrom
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Thu Sep  1 14:06:05 2022]
+rule open_chrom:
+    input: test/bam_atac_tn5/lib004_tn5.bam
+    output: test/bam_atac_open/lib004_open_tmp.bam, test/bam_atac_open/lib004_open.bam
+    log: test/logs/lib004_open_chrom.log
+    jobid: 29
+    wildcards: library=lib004
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib004_tn5.bam         test/bam_atac_open/lib004_open_tmp.bam         test/bam_atac_open/lib004_open.bam         4 &> test/logs/lib004_open_chrom.log
+        
+
+[Thu Sep  1 14:06:05 2022]
+rule open_chrom:
+    input: test/bam_atac_tn5/lib002_tn5.bam
+    output: test/bam_atac_open/lib002_open_tmp.bam, test/bam_atac_open/lib002_open.bam
+    log: test/logs/lib002_open_chrom.log
+    jobid: 27
+    wildcards: library=lib002
+    resources: tmpdir=/tmp
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib004_tn5.bam         test/bam_atac_open/lib004_open_tmp.bam         test/bam_atac_open/lib004_open.bam         4 &> test/logs/lib004_open_chrom.log'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+        workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib002_tn5.bam         test/bam_atac_open/lib002_open_tmp.bam         test/bam_atac_open/lib002_open.bam         4 &> test/logs/lib002_open_chrom.log
+        
+
+[Thu Sep  1 14:06:05 2022]
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib002_tn5.bam         test/bam_atac_open/lib002_open_tmp.bam         test/bam_atac_open/lib002_open.bam         4 &> test/logs/lib002_open_chrom.log'
+rule open_chrom:
+    input: test/bam_atac_tn5/lib003_tn5.bam
+    output: test/bam_atac_open/lib003_open_tmp.bam, test/bam_atac_open/lib003_open.bam
+    log: test/logs/lib003_open_chrom.log
+    jobid: 28
+    wildcards: library=lib003
+    resources: tmpdir=/tmp
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+
+        workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib003_tn5.bam         test/bam_atac_open/lib003_open_tmp.bam         test/bam_atac_open/lib003_open.bam         4 &> test/logs/lib003_open_chrom.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib003_tn5.bam         test/bam_atac_open/lib003_open_tmp.bam         test/bam_atac_open/lib003_open.bam         4 &> test/logs/lib003_open_chrom.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+[Thu Sep  1 14:06:05 2022]
+rule open_chrom:
+    input: test/bam_atac_tn5/lib001_tn5.bam
+    output: test/bam_atac_open/lib001_open_tmp.bam, test/bam_atac_open/lib001_open.bam
+    log: test/logs/lib001_open_chrom.log
+    jobid: 26
+    wildcards: library=lib001
+    resources: tmpdir=/tmp
+
+
+        workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib001_tn5.bam         test/bam_atac_open/lib001_open_tmp.bam         test/bam_atac_open/lib001_open.bam         4 &> test/logs/lib001_open_chrom.log
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt --bind /opt/miniconda3/envs/snakemake/lib/python3.9/site-packages:/mnt/snakemake /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'workflow/scripts/open_chrom.sh         test/bam_atac_tn5/lib001_tn5.bam         test/bam_atac_open/lib001_open_tmp.bam         test/bam_atac_open/lib001_open.bam         4 &> test/logs/lib001_open_chrom.log'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+Removing temporary output file test/bam_atac_open/lib004_open_tmp.bam.
+[Thu Sep  1 14:06:09 2022]
+Finished job 29.
+1 of 5 steps (20%) done
+Removing temporary output file test/bam_atac_open/lib002_open_tmp.bam.
+[Thu Sep  1 14:06:09 2022]
+Finished job 27.
+2 of 5 steps (40%) done
+Removing temporary output file test/bam_atac_open/lib001_open_tmp.bam.
+[Thu Sep  1 14:06:09 2022]
+Finished job 26.
+3 of 5 steps (60%) done
+Removing temporary output file test/bam_atac_open/lib003_open_tmp.bam.
+[Thu Sep  1 14:06:09 2022]
+Finished job 28.
+4 of 5 steps (80%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Thu Sep  1 14:06:09 2022]
+localrule all:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz, test/fastq_atac_proc/lib001_flex_1.fastq.gz, test/fastq_atac_proc/lib002_flex_1.fastq.gz, test/fastq_atac_proc/lib003_flex_1.fastq.gz, test/fastq_atac_proc/lib004_flex_1.fastq.gz, test/fastq_atac_proc/lib001_flex_2.fastq.gz, test/fastq_atac_proc/lib002_flex_2.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz, test/fastq_atac_proc/lib004_flex_2.fastq.gz, test/ref/ucsc_mm10_chr19, test/bam_atac_raw/lib001.bam, test/bam_atac_raw/lib002.bam, test/bam_atac_raw/lib003.bam, test/bam_atac_raw/lib004.bam, test/bam_atac_dedup/lib001_dedup.bam, test/bam_atac_dedup/lib002_dedup.bam, test/bam_atac_dedup/lib003_dedup.bam, test/bam_atac_dedup/lib004_dedup.bam, test/bam_atac_filt/lib001_filt.bam, test/bam_atac_filt/lib002_filt.bam, test/bam_atac_filt/lib003_filt.bam, test/bam_atac_filt/lib004_filt.bam, test/bam_atac_tn5/lib001_tn5.bam, test/bam_atac_tn5/lib002_tn5.bam, test/bam_atac_tn5/lib003_tn5.bam, test/bam_atac_tn5/lib004_tn5.bam, test/bam_atac_open/lib001_open.bam, test/bam_atac_open/lib002_open.bam, test/bam_atac_open/lib003_open.bam, test/bam_atac_open/lib004_open.bam
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Thu Sep  1 14:06:09 2022]
+Finished job 0.
+5 of 5 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-01T140604.606131.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

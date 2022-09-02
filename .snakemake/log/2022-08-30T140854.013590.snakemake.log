@@ -1,0 +1,4 @@
+KeyError in line 3 of /home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk:
+'fq_sym_dir'
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 70, in <module>
+  File "/home/jeszyman/repos/atac-seq/workflow/atac_read_process.smk", line 3, in <module>

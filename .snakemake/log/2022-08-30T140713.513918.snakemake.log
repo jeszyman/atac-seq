@@ -1,0 +1,3 @@
+NameError in line 54 of /home/jeszyman/repos/atac-seq/workflow/int_test.smk:
+name 'atac_container' is not defined
+  File "/home/jeszyman/repos/atac-seq/workflow/int_test.smk", line 54, in <module>

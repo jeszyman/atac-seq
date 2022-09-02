@@ -1,7 +1,7 @@
 multiqc_wrap()
     # Check for parameters, return usage if empty
     if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix 
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
            \n Wrapper for multiqc, see options in function
            \n $1 = input_dir
            \n $2 = output_dir
@@ -24,7 +24,7 @@ multiqc_wrap()
 multiqc_wrap()
     # Check for parameters, return usage if empty
     if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix 
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
            \n Wrapper for multiqc, see options in function
            \n $1 = input_dir
            \n $2 = output_dir

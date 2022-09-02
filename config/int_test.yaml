@@ -1,12 +1,14 @@
-container: "~/sing_containers/atac.sif"
+# Common names across repositories and snakefiles
+datadir: "test"
+fasta: "test/inputs/chr19.fa"
+logdir: "test/logs"
 threads: 4
-bam_dir: "test/bam"
-bowtie_prefix: "test/inputs/ucsc_mm10_chr19/ucsc_mm10_chr19"
+
+# Repository and snakefile-specific names
+container:
+  atac: "~/sing_containers/atac.1.1.0.sif"
+scriptdir:
+  atac: "workflow/scripts"
+
+
 keep_bed: "resources/keep.bed"
-log_dir: "test/logs"
-qc_dir: "test/qc"
-atac_scripts_dir: "workflow/scripts"
-dca_dir: "test/dca"
-data_dir: "test"
-fq_sym_dir: "test/fastq"
-fq_src_dir: "test/inputs"

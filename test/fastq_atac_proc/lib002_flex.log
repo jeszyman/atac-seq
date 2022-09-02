@@ -1,0 +1,83 @@
+
+               ________          __              
+              / ____/ /__  _  __/ /_  ____ ______
+             / /_  / / _ \| |/ / __ \/ __ `/ ___/
+            / __/ / /  __/>  </ /_/ / /_/ / /    
+           /_/   /_/\___/_/|_/_.___/\__._/_/     
+
+Flexbar - flexible barcode and adapter removal, version 3.5.0
+Developed with SeqAn, the library for sequence analysis
+
+Available on github.com/seqan/flexbar
+
+
+Local time:            Wed Aug 31 11:46:22 2022
+
+Number of threads:     4
+Bundled fragments:     256
+
+Target name:           test/fastq_atac_proc/lib002_flex
+File type:             fastq
+Reads file:            test/fastq_atac_raw/lib002_R1.fastq.gz
+Reads file 2:          test/fastq_atac_raw/lib002_R2.fastq.gz   (paired run)
+Adapter preset:        Nextera
+
+max-uncalled:          0
+pre-trim-right:        1
+min-read-length:       18
+
+adapter-pair-overlap:  ON
+adapter-trim-end:      RIGHT
+adapter-min-overlap:   3
+adapter-min-poverlap:  40
+adapter-error-rate:    0.1
+adapter-match:         1
+adapter-mismatch:     -1
+adapter-gap:          -6
+
+Adapter:               Sequence:
+Nextera-TruSight       CTGTCTCTTATACACATCT
+
+
+Processing reads ...done.
+
+Elapsed time:       27 sec
+Processing speed:   27777 reads/s
+
+
+Min, max, mean and median overlap of paired reads: 40 / 150 / 87 / 84
+
+Adapter removal statistics
+==========================
+Adapter:            Overlap removal:    Full length:
+Nextera-TruSight    339260              298501
+
+Min, max, mean and median overlap: 1 / 20 / 17 / 19
+
+
+Output file statistics
+======================
+Read file:               test/fastq_atac_proc/lib002_flex_1.fastq.gz
+  written reads          374512
+  short reads            8
+Read file 2:             test/fastq_atac_proc/lib002_flex_2.fastq.gz
+  written reads          374512
+  short reads            8
+
+
+Filtering statistics
+====================
+Processed reads                   750000
+  skipped due to uncalled bases      960   (480 uncalled in 480 pairs)
+  short prior to adapter removal       0
+  finally skipped short reads         16
+  skipped paired single reads          0
+Discarded reads overall              976
+Remaining reads                   749024   (99%)
+
+Processed bases   113250000
+Remaining bases    90538949   (79% of input)
+
+
+Flexbar completed adapter removal.
+
