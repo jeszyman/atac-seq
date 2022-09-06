@@ -1,0 +1,69 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job           count    min threads    max threads
+----------  -------  -------------  -------------
+all               1              1              1
+atacseq_qc        1              1              1
+total             2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	atacseq_qc
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	atacseq_qc
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue Sep  6 15:02:04 2022]
+rule atacseq_qc:
+    input: test/bam_atac_raw/lib001.bam, test/bam_atac_raw/lib002.bam, test/bam_atac_raw/lib003.bam, test/bam_atac_raw/lib004.bam, test/bam_atac_tn5/lib001_tn5.bam, test/bam_atac_tn5/lib002_tn5.bam, test/bam_atac_tn5/lib003_tn5.bam, test/bam_atac_tn5/lib004_tn5.bam, test/ref/txdb
+    output: test/qc/atac_qc.rdata
+    log: test/logs/atacseq_qc.log
+    jobid: 31
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/atacseq_qc.R         test/bam_atac_raw/lib001.bam test/bam_atac_raw/lib002.bam test/bam_atac_raw/lib003.bam test/bam_atac_raw/lib004.bam         test/bam_atac_tn5/lib001_tn5.bam test/bam_atac_tn5/lib002_tn5.bam test/bam_atac_tn5/lib003_tn5.bam test/bam_atac_tn5/lib004_tn5.bam         test/ref/txdb         test/qc/atac_qc.rdata > test/logs/atacseq_qc.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/atacseq_qc.R         test/bam_atac_raw/lib001.bam test/bam_atac_raw/lib002.bam test/bam_atac_raw/lib003.bam test/bam_atac_raw/lib004.bam         test/bam_atac_tn5/lib001_tn5.bam test/bam_atac_tn5/lib002_tn5.bam test/bam_atac_tn5/lib003_tn5.bam test/bam_atac_tn5/lib004_tn5.bam         test/ref/txdb         test/qc/atac_qc.rdata > test/logs/atacseq_qc.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:02:16 2022]
+Error in rule atacseq_qc:
+    jobid: 31
+    output: test/qc/atac_qc.rdata
+    log: test/logs/atacseq_qc.log (check log file(s) for error message)
+    shell:
+        
+        Rscript workflow/scripts/atacseq_qc.R         test/bam_atac_raw/lib001.bam test/bam_atac_raw/lib002.bam test/bam_atac_raw/lib003.bam test/bam_atac_raw/lib004.bam         test/bam_atac_tn5/lib001_tn5.bam test/bam_atac_tn5/lib002_tn5.bam test/bam_atac_tn5/lib003_tn5.bam test/bam_atac_tn5/lib004_tn5.bam         test/ref/txdb         test/qc/atac_qc.rdata > test/logs/atacseq_qc.log 2>&1
+        
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 593, in _callback
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 579, in cached_or_run
+    run_func(*args)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2461, in run_wrapper
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 2418, in run_wrapper
+    run(
+  File "/home/jeszyman/repos/atac-seq/workflow/atac.smk", line 401, in __rule_atacseq_qc
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/shell.py", line 266, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command ' singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/atacseq_qc.R         test/bam_atac_raw/lib001.bam test/bam_atac_raw/lib002.bam test/bam_atac_raw/lib003.bam test/bam_atac_raw/lib004.bam         test/bam_atac_tn5/lib001_tn5.bam test/bam_atac_tn5/lib002_tn5.bam test/bam_atac_tn5/lib003_tn5.bam test/bam_atac_tn5/lib004_tn5.bam         test/ref/txdb         test/qc/atac_qc.rdata > test/logs/atacseq_qc.log 2>&1'' returned non-zero exit status 1.
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-06T150204.546938.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

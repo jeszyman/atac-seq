@@ -3,8 +3,3 @@ usage: Example usage: alignmentSieve.py -b sample1.bam -o sample1.filtered.bam -
 alignmentSieve: error: argument --numberOfProcessors/-p: test/bam_atac_tn5/lib003_tn5_tmp.bam is not a valid number of processors
 usage: Example usage: alignmentSieve.py -b sample1.bam -o sample1.filtered.bam --minMappingQuality 10 --filterMetrics log.txt
 alignmentSieve: error: argument --numberOfProcessors/-p: test/bam_atac_tn5/lib003_tn5_tmp.bam is not a valid number of processors
-[E::bgzf_uncompress] Inflate operation failed: progress temporarily not possible, or in() / out() returned an error
-[E::bgzf_read] Read block operation failed with error -1 after 0 of 4 bytes
-samtools index: failed to create index for "4"
-usage: Example usage: alignmentSieve.py -b sample1.bam -o sample1.filtered.bam --minMappingQuality 10 --filterMetrics log.txt
-alignmentSieve: error: argument --numberOfProcessors/-p: test/bam_atac_tn5/lib003_tn5_tmp.bam is not a valid number of processors

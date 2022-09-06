@@ -1,0 +1,30 @@
+Building DAG of jobs...
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/workflow.py", line 763, in execute
+    dag.init()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 179, in init
+    job = self.update([job], progress=progress, create_inventory=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 801, in update
+    raise exceptions[0]
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 759, in update
+    self.update_(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 892, in update_
+    raise ex
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 874, in update_
+    selected_job = self.update(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 801, in update
+    raise exceptions[0]
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 759, in update
+    self.update_(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/dag.py", line 920, in update_
+    raise MissingInputException(job.rule, missing_input)
+snakemake.exceptions.MissingInputException: Missing input files for rule align_bt2:
+test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19.1.bt2
+
+MissingInputException in line 96 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+Missing input files for rule align_bt2:
+test/ref/ucsc_mm10_chr19/ucsc_mm10_chr19.1.bt2
+unlocking
+removed all locks

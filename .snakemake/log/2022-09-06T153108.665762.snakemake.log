@@ -1,0 +1,97 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job       count    min threads    max threads
+------  -------  -------------  -------------
+all           1              1              1
+fastqc        8              1              1
+total         9              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (8):
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (4):
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:31:09 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_proc/lib003_flex_1.fastq.gz
+    output: test/qc/lib003_R1_fastqc.html, test/qc/lib003_flex_1_fastqc.html
+    log: test/logs/lib003_R1_atac_fastqc.log
+    jobid: 36
+    wildcards: library=lib003, read=1
+    resources: tmpdir=/tmp
+
+Full Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/utils.py", line 430, in format
+    return fmt.format(_pattern, *args, **variables)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 161, in format
+    return self.vformat(format_string, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 165, in vformat
+    result, _ = self._vformat(format_string, args, kwargs, used_args, 2)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 205, in _vformat
+    obj, arg_used = self.get_field(field_name, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 270, in get_field
+    obj = self.get_value(first, args, kwargs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/string.py", line 227, in get_value
+    return kwargs[key]
+KeyError: 'outdir'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 869, in format_wildcards
+    return format(string, **_variables)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/utils.py", line 437, in format
+    raise NameError(
+NameError: The name 'outdir' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/__init__.py", line 699, in snakemake
+    success = workflow.execute(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/workflow.py", line 1069, in execute
+    success = self.scheduler.schedule()
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/scheduler.py", line 516, in schedule
+    self.run(runjobs)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/scheduler.py", line 563, in run
+    executor.run_jobs(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 149, in run_jobs
+    self.run(
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 463, in run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 243, in _run
+    super()._run(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 169, in _run
+    self.printjob(job)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/executors/__init__.py", line 175, in printjob
+    job.log_info(skip_dynamic=True)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 950, in log_info
+    logger.shellcmd(self.shellcmd, indent=indent)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 418, in shellcmd
+    self.format_wildcards(self.rule.shellcmd)
+  File "/opt/miniconda3/envs/snakemake/lib/python3.10/site-packages/snakemake/jobs.py", line 871, in format_wildcards
+    raise RuleException("NameError: " + str(ex), rule=self.rule)
+snakemake.exceptions.RuleException: NameError: The name 'outdir' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}
+
+RuleException in line 412 of /home/jeszyman/repos/atac-seq/workflow/atac.smk:
+NameError: The name 'outdir' is unknown in this context. Please make sure that you defined that variable. Also note that braces not used for variable access have to be escaped by repeating them, i.e. {{print $1}}
+unlocking
+removing lock
+removing lock
+removed all locks

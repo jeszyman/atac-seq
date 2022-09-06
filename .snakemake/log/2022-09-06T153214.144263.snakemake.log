@@ -1,0 +1,254 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job       count    min threads    max threads
+------  -------  -------------  -------------
+all           1              1              1
+fastqc        8              1              1
+total         9              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (8):
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (4):
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:32:14 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_proc/lib003_flex_1.fastq.gz
+    output: test/qc/lib003_R1_fastqc.html, test/qc/lib003_flex_1_fastqc.html
+    log: test/logs/lib003_R1_atac_fastqc.log
+    jobid: 36
+    wildcards: library=lib003, read=1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib003_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib003_flex_1.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib003_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib003_flex_1.fastq.gz'
+
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:14 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_proc/lib002_flex_1.fastq.gz
+    output: test/qc/lib002_R1_fastqc.html, test/qc/lib002_flex_1_fastqc.html
+    log: test/logs/lib002_R1_atac_fastqc.log
+    jobid: 34
+    wildcards: library=lib002, read=1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib002_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib002_flex_1.fastq.gz
+        
+
+[Tue Sep  6 15:32:14 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_proc/lib001_flex_1.fastq.gz
+    output: test/qc/lib001_R1_fastqc.html, test/qc/lib001_flex_1_fastqc.html
+    log: test/logs/lib001_R1_atac_fastqc.log
+    jobid: 32
+    wildcards: library=lib001, read=1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib001_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib001_flex_1.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib002_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib002_flex_1.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib001_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib001_flex_1.fastq.gz'
+[Tue Sep  6 15:32:14 2022]
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+rule fastqc:
+    input: test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz
+    output: test/qc/lib003_R2_fastqc.html, test/qc/lib003_flex_2_fastqc.html
+    log: test/logs/lib003_R2_atac_fastqc.log
+    jobid: 37
+    wildcards: library=lib003, read=2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib003_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib003_flex_2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib003_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib003_flex_2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:26 2022]
+Finished job 32.
+1 of 9 steps (11%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (4):
+	fastqc
+	fastqc
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (1):
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:32:26 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_proc/lib004_flex_1.fastq.gz
+    output: test/qc/lib004_R1_fastqc.html, test/qc/lib004_flex_1_fastqc.html
+    log: test/logs/lib004_R1_atac_fastqc.log
+    jobid: 38
+    wildcards: library=lib004, read=1
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib004_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib004_flex_1.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib004_R1.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib004_flex_1.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:26 2022]
+Finished job 37.
+2 of 9 steps (22%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (3):
+	fastqc
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (1):
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:32:26 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib004_R2.fastq.gz, test/fastq_atac_proc/lib004_flex_2.fastq.gz
+    output: test/qc/lib004_R2_fastqc.html, test/qc/lib004_flex_2_fastqc.html
+    log: test/logs/lib004_R2_atac_fastqc.log
+    jobid: 39
+    wildcards: library=lib004, read=2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib004_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib004_flex_2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib004_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib004_flex_2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:26 2022]
+Finished job 36.
+3 of 9 steps (33%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (2):
+	fastqc
+	fastqc
+Select jobs to execute...
+Selected jobs (1):
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:32:26 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_proc/lib001_flex_2.fastq.gz
+    output: test/qc/lib001_R2_fastqc.html, test/qc/lib001_flex_2_fastqc.html
+    log: test/logs/lib001_R2_atac_fastqc.log
+    jobid: 33
+    wildcards: library=lib001, read=2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib001_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib001_flex_2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib001_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib001_flex_2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:27 2022]
+Finished job 34.
+4 of 9 steps (44%) done
+Resources before job selection: {'_cores': 1, '_nodes': 9223372036854775804}
+Ready jobs (1):
+	fastqc
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	fastqc
+Resources after job selection: {'_cores': 0, '_nodes': 9223372036854775803}
+
+[Tue Sep  6 15:32:27 2022]
+rule fastqc:
+    input: test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_proc/lib002_flex_2.fastq.gz
+    output: test/qc/lib002_R2_fastqc.html, test/qc/lib002_flex_2_fastqc.html
+    log: test/logs/lib002_R2_atac_fastqc.log
+    jobid: 35
+    wildcards: library=lib002, read=2
+    resources: tmpdir=/tmp
+
+
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib002_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib002_flex_2.fastq.gz
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_raw/lib002_R2.fastq.gz
+        fastqc --outdir test/qc --quiet --threads config["threads"] test/fastq_atac_proc/lib002_flex_2.fastq.gz'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Tue Sep  6 15:32:38 2022]
+Finished job 33.
+5 of 9 steps (56%) done
+[Tue Sep  6 15:32:39 2022]
+Finished job 35.
+6 of 9 steps (67%) done
+[Tue Sep  6 15:32:39 2022]
+Finished job 38.
+7 of 9 steps (78%) done
+[Tue Sep  6 15:32:39 2022]
+Finished job 39.
+8 of 9 steps (89%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Tue Sep  6 15:32:39 2022]
+localrule all:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz, test/fastq_atac_proc/lib001_flex_1.fastq.gz, test/fastq_atac_proc/lib002_flex_1.fastq.gz, test/fastq_atac_proc/lib003_flex_1.fastq.gz, test/fastq_atac_proc/lib004_flex_1.fastq.gz, test/fastq_atac_proc/lib001_flex_2.fastq.gz, test/fastq_atac_proc/lib002_flex_2.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz, test/fastq_atac_proc/lib004_flex_2.fastq.gz, test/ref/ucsc_mm10_chr19, test/bam_atac_raw/lib001.bam, test/bam_atac_raw/lib002.bam, test/bam_atac_raw/lib003.bam, test/bam_atac_raw/lib004.bam, test/bam_atac_dedup/lib001_dedup.bam, test/bam_atac_dedup/lib002_dedup.bam, test/bam_atac_dedup/lib003_dedup.bam, test/bam_atac_dedup/lib004_dedup.bam, test/bam_atac_filt/lib001_filt.bam, test/bam_atac_filt/lib002_filt.bam, test/bam_atac_filt/lib003_filt.bam, test/bam_atac_filt/lib004_filt.bam, test/bam_atac_tn5/lib001_tn5.bam, test/bam_atac_tn5/lib002_tn5.bam, test/bam_atac_tn5/lib003_tn5.bam, test/bam_atac_tn5/lib004_tn5.bam, test/bam_atac_open/lib001_open.bam, test/bam_atac_open/lib002_open.bam, test/bam_atac_open/lib003_open.bam, test/bam_atac_open/lib004_open.bam, test/ref/txdb, test/qc/atac_qc.rdata, test/qc/lib001_R1_fastqc.html, test/qc/lib001_R2_fastqc.html, test/qc/lib002_R1_fastqc.html, test/qc/lib002_R2_fastqc.html, test/qc/lib003_R1_fastqc.html, test/qc/lib003_R2_fastqc.html, test/qc/lib004_R1_fastqc.html, test/qc/lib004_R2_fastqc.html, test/qc/lib001_flex_1_fastqc.html, test/qc/lib001_flex_2_fastqc.html, test/qc/lib002_flex_1_fastqc.html, test/qc/lib002_flex_2_fastqc.html, test/qc/lib003_flex_1_fastqc.html, test/qc/lib003_flex_2_fastqc.html, test/qc/lib004_flex_1_fastqc.html, test/qc/lib004_flex_2_fastqc.html
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue Sep  6 15:32:39 2022]
+Finished job 0.
+9 of 9 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-06T153214.144263.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks

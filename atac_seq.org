@@ -34,9 +34,9 @@ container:
 scriptdir:
   atac: "workflow/scripts"
 
-
 keep_bed: "resources/keep.bed"
 
+gtf: "test/inputs/chr19.gtf"
 #+end_src
 *** Integration testing inputs setup
 - Sample sheet
@@ -114,17 +114,18 @@ zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R2.fastq.gz | head
 for file in "test/inputs/*.fastq"; do gzip -f $file; done
 
 #+end_src
-** INPROCESS [[file:workflow/atac_read_process.smk][ATAC-seq read processing and alignment]]                     :smk:
+** ATAC-seq :smk:
+*** DONE ATAC-seq read processing and alignment
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
-*** Description
+**** Description
 Sequencing read adapters were removed and reads were quality trimmed using flexbar.
 
 Processed reads were aligned to mm10 using bowtie2.
 
 PCR duplicate reads were removed using samtools. Reads were then filtered and processed for ATAC-seq analysis as follows. Only paired reads aligning to mm10 autosomes were retained. Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist supercite:amemiya2019. Finally, alignments were shifted on the forward strand by +4 bp and on the reverse strand by −5 bp to account for the 9-bp duplication introduced by Tn5.
-*** DONE Read trimming                                                :smk_rule:
+**** DONE Read trimming                                               :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # Uses flexbar to trim and quality-filter fastq reads
@@ -182,7 +183,7 @@ params_threads="$4"
 flexbar_atac "${input_r1}" "${input_r2}" "${params_outdir}" "${params_threads}"
 
 #+end_src
-*** DONE Make bowtie2 index                                           :smk_rule:
+**** DONE Make bowtie2 index                                          :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # Make bowtie2 index
@@ -194,6 +195,7 @@ rule atac_index:
         script = config["scriptdir"]["atac"] + "/index.sh",
     output:
         directory(atac_bowtie2_dir),
+	atac_bowtie2_index + ".1.bt2",
     log:
         config["logdir"] + "/atac_index.log",
     container:
@@ -220,7 +222,7 @@ bowtie2-build \
 
 #+end_src
 
-*** DONE Align trimmed reads using bowtie2                            :smk_rule:
+**** DONE Align trimmed reads using bowtie2                           :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule align_bt2:
@@ -271,7 +273,7 @@ output_bam="$5"
 bt2_align "$params_threads" "$params_prefix" "$input_r1" "$input_r2" "$output_bam"
 samtools index $output_bam
 #+end_src
-*** DONE De-duplicate alignments                                      :smk_rule:
+**** DONE De-duplicate alignments                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # De-duplicate alignments
@@ -309,7 +311,7 @@ samtools sort -@ $threads -n -o - $raw_bam |
 samtools index $dedup_bam
 #+end_src
 
-*** DONE Filter de-duplicated alignments                              :smk_rule:
+**** DONE Filter de-duplicated alignments                             :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # Filter alignments by quality and reference position
@@ -347,7 +349,7 @@ samtools view -@ $threads -b -f 3 -h -L $bed -M -q 20 -o $outbam $inbam
 samtools index $outbam
 
 #+end_src
-*** DONE Tn5 shift filtered alignments                                :smk_rule:
+**** DONE Tn5 shift filtered alignments                               :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule tn5_shift:
@@ -384,7 +386,7 @@ alignmentSieve --ATACshift --bam "$1" --numberOfProcessors $4 --outFile "$2"
 samtools sort -@ $4 -o $3 $2
 samtools index -@ $4 $3
 #+end_src
-*** DONE Get Tn5-shifted alignments to open chromatin                 :smk_rule:
+**** DONE Get Tn5-shifted alignments to open chromatin                :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule open_chrom:
@@ -423,209 +425,166 @@ alignmentSieve --bam $input \
 samtools sort -@ $threads -o $open $tmp
 samtools index -@ $threads $open
 #+end_src
-** INPROCESS ATAC-seq QC
+*** Quality control
 :PROPERTIES:
-:header-args:snakemake: :tangle no
+:header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
-**** TODO ATAC-seq QC:smk_rule:
-#+begin_src R
-duplicated = "test/bam_atac_raw/lib002.bam"
-processed = "test/bam_atac_tn5/lib002_tn5.bam"
-gtf = "test/inputs/chr19.gtf"
-organism = "Mus musculus"
-
-library(ATACseqQC)
-library(GenomicFeatures)
-
-freq = readsDupFreq(duplicated)
-libcomp = estimateLibComplexity(freq)
-
-bamfile.labels <- gsub(".bam", "", basename(bamfile))
-fragSize = fragSizeDist(bamfile, bamfile.labels)
-
-txdb = makeTxDbFromGFF(gtf,
-                       format = "gtf",
-                       organism = organism)
-txs = transcripts(txdb)
-gal = readBamFile(bamfile)
-tsse = TSSEscore(gal, txs)
-
-#+end_src
-
+**** DONE Make R txdb database                                        :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule atac-seq_qc:
-    input:
-    params:
-        script = config["repo"] + "workflow/scripts/atac-seq_qc.R"
-    output:
+rule make_txdb:
+    container:
+        atac_container,
     log:
-        config["data_dir"] + "/logs/atac-seq_qc.log"
+        config["logdir"] + "/make_txdb.log",
+    output:
+        config["datadir"] + "/ref/txdb",
+    params:
+        gtf = config["gtf"],
+        script = config["scriptdir"]["atac"] + "/make_txdb.R",
     shell:
         """
         Rscript {params.script} \
-        >& {log}
+        {params.gtf} \
+        {output} \
+        > {log} 2>&1
         """
 #+end_src
+- [[file:./workflow/scripts/make_txdb.R][Rscript]]
+  #+begin_src R :noweb yes :tangle ./workflow/scripts/make_txdb.R
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly = TRUE)
+gtf_file = args[1]
+txdb_file = args[2]
 
+library(GenomicFeatures)
 
+txdb = makeTxDbFromGFF(gtf_file,
+                       format = "gtf")
 
-***** notes
-:PROPERTIES:
-:ID:       06f9345e-a489-4b5e-9f68-82e22e468096
-:END:
-- run on server, run launch_atac to load docker with ATACseqQC package
-- do not run R docker through docker_interactive function- unknown error
-
-
-**** TODO Samstats:smk_rule:
+saveDb(txdb, file = txdb_file)
+#+end_src
+**** DONE ATAC-seq QC                                                 :smk_rule:
 - Snakemake
   #+begin_src snakemake
-rule samstats:
+rule atacseq_qc:
+    container:
+        atac_container,
     input:
-        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
-    output:
-        stat = config["data_dir"] + "/qc/{library_id}_stat.txt",
-        flagstat = config["data_dir"] + "/qc/{library_id}_flagstat.txt",
+        dup_bams = expand(atac_bam_raw + "/{library}.bam", library = ATAC_LIBRARIES),
+        processed_bams = expand(atac_bam_tn5 + "/{library}_tn5.bam", library = ATAC_LIBRARIES),
+        txdb = config["datadir"] + "/ref/txdb",
     log:
-        config["data_dir"] + "/logs/{library_id}_samstats.log",
+        config["logdir"] + "/atacseq_qc.log",
+    output:
+        config["datadir"] + "/qc/atac_qc.rdata",
+    params:
+        script = config["scriptdir"]["atac"] + "/atacseq_qc.R",
     shell:
         """
-        "workflow/scripts/samstats.sh" {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
+        Rscript {params.script} \
+        "{input.dup_bams}" \
+        "{input.processed_bams}" \
+        {input.txdb} \
+        {output} > {log} 2>&1
         """
 #+end_src
-- [[file:./workflow/scripts/samstats.sh][Base script]]
-  #+begin_src bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-samtools stats -@ $1 $2 > $3
-samtools flagstat -@ $1 $2 > $4
+- [[file:workflow/scripts/atac-seq_qc.R][Rscript]]
+#+begin_src R :tangle ./workflow/scripts/atacseq_qc.R
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly = TRUE)
+dup_bam_str = args[1]
+proc_bam_str = args[2]
+txdb_file = args[3]
+atac_qc_file = args[4]
+
+library(ATACseqQC)
+library(tidyverse)
+library(AnnotationDbi)
+
+txdb = loadDb(txdb_file)
+
+split_filename_str = function(filename_str){
+  vect = strsplit(filename_str, " ")[[1]]
+  return(vect)
+}
+
+dup_bam_vect = split_filename_str(dup_bam_str)
+proc_bam_vect = split_filename_str(proc_bam_str)
+bam_vect = data.frame(
+  dup = dup_bam_vect,
+  proc = proc_bam_vect
+)
+
+atacqc = function(dup_bam, proc_bam, txdb){
+  freq = readsDupFreq(dup_bam)
+  libcomp = estimateLibComplexity(freq)
+  txs = transcripts(txdb)
+  gal = readBamFile(proc_bam)
+  tsse_list = TSSEscore(gal, txs)
+  tsse_df = data.frame(
+    tsse = tsse_list[1],
+    distance = 100*(-9:10-.5)
+  )
+  tsse = tsse_list[2]
+  atac = list(libcomp, tsse, tsse_df)
+  names(atac) = c("libcomp_df", "tsse", "tsse_df")
+  return(atac)
+}
+
+atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb = txdb))
+
+save(atac_qc_out, file = atac_qc_file)
 #+end_src
-**** TODO FastQC:smk_rule:
+**** DONE FastQC :smk_rule:                                           :smk_rule:
 - Snakemake
   #+begin_src snakemake
+# <DESCRIPTIVE COMMENT>
 rule fastqc:
+    container:
+        atac_container,
     input:
+        raw = atac_fastq_raw + "/{library}_R{read}.fastq.gz",
+        filt = atac_fastq_proc + "/{library}_flex_{read}.fastq.gz",
+    log:
+        config["logdir"] + "/{library}_R{read}_atac_fastqc.log",
     output:
+        raw = config["datadir"] + "/qc/{library}_R{read}_fastqc.html",
+        filt = config["datadir"] + "/qc/{library}_flex_{read}_fastqc.html",
+    params:
+        outdir = config["datadir"] + "/qc",
     shell:
         """
-        scripts/fastqc.sh
+        fastqc --outdir {params.outdir} --quiet --threads {config[threads]} {input.raw}
+        fastqc --outdir {params.outdir} --quiet --threads {config[threads]} {input.filt}
         """
 #+end_src
-- [[file:./workflow/scripts/fastqc.sh][Base script]]
-  #+begin_src bash
-# Snakemake variables
-# Function
-# Run command
-for file in $data_dir}/atac/atac-fastq/*.fastq.gz;
-do
-    fastqc --outdir=$data_dir}/results/qc $file &>> "$data_dir}/log/fastqc_log.txt"
-done
 
 
-#+end_src
-**** TODO MultiQC:smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule multiqc:
-    input:
-    output:
-    shell:
-        """
-        scripts/multiqc.sh
-        """
-#+end_src
-- [[file:./workflow/scripts/multiqc.sh][Base script]]
-  #+begin_src bash
-multiqc_wrap()
-    # Check for parameters, return usage if empty
-    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
-           \n Wrapper for multiqc, see options in function
-           \n $1 = input_dir
-           \n $2 = output_dir
-           \n $3 = output_dir_prefix
-           \n "
-    else
-        multiqc $1 \
-        --force \
-        --dirs \
-        --dirs-depth 1 \
-        --outdir $2 \
-        --filename atac_qc
-    fi
-}
-
-# Snakemake variables
-# Function
-# Run command
-#########1#########2#########3#########4#########5#########6#########7#########8
-multiqc_wrap()
-    # Check for parameters, return usage if empty
-    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
-    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
-           \n Wrapper for multiqc, see options in function
-           \n $1 = input_dir
-           \n $2 = output_dir
-           \n $3 = output_dir_prefix
-           \n "
-    else
-        multiqc $1 \
-        --force \
-        --dirs \
-        --dirs-depth 1 \
-        --outdir $2 \
-        --filename atac_qc
-    fi
-}
-
-#+end_src
-**** ?
-
-- ? cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
-*** DONE Samstats                                                     :smk_rule:
+**** DONE Samstats                                                    :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule samstats:
+    container:
+        atac_container,
     input:
-        bam = config["bam_dir"] + "/{library_id}.bam",
+        atac_bam_filt + "/{library}_filt.bam",
     output:
-        stat = config["qc_dir"] + "/{library_id}_stat.txt",
-        flagstat = config["qc_dir"] + "/{library_id}_flagstat.txt",
+        stat = config["datadir"] + "/qc/{library}_filt_stat.txt",
+        flagstat = config["datadir"] + "/qc/{library}_filt_flagstat.txt",
     log:
-        config["log_dir"] + "/{library_id}_samstats.log",
+        config["logdir"] + "/{library}_samstats.log",
     shell:
         """
-        workflow/scripts/samstats.sh {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
+        workflow/scripts/samstats.sh {config[threads]} {input} {output.stat} {output.flagstat} 2>&1 >> {log}
         """
 #+end_src
 - [[file:./workflow/scripts/samstats.sh][Base script]]
   #+begin_src bash :tangle ./workflow/scripts/samstats.sh
-#########1#########2#########3#########4#########5#########6#########7#########8
 samtools stats -@ $1 $2 > $3
 samtools flagstat -@ $1 $2 > $4
+#+end_src
 
-#+end_src
-*** DONE FastQC                                                       :smk_rule:
-- Snakemake
-  #+begin_src snakemake
-rule fastqc:
-    input:
-        raw = config["fq_sym_dir"] + "/{library_id}_{read}.fastq.gz",
-    output:
-        raw_html = config["qc_dir"] + "/{library_id}_{read}_fastqc.html",
-    log:
-        raw = config["log_dir"] + "/fastqc_raw_{library_id}_{read}.log",
-    shell:
-        """
-        fastqc --outdir {config[qc_dir]} \
-        --quiet \
-        --threads {config[threads]} {input.raw} &> {log}
-        """
-#+end_src
-- [[file:./workflow/scripts/fastqc.sh][Base script]]
-  #+begin_src bash :tangle ./workflow/scripts/fastqc.sh
-fastqc --quiet --outdir=$1 $2 &>> $3
-#+end_src
 ** INPROCESS Integration testing :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/int_test.smk :tangle-mode (identity #o555)
@@ -663,23 +622,30 @@ library_indict = libraries["library"].tolist()
 file_indict = libraries["r1_path"].tolist()
 lib_dict = dict(zip(library_indict, file_indict))
 
-LIBRARIES = list(lib_dict.keys())
+ATAC_LIBRARIES = list(lib_dict.keys())
 #+end_src
 *** All rule
 #+begin_src snakemake
 
 rule all:
     input:
-        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = LIBRARIES),
+        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = ATAC_LIBRARIES),
 	atac_bowtie2_dir,
-        expand(atac_bam_raw + "/{library}.bam",	library = LIBRARIES),
-        expand(atac_bam_dedup + "/{library}_dedup.bam", library = LIBRARIES),
-        expand(atac_bam_filt + "/{library}_filt.bam", library = LIBRARIES),
-        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = LIBRARIES),
-        expand(atac_bam_open + "/{library}_open.bam", library = LIBRARIES),
+        expand(atac_bam_raw + "/{library}.bam",	library = ATAC_LIBRARIES),
+        expand(atac_bam_dedup + "/{library}_dedup.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_filt + "/{library}_filt.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_open + "/{library}_open.bam", library = ATAC_LIBRARIES),
+        config["datadir"] + "/ref/txdb",
+        config["datadir"] + "/qc/atac_qc.rdata",
+        expand(config["datadir"] + "/qc/{library}_R{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
+        expand(config["datadir"] + "/qc/{library}_flex_{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
+        expand(config["datadir"] + "/qc/{library}_filt_stat.txt", library = ATAC_LIBRARIES),
+        expand(config["datadir"] + "/qc/{library}_filt_flagstat.txt", library = ATAC_LIBRARIES),
+
         #expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
         #expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
         #expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
@@ -725,6 +691,7 @@ include: "atac.smk"
 :header-args:snakemake: :tangle no
 :header-args:bash: :tangle no
 :END:
+- ? cp /mnt/ris/jschwarz/cardiac-radiobiology/ref/keep.bed resources/keep.bed
 *** ideas
 - cite:liu2021 https://www.sciencedirect.com/science/article/pii/S1672022921001479
 - for split alignment conservation https://support.bioconductor.org/p/96226/ (works in docker)
@@ -4815,6 +4782,72 @@ done
 head /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
 
 cp /mnt/ris/jschwarz/cardiac-radiobiology/atac/frac_open.txt
+#+end_src
+*** Development                                                         :dev:
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+do this one as agg rule
+bamfile.labels <- gsub(".bam", "", basename(bamfile))
+fragSize = fragSizeDist(bamfile, bamfile.labels)
+fragsize = data.frame(len=, cnt
+
+
+**** TODO MultiQC:smk_rule:
+- Snakemake
+  #+begin_src snakemake
+rule multiqc:
+    input:
+    output:
+    shell:
+        """
+        scripts/multiqc.sh
+        """
+#+end_src
+- [[file:./workflow/scripts/multiqc.sh][Base script]]
+  #+begin_src bash
+multiqc_wrap()
+    # Check for parameters, return usage if empty
+    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
+           \n Wrapper for multiqc, see options in function
+           \n $1 = input_dir
+           \n $2 = output_dir
+           \n $3 = output_dir_prefix
+           \n "
+    else
+        multiqc $1 \
+        --force \
+        --dirs \
+        --dirs-depth 1 \
+        --outdir $2 \
+        --filename atac_qc
+    fi
+}
+
+# Snakemake variables
+# Function
+# Run command
+#########1#########2#########3#########4#########5#########6#########7#########8
+multiqc_wrap()
+    # Check for parameters, return usage if empty
+    if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
+    printf "\n usage: multiqc_wrap input_dir output_dir output_prefix
+           \n Wrapper for multiqc, see options in function
+           \n $1 = input_dir
+           \n $2 = output_dir
+           \n $3 = output_dir_prefix
+           \n "
+    else
+        multiqc $1 \
+        --force \
+        --dirs \
+        --dirs-depth 1 \
+        --outdir $2 \
+        --filename atac_qc
+    fi
+}
+
 #+end_src
 ** README
 currently only for mouse for macs2

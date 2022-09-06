@@ -29,25 +29,27 @@ library_indict = libraries["library"].tolist()
 file_indict = libraries["r1_path"].tolist()
 lib_dict = dict(zip(library_indict, file_indict))
 
-LIBRARIES = list(lib_dict.keys())
+ATAC_LIBRARIES = list(lib_dict.keys())
 
 rule all:
     input:
-        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = LIBRARIES),
+        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = ATAC_LIBRARIES),
+        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = ATAC_LIBRARIES),
 	atac_bowtie2_dir,
-        expand(atac_bam_raw + "/{library}.bam",	library = LIBRARIES),
-        expand(atac_bam_dedup + "/{library}_dedup.bam", library = LIBRARIES),
-        expand(atac_bam_filt + "/{library}_filt.bam", library = LIBRARIES),
-        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = LIBRARIES),
-        expand(atac_bam_open + "/{library}_open.bam", library = LIBRARIES),
-        #expand(config["bam_dir"] + "/{library_id}_regfilt.bam", library_id = LIBRARY_IDS),
-        #expand(config["bam_dir"] + "/{library_id}_regfilt.bam.bai", library_id = LIBRARY_IDS),
-        #expand(config["bam_dir"] + "/{library_id}_open.bam", library_id = LIBRARY_IDS),
-        #expand(config["bam_dir"] + "/{library_id}_regfilt_tn5.bam", library_id = LIBRARY_IDS),
-        #expand(config["bam_dir"] + "/{library_id}_open_tn5.bam", library_id = LIBRARY_IDS),
+        expand(atac_bam_raw + "/{library}.bam",	library = ATAC_LIBRARIES),
+        expand(atac_bam_dedup + "/{library}_dedup.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_filt + "/{library}_filt.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = ATAC_LIBRARIES),
+        expand(atac_bam_open + "/{library}_open.bam", library = ATAC_LIBRARIES),
+        config["datadir"] + "/ref/txdb",
+        config["datadir"] + "/qc/atac_qc.rdata",
+        expand(config["datadir"] + "/qc/{library}_R{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
+        expand(config["datadir"] + "/qc/{library}_flex_{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
+        expand(config["datadir"] + "/qc/{library}_filt_stat.txt", library = ATAC_LIBRARIES),
+        expand(config["datadir"] + "/qc/{library}_filt_flagstat.txt", library = ATAC_LIBRARIES),
+
         #expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
         #expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
         #expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),

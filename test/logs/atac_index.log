@@ -24,7 +24,7 @@ Calculating joined length
 Writing header
 Reserving space for joined string
 Joining reference sequences
-  Time to join reference sequences: 00:00:01
+  Time to join reference sequences: 00:00:00
 bmax according to bmaxDivN setting: 14551464
 Using parameters --bmax 10913598 --dcv 1024
   Doing ahead-of-time memory usage test
@@ -34,10 +34,10 @@ Building DifferenceCoverSample
   Building sPrime
   Building sPrimeOrder
   V-Sorting samples
-  V-Sorting samples time: 00:00:01
+  V-Sorting samples time: 00:00:00
   Allocating rank array
   Ranking v-sort output
-  Ranking v-sort output time: 00:00:00
+  Ranking v-sort output time: 00:00:01
   Invoking Larsson-Sadakane on ranks
   Invoking Larsson-Sadakane on ranks time: 00:00:00
   Sanity-checking and returning
@@ -76,7 +76,7 @@ Split 1, merged 6; iterating...
   80%
   90%
   100%
-  Binary sorting into buckets time: 00:00:01
+  Binary sorting into buckets time: 00:00:02
 Splitting and merging
   Splitting and merging time: 00:00:00
 Avg bucket size: 7.27573e+06 (target: 10913597)
@@ -141,7 +141,7 @@ Getting block 3 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 7357196
   (Using difference cover)
-  Sorting block time: 00:00:02
+  Sorting block time: 00:00:03
 Returning block of 7357197
 Getting block 4 of 8
   Reserving size (10913598) for bucket
@@ -158,7 +158,7 @@ Getting block 4 of 8
   80%
   90%
   100%
-  Block accumulator loop time: 00:00:00
+  Block accumulator loop time: 00:00:01
   Sorting block of length 8797584
   (Using difference cover)
   Sorting block time: 00:00:03
@@ -201,7 +201,7 @@ Getting block 6 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 7865742
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:03
 Returning block of 7865743
 Getting block 7 of 8
   Reserving size (10913598) for bucket
@@ -218,7 +218,7 @@ Getting block 7 of 8
   80%
   90%
   100%
-  Block accumulator loop time: 00:00:01
+  Block accumulator loop time: 00:00:02
   Sorting block of length 9020469
   (Using difference cover)
   Sorting block time: 00:00:02
@@ -241,7 +241,7 @@ Getting block 8 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 5718022
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:02
 Returning block of 5718023
 Exited Ebwt loop
 fchr[A]: 0
@@ -280,7 +280,7 @@ Headers:
     ebwtTotSz: 19401984
     color: 0
     reverse: 0
-Total time for call to driver() for forward index: 00:00:29
+Total time for call to driver() for forward index: 00:00:37
 Reading reference sizes
   Time reading reference sizes: 00:00:01
 Calculating joined length
@@ -303,7 +303,7 @@ Building DifferenceCoverSample
   Ranking v-sort output
   Ranking v-sort output time: 00:00:00
   Invoking Larsson-Sadakane on ranks
-  Invoking Larsson-Sadakane on ranks time: 00:00:00
+  Invoking Larsson-Sadakane on ranks time: 00:00:01
   Sanity-checking and returning
 Building samples
 Reserving space for 12 sample suffixes
@@ -347,7 +347,7 @@ Getting block 1 of 8
   80%
   90%
   100%
-  Block accumulator loop time: 00:00:00
+  Block accumulator loop time: 00:00:01
   Sorting block of length 6260351
   (Using difference cover)
   Sorting block time: 00:00:02
@@ -370,7 +370,7 @@ Getting block 2 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 6910887
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:02
 Returning block of 6910888
 Getting block 3 of 8
   Reserving size (10913598) for bucket
@@ -390,7 +390,7 @@ Getting block 3 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 8157509
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:03
 Returning block of 8157510
 Getting block 4 of 8
   Reserving size (10913598) for bucket
@@ -410,7 +410,7 @@ Getting block 4 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 7834112
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:02
 Returning block of 7834113
 Getting block 5 of 8
   Reserving size (10913598) for bucket
@@ -430,7 +430,7 @@ Getting block 5 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 8984477
   (Using difference cover)
-  Sorting block time: 00:00:02
+  Sorting block time: 00:00:03
 Returning block of 8984478
 Getting block 6 of 8
   Reserving size (10913598) for bucket
@@ -450,7 +450,7 @@ Getting block 6 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 8797325
   (Using difference cover)
-  Sorting block time: 00:00:01
+  Sorting block time: 00:00:03
 Returning block of 8797326
 Getting block 7 of 8
   Reserving size (10913598) for bucket
@@ -470,7 +470,7 @@ Getting block 7 of 8
   Block accumulator loop time: 00:00:01
   Sorting block of length 10621647
   (Using difference cover)
-  Sorting block time: 00:00:02
+  Sorting block time: 00:00:03
 Returning block of 10621648
 Getting block 8 of 8
   Reserving size (10913598) for bucket
@@ -487,10 +487,10 @@ Getting block 8 of 8
   80%
   90%
   100%
-  Block accumulator loop time: 00:00:01
+  Block accumulator loop time: 00:00:00
   Sorting block of length 639541
   (Using difference cover)
-  Sorting block time: 00:00:00
+  Sorting block time: 00:00:01
 Returning block of 639542
 Exited Ebwt loop
 fchr[A]: 0
@@ -529,4 +529,4 @@ Headers:
     ebwtTotSz: 19401984
     color: 0
     reverse: 1
-Total time for backward call to driver() for mirror index: 00:00:27
+Total time for backward call to driver() for mirror index: 00:00:36

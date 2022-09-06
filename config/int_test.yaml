@@ -10,5 +10,6 @@ container:
 scriptdir:
   atac: "workflow/scripts"
 
-
 keep_bed: "resources/keep.bed"
+
+gtf: "test/inputs/chr19.gtf"

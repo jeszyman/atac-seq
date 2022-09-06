@@ -1,0 +1,59 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Job stats:
+job          count    min threads    max threads
+---------  -------  -------------  -------------
+all              1              1              1
+make_txdb        1              1              1
+total            2              1              1
+
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	make_txdb
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	make_txdb
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Fri Sep  2 15:55:33 2022]
+rule make_txdb:
+    output: test/ref/txdb
+    log: test/logs/make_txdb.log
+    jobid: 30
+    resources: tmpdir=/tmp
+
+
+        Rscript workflow/scripts/make_txdb.R         test/inputs/chr19.gtf         test/ref/txdb         > test/logs/make_txdb.log 2>&1
+        
+ singularity  exec --home /home/jeszyman/repos/atac-seq --bind /home/jeszyman:/home/jeszyman --bind /mnt:/mnt /home/jeszyman/sing_containers/atac.1.1.0.sif bash -c 'set -euo pipefail;  
+        Rscript workflow/scripts/make_txdb.R         test/inputs/chr19.gtf         test/ref/txdb         > test/logs/make_txdb.log 2>&1'
+Activating singularity image /home/jeszyman/sing_containers/atac.1.1.0.sif
+[Fri Sep  2 15:55:41 2022]
+Finished job 30.
+1 of 2 steps (50%) done
+Resources before job selection: {'_cores': 4, '_nodes': 9223372036854775807}
+Ready jobs (1):
+	all
+Select jobs to execute...
+Using greedy selector because only single job has to be scheduled.
+Selected jobs (1):
+	all
+Resources after job selection: {'_cores': 3, '_nodes': 9223372036854775806}
+
+[Fri Sep  2 15:55:41 2022]
+localrule all:
+    input: test/fastq_atac_raw/lib001_R1.fastq.gz, test/fastq_atac_raw/lib002_R1.fastq.gz, test/fastq_atac_raw/lib003_R1.fastq.gz, test/fastq_atac_raw/lib004_R1.fastq.gz, test/fastq_atac_raw/lib001_R2.fastq.gz, test/fastq_atac_raw/lib002_R2.fastq.gz, test/fastq_atac_raw/lib003_R2.fastq.gz, test/fastq_atac_raw/lib004_R2.fastq.gz, test/fastq_atac_proc/lib001_flex_1.fastq.gz, test/fastq_atac_proc/lib002_flex_1.fastq.gz, test/fastq_atac_proc/lib003_flex_1.fastq.gz, test/fastq_atac_proc/lib004_flex_1.fastq.gz, test/fastq_atac_proc/lib001_flex_2.fastq.gz, test/fastq_atac_proc/lib002_flex_2.fastq.gz, test/fastq_atac_proc/lib003_flex_2.fastq.gz, test/fastq_atac_proc/lib004_flex_2.fastq.gz, test/ref/ucsc_mm10_chr19, test/bam_atac_raw/lib001.bam, test/bam_atac_raw/lib002.bam, test/bam_atac_raw/lib003.bam, test/bam_atac_raw/lib004.bam, test/bam_atac_dedup/lib001_dedup.bam, test/bam_atac_dedup/lib002_dedup.bam, test/bam_atac_dedup/lib003_dedup.bam, test/bam_atac_dedup/lib004_dedup.bam, test/bam_atac_filt/lib001_filt.bam, test/bam_atac_filt/lib002_filt.bam, test/bam_atac_filt/lib003_filt.bam, test/bam_atac_filt/lib004_filt.bam, test/bam_atac_tn5/lib001_tn5.bam, test/bam_atac_tn5/lib002_tn5.bam, test/bam_atac_tn5/lib003_tn5.bam, test/bam_atac_tn5/lib004_tn5.bam, test/bam_atac_open/lib001_open.bam, test/bam_atac_open/lib002_open.bam, test/bam_atac_open/lib003_open.bam, test/bam_atac_open/lib004_open.bam, test/ref/txdb
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Fri Sep  2 15:55:41 2022]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: /home/jeszyman/repos/atac-seq/.snakemake/log/2022-09-02T155532.799411.snakemake.log
+unlocking
+removing lock
+removing lock
+removed all locks
