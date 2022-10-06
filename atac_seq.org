@@ -5300,28 +5300,46 @@ rule call_macs2_broad:
         """
 #+end_src
 - [[file:workflow/scripts/call_macs2_broad.sh][Script]]
-  #+begin_src bash :tangle ./workflow/scripts/call_macs2_broad.sh
+  #+begin_src bash :tangle ./workflow/scripts/run_macs2_corces_onesummit.sh
 #!/usr/bin/env bash
-#########1#########2#########3#########4#########5#########6#########7#########8
-# Check for parameters, return usage if empty
-if [[ "$#" -ne 3 ]];
-then
-    printf "\n usage: call_macs2_broad <BAM FILE> <OUTPUT BASENAME> <OUTPUT DIRECTORY>
-    \n Wrapper function for calling broad beaks from ATAC-seq data with MACS2
-    \n "
-elif
-    [[ ! -f "${1}.bai" ]]; then echo "No index for $1"
-else
+set -o errexit   # abort on nonzero exitstatus
+set -o nounset   # abort on unbound variable
+set -o pipefail  # don't hide errors within pipes
+
+# Script variables
+inbam=$1
+outdir=$2
+
+main(){
+    macs2_wrapper \
+        $inbam \
+        $outdir
+}
+
+# Functions
+macs2_wrapper(){
+    local inbam="${1}"
+    local outdir="${2}"
+    #
+    base=$(basename -s .bam $inbam)
+    #
     macs2 callpeak \
           --broad \
-          --broad-cutoff 0.05 \
+          --extsize 150 \
           --format BAMPE \
           --gsize mm \
           --keep-dup all \
-          --name $2 \
-          --outdir $3 \
-          --treatment $1
-fi
+          --name $base \
+          --nolambda \
+          --nomodel \
+          --outdir $outdir \
+          -p 0.01 \
+          --shift -75 \
+          --treatment $inbam
+}
+
+# Run
+main "$@"
 #+end_src
 - Function- Broadpeak as in  cite:corces2018 and cite:hendrickson2017
 **** DONE Peak calling, all samples                                   :smk_rule:
