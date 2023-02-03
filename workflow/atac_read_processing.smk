@@ -87,22 +87,10 @@ rule dedup:
         {output} &> {log}
         """
 
-rule make_atac_keep_bed:
-    input:
-        autosome_bed = autosome_bed,
-        blacklist_bed_bed = blacklist_bed,
-    output: config["data_dir"] + "/ref/atac_keep.bed",
-    shell:
-        """
-        bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed_bed} > {output}
-        """
-
 # Filter alignments by quality and reference position
 rule filter_bam:
     container: atac_container,
-    input:
-        bam = atac_bam_dir + "/{library}_dedup.bam",
-        bed = data_dir + "/ref/atac_keep.bed",
+    input: atac_bam_dir + "/{library}_dedup.bam",
     log: log_dir + "/{library}_atac_filter_bam.log",
     output: atac_bam_dir + "/{library}_filt.bam",
     params:
@@ -111,9 +99,8 @@ rule filter_bam:
     shell:
         """
         {params.script} \
-        {input.bam} \
+        {input} \
         {output} \
-        {input.bed} \
         {params.threads} &> {log}
         """
 
@@ -194,4 +181,23 @@ rule atacseq_qc:
         "{input.processed_bams}" \
         {input.txdb} \
         {output} > {log} 2>&1
+        """
+
+rule atac_multiqc:
+    benchmark: bench_dir + "/atac_multiqc.benchmark"
+    input:
+        expand(qc_dir + "/{library}_{processing}_{read}_fastqc.zip",
+               library = ATAC_LIBS,
+               processing = ["raw", "proc"],
+               read = ["R1","R2"]),
+    log: log_dir + "/atac_multiqc.log"
+    output:
+        qc_dir + "/atac_multiqc.html",
+    params:
+        out_dir = qc_dir,
+        script = atac_scripts_dir + "/multiqc.sh"
+    shell:
+        """
+        {params.script} \
+        {input} {params.out_dir} &> {log}
         """

@@ -94,3 +94,30 @@ rule naive_overlap :
         {output} \
         > {log} 2>&1
         """
+
+rule peak_annotation:
+    input:
+        config["data_dir"] + "/atac/dca.rds"
+    params:
+        script = config["repo"] + "/workflow/scripts/peak_annotation.R"
+    output:
+        annotated_counts = config["data_dir"] + "/atac/annotated_counts.rds",
+    log:
+        config["data_dir"] + "/logs/peak_annotation.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.annot} \
+        >& {log}
+        """
+
+rule make_atac_keep_bed:
+    input:
+        autosome_bed = autosome_bed,
+        blacklist_bed_bed = blacklist_bed,
+    output: config["data_dir"] + "/ref/atac_keep.bed",
+    shell:
+        """
+        bedtools subtract -a {input.autosome_bed} -b {input.blacklist_bed_bed} > {output}
+        """

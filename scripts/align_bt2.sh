@@ -1,6 +1,6 @@
 # Function
 bt2_align(){
-    bowtie2 --maxins 2000 --threads $1 --very-sensitive -x $2 -1 $3 -2 $4 |
+    bowtie2 --maxins 2000 --threads $1 --very-sensitive --mm -x $2 -1 $3 -2 $4 |
         samtools view -@ $4 -f 2 -F 524 -q 40 -o -b |
         samtools sort -@ $4 -o $5 -
     samtools index -@ $4 $5
