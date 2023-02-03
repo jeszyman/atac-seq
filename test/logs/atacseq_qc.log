@@ -67,11 +67,11 @@ The following object is masked from 'package:dplyr':
 Loading required package: GenomicFeatures
 Loading required package: GenomeInfoDb
 Loading required package: GenomicRanges
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib001.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib001.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib002.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib002.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib003.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib003.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib004.bam.bai
-[W::hts_idx_load2] The index file is older than the data file: test/bam_atac_raw/lib004.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib001_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib001_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib002_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib002_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib003_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib003_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib004_raw.bam.bai
+[W::hts_idx_load2] The index file is older than the data file: test/analysis/atac/bams/lib004_raw.bam.bai
