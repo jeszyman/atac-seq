@@ -1,10 +1,12 @@
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
-###               Integration testing snakefile for <REPO>                   ###
+###             Integration testing snakefile for ATAC-seq                   ###
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
-###   Load required packages   ###
+##################################
+###   Load Required Packages   ###
+##################################
 
 import numpy as np
 import os
@@ -59,32 +61,35 @@ ATAC_GROUPS = pd.read_table(sample_sheet)['group'].unique().tolist()
 
 rule all:
     input:
-        expand(qc_dir +
-               "/{library}_{processing}_{read}_fastqc.html",
+        expand(atac_fastq_dir + "/{library}_raw_{read}.fastq.gz",
                library = ATAC_LIBS,
-               processing = ["raw","proc"],
-               read = ["R1", "R2"]),
-        expand(qc_dir + "/{library}_{processing}_{stat}.txt",
-               library = ATAC_LIBS,
-               processing = ["raw","dedup","filt"],
-               stat = ["flagstat", "samstats"]),
-        qc_dir + "/insert_sizes.tsv",
-        qc_dir + "/insert_sizes.pdf",
-        qc_dir + "/atac_qc.rdata",
-        expand(atac_macs2_dir +
-               "/{library}_multi_peaks.narrowPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir +
-               "/{library}_peaks.broadPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir +
-               "/{library}_single_peaks.narrowPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir + "/{group}_consensus.bed",
-               group = ATAC_GROUPS),
-        expand(atac_macs2_dir + "/{library}_naive.bed",
-               library = ATAC_LIBS),
-        data_dir + "/ref/txdb",
+               read = ['R1', 'R2']),
+        # expand(qc_dir +
+        #        "/{library}_{processing}_{read}_fastqc.html",
+        #        library = ATAC_LIBS,
+        #        processing = ["raw","proc"],
+        #        read = ["R1", "R2"]),
+        # expand(qc_dir + "/{library}_{processing}_{stat}.txt",
+        #        library = ATAC_LIBS,
+        #        processing = ["raw","dedup","filt"],
+        #        stat = ["flagstat", "samstats"]),
+        # qc_dir + "/insert_sizes.tsv",
+        # qc_dir + "/insert_sizes.pdf",
+        # qc_dir + "/atac_qc.rdata",
+        # expand(atac_macs2_dir +
+        #        "/{library}_multi_peaks.narrowPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir +
+        #        "/{library}_peaks.broadPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir +
+        #        "/{library}_single_peaks.narrowPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir + "/{group}_consensus.bed",
+        #        group = ATAC_GROUPS),
+        # expand(atac_macs2_dir + "/{library}_naive.bed",
+        #        library = ATAC_LIBS),
+        # data_dir + "/ref/txdb",
 
 ###   Benchmark   ###
 #+begin_src snakemake
@@ -112,4 +117,4 @@ rule symlink_inputs:
         """
 
 include: atac_repo + "/workflow/atac_read_processing.smk"
-include: atac_repo + "/workflow/atac_peaks.smk"
+#include: atac_repo + "/workflow/atac_peaks.smk"

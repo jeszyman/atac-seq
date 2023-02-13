@@ -6,136 +6,47 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
-
-- narrowpeak is used as for https://www.nature.com/articles/s41467-021-21534-4
-** Setup
-*** Bash preamble
-#+name: bash_preamble
-#+begin_src bash
-
-#  Note: This script is tangled from code blocks in the Emacs Org-mode file at
-#  https://github.com/jeszyman/atac-seq/blob/master/atac-seq.org. Changes
-#  made directly to this file will be overwritten upon tangle from Org-mode.
-
+** TODO Repository setup and administration
+*** Bash source
+#+begin_src bash :tangle ./config/bash_src
+data_dir="/mnt/ris/szymanski/Active/test"
 #+end_src
-*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
-*** Integration testing Snakemake YAML
-:PROPERTIES:
-:header-args:bash: :tangle ./config/int_test.yaml
-:END:
-#+begin_src bash
-
-# Common names across repositories and snakefiles
-datadir: "test"
-fasta: "test/inputs/chr19.fa"
-logdir: "test/logs"
-threads: 4
-
-# Repository and snakefile-specific names
-container:
-  atac: "~/sing_containers/atac.1.1.0.sif"
-scriptdir:
-  atac: "workflow/scripts"
-
-keep_bed: "resources/keep.bed"
-
-gtf: "test/inputs/chr19.gtf"
-#+end_src
-*** Integration testing inputs setup
-- Sample sheet
-  | library | basename          |
-  |---------+-------------------|
-  | lib001  | atac1_R1.fastq.gz |
-  | lib002  | atac2_R1.fastq.gz |
-  | lib003  | atac3_R1.fastq.gz |
-  | lib004  | atac4_R1.fastq.gz |
-=======
-** Repository setup and administration
-
 *** Setup of inputs for integration testing
+- Some human fastqs
+  #+begin_src bash
+cp /mnt/ris/stacey.rentschler/Active/
+
+cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+
+cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R2.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+
+#+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library | path                          | group |
-  |---------+-------------------------------+-------|
-  | lib001  | test/inputs/atac1_R1.fastq.gz | ctrl  |
-  | lib002  | test/inputs/atac2_R1.fastq.gz | exp   |
-  | lib003  | test/inputs/atac3_R1.fastq.gz | exp   |
-  | lib004  | test/inputs/atac4_R1.fastq.gz | ctrl  |
-
-- Make reference fasta from mm10 chr 19
+  | library | path                                                               | group |
+  |---------+--------------------------------------------------------------------+-------|
+  | lib001  | test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
+- Human reference fasta
   #+begin_src bash
-mkdir -p "test/inputs"
-
-wget --directory-prefix="test/inputs/" "https://hgdownload.soe.ucsc.edu/goldenPath/mm10/chromosomes/chr19.fa.gz"
-
-zcat "test/inputs/chr9.fa.gz" | grep -A 200000 chr9 > test/inputs/chr9.fa
-
-mkdir -p "test/inputs/ucsc_mm10_chr19"
-
-chmod -R 777  "test/inputs/ucsc_mm10_chr19"
-
-singularity shell ~/sing_containers/atac.sif
-
-zcat "test/inputs/chr19.fa.gz" > test/inputs/chr19.fa
-
-
-\rm /home/jeszyman/repos/atac-seq/test/inputs/chr19.fa
-
+source config/bash_src
+wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
 #+end_src
-- Make reference gtf
-  #+begin_src bash
-wget --directory-prefix test/inputs https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/genes/mm10.ensGene.gtf.gz
-zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
-\rm test/inputs/mm10.ensGene.gtf.gz
+
+*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
+** ATAC-seq environmental YAML
+#+begin_src bash
+conda env create -f config/atac_env.yaml
 #+end_src
-- Make reference chromosome bed file
-  https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-  | chr1  | 1 | 195471971 |
-  | chr2  | 1 | 182113224 |
-  | chr3  | 1 | 160039680 |
-  | chr4  | 1 | 156508116 |
-  | chr5  | 1 | 151834684 |
-  | chr6  | 1 | 149736546 |
-  | chr7  | 1 | 145441459 |
-  | chr10 | 1 | 130694993 |
-  | chr8  | 1 | 129401213 |
-  | chr14 | 1 | 124902244 |
-  | chr9  | 1 | 124595110 |
-  | chr11 | 1 | 122082543 |
-  | chr13 | 1 | 120421639 |
-  | chr12 | 1 | 120129022 |
-  | chr15 | 1 | 104043685 |
-  | chr16 | 1 |  98207768 |
-  | chr17 | 1 |  94987271 |
-  | chr18 | 1 |  90702639 |
-  | chr19 | 1 |  61431566 |
-- Get sample fastqs
-  #+begin_src bash
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
+#+begin_src bash :tangle ./config/atac_env.yaml
+name: atac
+channels:
+  - conda-forge
+  - bioconda
 
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R2.fastq.gz | head -n 1500000 > test/inputs/atac1_R2.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R1.fastq.gz | head -n 1500000 > test/inputs/atac2_R1.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R2.fastq.gz | head -n 1500000 > test/inputs/atac2_R2.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R1.fastq.gz | head -n 1500000 > test/inputs/atac3_R1.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R2.fastq.gz | head -n 1500000 > test/inputs/atac3_R2.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R1.fastq.gz | head -n 1500000 > test/inputs/atac4_R1.fastq
-
-zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R2.fastq.gz | head -n 1500000 > test/inputs/atac4_R2.fastq
-
-for file in "test/inputs/*.fastq"; do gzip -f $file; done
-
+dependencies:
+  - r-tidyverse
+  - macs2
 #+end_src
-- Blacklist_bed
-  #+begin_src bash
-wget --directory-prefix="/home/jeszyman/repos/atac-seq/test/inputs" https://raw.githubusercontent.com/Boyle-Lab/Blacklist_bed/master/lists/mm10-blacklist.v2.bed.gz
 
-gunzip /home/jeszyman/repos/atac-seq/test/inputs/mm10-blacklist.v2.bed.gz
-#+end_src
-*** Dockerfile
 ** Snakemake configuration YAML
 :PROPERTIES:
 :header-args:bash: :tangle ./config/int_test.yaml
@@ -156,10 +67,6 @@ threads: 4
 # Common names across repositories and snakefiles
 
 gsize: "1.87e9"
-
-
-
-
 
 
 # Repository and snakefile-specific names
@@ -184,184 +91,6 @@ dir:
   atac_fastq_raw: "test/fastq-atac-raw"
   atac_fastq_proc: "test/fastq-atac-proc"
 
-#+end_src
-** [[./workflow/int_test.smk][Integration testing]]                                                  :smk:
-:PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/int_test.smk :tangle-mode (identity #o444))
-:END:
-*** Preamble
-#+begin_src snakemake
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-###                                                                          ###
-###               Integration testing snakefile for <REPO>                   ###
-###                                                                          ###
-#########1#########2#########3#########4#########5#########6#########7#########8
-
-###   Load required packages   ###
-
-import numpy as np
-import os
-import pandas as pd
-import re
-
-#+end_src
-*** Variable naming
-#+begin_src snakemake
-atac_groups = 'waht?'
-###   Variable naming   ###
-
-# Names directly from configuration YAML
-atac_container = config['atac_container']
-atac_peak_cut =  config['atac_peak_cut']
-atac_repo =      config['atac_repo']
-autosome_bed =   config['autosome_bed']
-blacklist_bed =      config['blacklist_bed']
-data_dir =       config['data_dir']
-genome_fasta =   config['genome_fasta']
-log_dir =        config['log_dir']
-qc_dir =         config['qc_dir']
-sample_sheet =   config['sample_sheet']
-threads =        config['threads']
-
-# Names derived from configuration YAML base
-atac_bam_dir = data_dir + "/analysis/atac/bams"
-atac_fastq_dir = data_dir + "/analysis/atac/fastqs"
-atac_atac_keep_bed = data_dir + "/inputs/mm10chrs.bed"
-atac_macs2_dir = data_dir + "/analysis/atac/macs2"
-atac_scripts = atac_repo + "/scripts"
-bowtie2_dir =   config["data_dir"] + "/ref/ucsc_mm10_chr19"
-bowtie2_index = config["data_dir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
-atac_atac_keep_bed = config["data_dir"] + "/ref/atac_keep.bed"
-#+end_src
-*** Functions
-#+begin_src snakemake
-
-###   Functions   ###
-
-def make_library_dictionary(tsv_path, col):
-    lib_in = pd.read_table(tsv_path)
-    readable = []
-    for x in lib_in[col]:
-        readable.append(os.access(x, os.R_OK))
-    lib_in['readable']=readable
-    lib = lib_in[lib_in.readable == True]
-    lib_dict = dict(zip(lib['library'], lib[col]))
-    return lib_dict
-
-lib_dict = make_library_dictionary(sample_sheet, "path")
-
-ATAC_LIBS = list(lib_dict.keys())
-
-ATAC_GROUPS = pd.read_table(sample_sheet)['group'].unique().tolist()
-
-#+end_src
-*** All rule
-#+begin_src snakemake
-
-###   Rules   ###
-
-rule all:
-    input:
-        expand(qc_dir +
-               "/{library}_{processing}_{read}_fastqc.html",
-               library = ATAC_LIBS,
-               processing = ["raw","proc"],
-               read = ["R1", "R2"]),
-        expand(qc_dir + "/{library}_{processing}_{stat}.txt",
-               library = ATAC_LIBS,
-               processing = ["raw","dedup","filt"],
-               stat = ["flagstat", "samstats"]),
-        qc_dir + "/insert_sizes.tsv",
-        qc_dir + "/insert_sizes.pdf",
-        qc_dir + "/atac_qc.rdata",
-        expand(atac_macs2_dir +
-               "/{library}_multi_peaks.narrowPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir +
-               "/{library}_peaks.broadPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir +
-               "/{library}_single_peaks.narrowPeak",
-               library = ATAC_LIBS),
-        expand(atac_macs2_dir + "/{group}_consensus.bed",
-               group = ATAC_GROUPS),
-        expand(atac_macs2_dir + "/{library}_naive.bed",
-               library = ATAC_LIBS),
-        data_dir + "/ref/txdb",
-#+end_src
-*** Benchmark aggregation
-- Snakemake
-  #+begin_src snakemake
-
-###   Benchmark   ###
-,#+begin_src snakemake
-
-# onsuccess:
-#     shell("""
-#         bash {cfdna_wgs_scriptdir}/agg_bench.sh {benchdir} {qc_dir}/agg_bench.tsv
-#         """)
-#+end_src
-- Shell script
-#+begin_src bash :tangle ./scripts/agg_bench.sh
-# For unit testing
-indir="test/benchmark"
-output="test/analysis/qc/bench_agg.tsv"
-
-if [ -f $output ]; then rm $output; fi
-
-for file in $indir/*
-do
-    base=$(basename $file)
-    cat $file | awk -v OFS='\t' -v var=$base 'NR>1 {print var,$0}' >> $output
-done
-
-sed -i '1i\process\tfloat_sec\trun_time\tmax_rss\tmax_vms\tmax_uss\tmax_pss\tio_in\tio_out\tmean_load\tcpu_time' $output
-
-#+end_src
-
-
-*** Symlink input fastqs
-#+begin_src snakemake
-rule symlink_inputs:
-    input: lambda wildcards: lib_dict[wildcards.library],
-    output:
-        read1 = atac_fastq_dir + "/{library}_raw_R1.fastq.gz",
-        read2 = atac_fastq_dir + "/{library}_raw_R2.fastq.gz",
-    params:
-        out_dir = atac_fastq_dir,
-        script = atac_scripts + "/symlink.sh",
-    shell:
-        """
-        {params.script} \
-        {input} \
-        {output.read1} \
-        {output.read2} \
-        {params.out_dir}
-        """
-#+end_src
-#+begin_src bash :tangle ./scripts/symlink.sh
-#!/usr/bin/env bash
-
-input_read1="${1}"
-output_read1="${2}"
-output_read2="${3}"
-outdir="${4}"
-
-mkdir -p $outdir
-
-input_read2="$(echo $input_read1 | sed "s/_R1/_R2/g")"
-
-ln -sf --relative ${input_read1} ${output_read1}
-ln -sf --relative ${input_read2} ${output_read2}
-
-#+end_src
-
-
-*** Includes statements
-#+begin_src snakemake
-include: atac_repo + "/workflow/atac_read_processing.smk"
-include: atac_repo + "/workflow/atac_peaks.smk"
 #+end_src
 ** [[file:workflow/atac_read_processing.smk][ATAC-seq read and alignment processing]]                               :smk:
 :PROPERTIES:
@@ -440,7 +169,11 @@ fastp_wrap $input_r1 \
            $threads
 #+end_src
 
-*** Make bowtie2 index                                             :smk_rule:
+*** Development
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+**** Make bowtie2 index                                            :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # Make bowtie2 index
@@ -476,7 +209,7 @@ bowtie2-build \
 
 #+end_src
 
-*** Align trimmed reads using bowtie2                              :smk_rule:
+**** Align trimmed reads using bowtie2                             :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule align_bt2:
@@ -528,7 +261,7 @@ samtools index $output_bam
   - Maximum fragment length 2000 per cite:corces2017 and ENCODE1.8
   - Very sensitive per cite:reske2020
   - Initial quality filtering from ENCODE ATAC-seq pipeline version 1
-*** De-duplicate alignments                                        :smk_rule:
+**** De-duplicate alignments                                       :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # De-duplicate alignments
@@ -561,7 +294,7 @@ samtools sort -@ $threads -n -o - $raw_bam |
 samtools index $dedup_bam
 #+end_src
 
-*** Filter de-duplicated alignments                                :smk_rule:
+**** Filter de-duplicated alignments                               :smk_rule:
 - Snakemake
   #+begin_src snakemake
 # Filter alignments by quality and reference position
@@ -597,7 +330,7 @@ samtools view -@ $threads -b -f 1 -h -q 20 -o $outbam $inbam
 samtools index $outbam
 
 #+end_src
-*** FastQC :smk_rule:                                              :smk_rule:
+**** FastQC :smk_rule:                                             :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule fastqc:
@@ -635,7 +368,7 @@ fastqc  --outdir $outdir \
         --threads $threads $input
 
 #+end_src
-*** Alignment QC                                                   :smk_rule:
+**** Alignment QC                                                  :smk_rule:
 #+begin_src snakemake
 # Alignment samtools QC
 rule alignment_qc:
@@ -703,7 +436,7 @@ samstats(){
 # Run
 main "$@"
 #+end_src
-*** Insert size distributions                                      :smk_rule:
+**** Insert size distributions                                     :smk_rule:
 - Snakemake
   #+begin_src snakemake
 checkpoint insert_size:
@@ -806,7 +539,7 @@ ggsave(plot, file = peak_ratio_plot)
 
 #+end_src
 
-*** ATAC-seqQC                                                     :smk_rule:
+**** ATAC-seqQC                                                    :smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule atacseq_qc:
@@ -875,7 +608,7 @@ atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb =
 
 save(atac_qc_out, file = atac_qc_file)
 #+end_src
-*** TODO MultiQC:smk_rule:
+**** TODO MultiQC:smk_rule:
 - Snakemake
   #+begin_src snakemake
 rule atac_multiqc:
@@ -912,7 +645,7 @@ multiqc $input \
         --filename $out_name
 
 #+end_src
-*** TODO move qc into analysis
+**** TODO move qc into analysis
 ** [[file:workflow/atac_peaks.smk][ATAC-seq peak analysis]]                                               :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac_peaks.smk :tangle-mode (identity #o555)
@@ -1242,6 +975,191 @@ rule make_atac_keep_bed:
         """
 #+end_src
 *** TODO do this filt at bedfile step Read pairs were also removed if they overlapped known problematic regions from the ENCODE blacklist_bed [[#amemiya2019][amemiya2019]].
+** [[./workflow/int_test.smk][Integration testing]]                                                  :smk:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/int_test.smk :tangle-mode (identity #o444))
+:END:
+*** Preamble
+#+begin_src snakemake
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###             Integration testing snakefile for ATAC-seq                   ###
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+##################################
+###   Load Required Packages   ###
+##################################
+
+import numpy as np
+import os
+import pandas as pd
+import re
+
+#+end_src
+*** Variable naming
+#+begin_src snakemake
+atac_groups = 'waht?'
+###   Variable naming   ###
+
+# Names directly from configuration YAML
+atac_container = config['atac_container']
+atac_peak_cut =  config['atac_peak_cut']
+atac_repo =      config['atac_repo']
+autosome_bed =   config['autosome_bed']
+blacklist_bed =      config['blacklist_bed']
+data_dir =       config['data_dir']
+genome_fasta =   config['genome_fasta']
+log_dir =        config['log_dir']
+qc_dir =         config['qc_dir']
+sample_sheet =   config['sample_sheet']
+threads =        config['threads']
+
+# Names derived from configuration YAML base
+atac_bam_dir = data_dir + "/analysis/atac/bams"
+atac_fastq_dir = data_dir + "/analysis/atac/fastqs"
+atac_atac_keep_bed = data_dir + "/inputs/mm10chrs.bed"
+atac_macs2_dir = data_dir + "/analysis/atac/macs2"
+atac_scripts = atac_repo + "/scripts"
+bowtie2_dir =   config["data_dir"] + "/ref/ucsc_mm10_chr19"
+bowtie2_index = config["data_dir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
+atac_atac_keep_bed = config["data_dir"] + "/ref/atac_keep.bed"
+#+end_src
+*** Functions
+#+begin_src snakemake
+
+#####################
+###   Functions   ###
+#####################
+
+def make_library_dictionary(tsv_path, col):
+    lib_in = pd.read_table(tsv_path)
+    readable = []
+    for x in lib_in[col]:
+        readable.append(os.access(x, os.R_OK))
+    lib_in['readable']=readable
+    lib = lib_in[lib_in.readable == True]
+    lib_dict = dict(zip(lib['library'], lib[col]))
+    return lib_dict
+
+lib_dict = make_library_dictionary(sample_sheet, "path")
+
+ATAC_LIBS = list(lib_dict.keys())
+
+ATAC_GROUPS = pd.read_table(sample_sheet)['group'].unique().tolist()
+
+#+end_src
+*** All rule
+#+begin_src snakemake
+
+###   Rules   ###
+
+rule all:
+    input:
+        expand(atac_fastq_dir + "/{library}_raw_{read}.fastq.gz",
+               library = ATAC_LIBS,
+               read = ['R1', 'R2']),
+        # expand(qc_dir +
+        #        "/{library}_{processing}_{read}_fastqc.html",
+        #        library = ATAC_LIBS,
+        #        processing = ["raw","proc"],
+        #        read = ["R1", "R2"]),
+        # expand(qc_dir + "/{library}_{processing}_{stat}.txt",
+        #        library = ATAC_LIBS,
+        #        processing = ["raw","dedup","filt"],
+        #        stat = ["flagstat", "samstats"]),
+        # qc_dir + "/insert_sizes.tsv",
+        # qc_dir + "/insert_sizes.pdf",
+        # qc_dir + "/atac_qc.rdata",
+        # expand(atac_macs2_dir +
+        #        "/{library}_multi_peaks.narrowPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir +
+        #        "/{library}_peaks.broadPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir +
+        #        "/{library}_single_peaks.narrowPeak",
+        #        library = ATAC_LIBS),
+        # expand(atac_macs2_dir + "/{group}_consensus.bed",
+        #        group = ATAC_GROUPS),
+        # expand(atac_macs2_dir + "/{library}_naive.bed",
+        #        library = ATAC_LIBS),
+        # data_dir + "/ref/txdb",
+#+end_src
+*** Benchmark aggregation
+- Snakemake
+  #+begin_src snakemake
+
+###   Benchmark   ###
+,#+begin_src snakemake
+
+# onsuccess:
+#     shell("""
+#         bash {cfdna_wgs_scriptdir}/agg_bench.sh {benchdir} {qc_dir}/agg_bench.tsv
+#         """)
+#+end_src
+- Shell script
+#+begin_src bash :tangle ./scripts/agg_bench.sh
+# For unit testing
+indir="test/benchmark"
+output="test/analysis/qc/bench_agg.tsv"
+
+if [ -f $output ]; then rm $output; fi
+
+for file in $indir/*
+do
+    base=$(basename $file)
+    cat $file | awk -v OFS='\t' -v var=$base 'NR>1 {print var,$0}' >> $output
+done
+
+sed -i '1i\process\tfloat_sec\trun_time\tmax_rss\tmax_vms\tmax_uss\tmax_pss\tio_in\tio_out\tmean_load\tcpu_time' $output
+
+#+end_src
+
+
+*** Symlink input fastqs
+#+begin_src snakemake
+rule symlink_inputs:
+    input: lambda wildcards: lib_dict[wildcards.library],
+    output:
+        read1 = atac_fastq_dir + "/{library}_raw_R1.fastq.gz",
+        read2 = atac_fastq_dir + "/{library}_raw_R2.fastq.gz",
+    params:
+        out_dir = atac_fastq_dir,
+        script = atac_scripts + "/symlink.sh",
+    shell:
+        """
+        {params.script} \
+        {input} \
+        {output.read1} \
+        {output.read2} \
+        {params.out_dir}
+        """
+#+end_src
+#+begin_src bash :tangle ./scripts/symlink.sh
+#!/usr/bin/env bash
+
+input_read1="${1}"
+output_read1="${2}"
+output_read2="${3}"
+outdir="${4}"
+
+mkdir -p $outdir
+
+input_read2="$(echo $input_read1 | sed "s/_R1/_R2/g")"
+
+ln -sf --relative ${input_read1} ${output_read1}
+ln -sf --relative ${input_read2} ${output_read2}
+
+#+end_src
+
+
+*** Includes statements
+#+begin_src snakemake
+include: atac_repo + "/workflow/atac_read_processing.smk"
+#include: atac_repo + "/workflow/atac_peaks.smk"
+#+end_src
 ** Differential chromatin accessibility
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac_dca.smk :tangle-mode (identity #o555)
@@ -1293,6 +1211,7 @@ saveDb(txdb, file = txdb_file)
 :header-args:bash: :tangle no
 :END:
 ** Ideas
+- chromatin information enrichment - narrowpeak is used as for https://www.nature.com/articles/s41467-021-21534-4
 # naive consensus peaks by markov chain
 library(BSgenome.Hsapiens.UCSC.hg19)
 seq = getAllPeakSequence(overlaps,
@@ -12798,6 +12717,62 @@ bamPEFragmentSize --bamfiles $input \
 #+end_src
 
 ** Reference
+- old code
+- Make reference gtf
+  #+begin_src bash
+wget --directory-prefix test/inputs https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/genes/mm10.ensGene.gtf.gz
+zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
+\rm test/inputs/mm10.ensGene.gtf.gz
+#+end_src
+- Make reference chromosome bed file
+    https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
+    | chr1  | 1 | 195471971 |
+    | chr2  | 1 | 182113224 |
+    | chr3  | 1 | 160039680 |
+    | chr4  | 1 | 156508116 |
+    | chr5  | 1 | 151834684 |
+    | chr6  | 1 | 149736546 |
+    | chr7  | 1 | 145441459 |
+    | chr10 | 1 | 130694993 |
+    | chr8  | 1 | 129401213 |
+    | chr14 | 1 | 124902244 |
+    | chr9  | 1 | 124595110 |
+    | chr11 | 1 | 122082543 |
+    | chr13 | 1 | 120421639 |
+    | chr12 | 1 | 120129022 |
+    | chr15 | 1 | 104043685 |
+    | chr16 | 1 |  98207768 |
+    | chr17 | 1 |  94987271 |
+    | chr18 | 1 |  90702639 |
+    | chr19 | 1 |  61431566 |
+  - Get sample fastqs
+    #+begin_src bash
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R2.fastq.gz | head -n 1500000 > test/inputs/atac1_R2.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R1.fastq.gz | head -n 1500000 > test/inputs/atac2_R1.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib009_R2.fastq.gz | head -n 1500000 > test/inputs/atac2_R2.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R1.fastq.gz | head -n 1500000 > test/inputs/atac3_R1.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib015_R2.fastq.gz | head -n 1500000 > test/inputs/atac3_R2.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R1.fastq.gz | head -n 1500000 > test/inputs/atac4_R1.fastq
+
+  zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib016_R2.fastq.gz | head -n 1500000 > test/inputs/atac4_R2.fastq
+
+  for file in "test/inputs/*.fastq"; do gzip -f $file; done
+
+  #+end_src
+  - Blacklist_bed
+    #+begin_src bash
+  wget --directory-prefix="/home/jeszyman/repos/atac-seq/test/inputs" https://raw.githubusercontent.com/Boyle-Lab/Blacklist_bed/master/lists/mm10-blacklist.v2.bed.gz
+
+  gunzip /home/jeszyman/repos/atac-seq/test/inputs/mm10-blacklist.v2.bed.gz
+  #+end_src
+
 - [[https://static-content.springer.com/esm/art%3A10.1186%2Fs13072-020-00342-y/MediaObjects/13072_2020_342_MOESM6_ESM.txt][reske csaw workflow]]
 - [[id:271b4d5f-727e-496e-b835-8fe9f8655655][biopipe module]]
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]

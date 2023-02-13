@@ -1,0 +1,8 @@
+name: atac
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - r-tidyverse
+  - macs2

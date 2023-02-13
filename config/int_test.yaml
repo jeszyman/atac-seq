@@ -14,10 +14,6 @@ threads: 4
 gsize: "1.87e9"
 
 
-
-
-
-
 # Repository and snakefile-specific names
 container:
   atac: "~/sing_containers/atac.1.1.0.sif"
