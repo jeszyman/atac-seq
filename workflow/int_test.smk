@@ -1,82 +1,115 @@
-atac_fastq_raw =     config["datadir"] + "/fastq_atac_raw"
-atac_fastq_proc =    config["datadir"] + "/fastq_atac_proc"
-logdir =             config["logdir"]
-atac_container =     config["container"]["atac"]
-atac_bowtie2_index = config["datadir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
-atac_bowtie2_dir =   config["datadir"] + "/ref/ucsc_mm10_chr19"
-atac_bam_raw =       config["datadir"] + "/bam_atac_raw"
-atac_bam_dedup =     config["datadir"] + "/bam_atac_dedup"
-atac_bam_filt =      config["datadir"] + "/bam_atac_filt"
-atac_keep_bed =      config["datadir"] + "/inputs/mm10chrs.bed"
-atac_bam_tn5 =       config["datadir"] + "/bam_atac_tn5"
-atac_bam_open =      config["datadir"] + "/bam_atac_open"
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###               Integration testing snakefile for <REPO>                   ###
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
 
+###   Load required packages   ###
+
+import numpy as np
+import os
 import pandas as pd
 import re
-import numpy as np
 
-libraries = pd.read_table("test/inputs/libraries.tsv")
-libraries["r1_path"]="test/inputs/" + libraries["basename"]
+atac_groups = 'waht?'
+###   Variable naming   ###
 
-readable = []
-for x in libraries.r1_path:
-    readable.append(os.access(x, os.R_OK))
-libraries['readable']=readable
+# Names directly from configuration YAML
+atac_container = config['atac_container']
+atac_peak_cut =  config['atac_peak_cut']
+atac_repo =      config['atac_repo']
+autosome_bed =   config['autosome_bed']
+blacklist_bed =      config['blacklist_bed']
+data_dir =       config['data_dir']
+genome_fasta =   config['genome_fasta']
+log_dir =        config['log_dir']
+qc_dir =         config['qc_dir']
+sample_sheet =   config['sample_sheet']
+threads =        config['threads']
 
-libraries = libraries[libraries.readable == True]
+# Names derived from configuration YAML base
+atac_bam_dir = data_dir + "/analysis/atac/bams"
+atac_fastq_dir = data_dir + "/analysis/atac/fastqs"
+atac_atac_keep_bed = data_dir + "/inputs/mm10chrs.bed"
+atac_macs2_dir = data_dir + "/analysis/atac/macs2"
+atac_scripts = atac_repo + "/scripts"
+bowtie2_dir =   config["data_dir"] + "/ref/ucsc_mm10_chr19"
+bowtie2_index = config["data_dir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
+atac_atac_keep_bed = config["data_dir"] + "/ref/atac_keep.bed"
 
-library_indict = libraries["library"].tolist()
-file_indict = libraries["r1_path"].tolist()
-lib_dict = dict(zip(library_indict, file_indict))
+###   Functions   ###
 
-ATAC_LIBRARIES = list(lib_dict.keys())
+def make_library_dictionary(tsv_path, col):
+    lib_in = pd.read_table(tsv_path)
+    readable = []
+    for x in lib_in[col]:
+        readable.append(os.access(x, os.R_OK))
+    lib_in['readable']=readable
+    lib = lib_in[lib_in.readable == True]
+    lib_dict = dict(zip(lib['library'], lib[col]))
+    return lib_dict
+
+lib_dict = make_library_dictionary(sample_sheet, "path")
+
+ATAC_LIBS = list(lib_dict.keys())
+
+ATAC_GROUPS = pd.read_table(sample_sheet)['group'].unique().tolist()
+
+###   Rules   ###
 
 rule all:
     input:
-        expand(atac_fastq_raw + "/{library}_R1.fastq.gz", library = ATAC_LIBRARIES),
-        expand(atac_fastq_raw + "/{library}_R2.fastq.gz", library = ATAC_LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_1.fastq.gz", library = ATAC_LIBRARIES),
-        expand(atac_fastq_proc + "/{library}_flex_2.fastq.gz", library = ATAC_LIBRARIES),
-	atac_bowtie2_dir,
-        expand(atac_bam_raw + "/{library}.bam",	library = ATAC_LIBRARIES),
-        expand(atac_bam_dedup + "/{library}_dedup.bam", library = ATAC_LIBRARIES),
-        expand(atac_bam_filt + "/{library}_filt.bam", library = ATAC_LIBRARIES),
-        expand(atac_bam_tn5 + "/{library}_tn5.bam", library = ATAC_LIBRARIES),
-        expand(atac_bam_open + "/{library}_open.bam", library = ATAC_LIBRARIES),
-        config["datadir"] + "/ref/txdb",
-        config["datadir"] + "/qc/atac_qc.rdata",
-        expand(config["datadir"] + "/qc/{library}_R{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
-        expand(config["datadir"] + "/qc/{library}_flex_{read}_fastqc.html", library = ATAC_LIBRARIES, read=["1","2"]),
-        expand(config["datadir"] + "/qc/{library}_filt_stat.txt", library = ATAC_LIBRARIES),
-        expand(config["datadir"] + "/qc/{library}_filt_flagstat.txt", library = ATAC_LIBRARIES),
+        expand(qc_dir +
+               "/{library}_{processing}_{read}_fastqc.html",
+               library = ATAC_LIBS,
+               processing = ["raw","proc"],
+               read = ["R1", "R2"]),
+        expand(qc_dir + "/{library}_{processing}_{stat}.txt",
+               library = ATAC_LIBS,
+               processing = ["raw","dedup","filt"],
+               stat = ["flagstat", "samstats"]),
+        qc_dir + "/insert_sizes.tsv",
+        qc_dir + "/insert_sizes.pdf",
+        qc_dir + "/atac_qc.rdata",
+        expand(atac_macs2_dir +
+               "/{library}_multi_peaks.narrowPeak",
+               library = ATAC_LIBS),
+        expand(atac_macs2_dir +
+               "/{library}_peaks.broadPeak",
+               library = ATAC_LIBS),
+        expand(atac_macs2_dir +
+               "/{library}_single_peaks.narrowPeak",
+               library = ATAC_LIBS),
+        expand(atac_macs2_dir + "/{group}_consensus.bed",
+               group = ATAC_GROUPS),
+        expand(atac_macs2_dir + "/{library}_naive.bed",
+               library = ATAC_LIBS),
+        data_dir + "/ref/txdb",
 
-        #expand(config["qc_dir"] + "/{library_id}_{read}_fastqc.html", library_id = LIBRARY_IDS, read = ["R1", "R2"]),
-        #expand(config["qc_dir"] + "/{library_id}_stat.txt", library_id = LIBRARY_IDS),
-        #expand(config["qc_dir"] + "/{library_id}_flagstat.txt", library_id = LIBRARY_IDS),
-        #expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_broad}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_broad = MACS_BROAD_EXT),
-        #expand(config["data_dir"] + "/macs2/{library_id}_{bam_process}_{macs_narrow}", library_id = LIBRARY_IDS, bam_process = ["open", "regfilt"], macs_narrow = MACS_NARROW_EXT),
-        #expand(config["data_dir"] + "/csaw/background_counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/csaw/counts_all_{bam_process}_rse.rds", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt", library_id = LIBRARY_IDS),
-	#expand(config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/csaw/dge_{bam_process}.rds", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/dca/dca_granges_{bam_process}.rds", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/dca/{bam_process}_dca.csv", bam_process = BAM_PROCESS),
-        #expand(config["data_dir"] + "/dca/{bam_process}_chipseek.rds", bam_process = BAM_PROCESS),
+###   Benchmark   ###
+#+begin_src snakemake
 
-rule symlink:
-    container:
-        atac_container,
-    input:
-        lambda wildcards: lib_dict[wildcards.library],
+# onsuccess:
+#     shell("""
+#         bash {cfdna_wgs_scriptdir}/agg_bench.sh {benchdir} {qc_dir}/agg_bench.tsv
+#         """)
+
+rule symlink_inputs:
+    input: lambda wildcards: lib_dict[wildcards.library],
     output:
-        r1 = atac_fastq_raw + "/{library}_R1.fastq.gz",
-        r2 = atac_fastq_raw + "/{library}_R2.fastq.gz",
+        read1 = atac_fastq_dir + "/{library}_raw_R1.fastq.gz",
+        read2 = atac_fastq_dir + "/{library}_raw_R2.fastq.gz",
+    params:
+        out_dir = atac_fastq_dir,
+        script = atac_scripts + "/symlink.sh",
     shell:
         """
-        r2=$(echo {input} | sed "s/_R1/_R2/g")
-        ln -sf --relative {input} {output.r1}
-        ln -sf --relative $r2 {output.r2}
+        {params.script} \
+        {input} \
+        {output.read1} \
+        {output.read2} \
+        {params.out_dir}
         """
 
-include: "atac.smk"
+include: atac_repo + "/workflow/atac_read_processing.smk"
+include: atac_repo + "/workflow/atac_peaks.smk"

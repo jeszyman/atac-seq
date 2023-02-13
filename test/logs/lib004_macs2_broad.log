@@ -1,0 +1,40 @@
+INFO  @ Fri, 03 Feb 2023 12:16:20: 
+# Command line: callpeak --treatment test/analysis/atac/bams/lib004_filt.bam --bdg --broad --broad-cutoff 0.05 --format BAMPE --gsize 1.87e9 --keep-dup all --name lib004 --outdir test/analysis/atac/macs2 --SPMR
+# ARGUMENTS LIST:
+# name = lib004
+# format = BAMPE
+# ChIP-seq file = ['test/analysis/atac/bams/lib004_filt.bam']
+# control file = None
+# effective genome size = 1.87e+09
+# band width = 300
+# model fold = [5, 50]
+# qvalue cutoff for narrow/strong regions = 5.00e-02
+# qvalue cutoff for broad/weak regions = 5.00e-02
+# The maximum gap between significant sites is assigned as the read length/tag size.
+# The minimum length of peaks is assigned as the predicted fragment length "d".
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 10000 bps
+# Broad region calling is on
+# Paired-End mode is on
+# MACS will save fragment pileup signal per million reads
+ 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1 read fragment files... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1 read treatment fragments... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: 8162 fragments have been read. 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1 mean fragment size is determined as 240.4 bp from treatment 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1 fragment size = 240.4 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1  total fragments in treatment: 8162 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #1 finished! 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #2 Build Peak Model... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #2 Skipped... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3 Call peaks... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3 Call broad peaks with given level1 -log10qvalue cutoff and level2: 1.301030, 1.301030... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3 Pre-compute pvalue-qvalue table... 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3 In the peak calling step, the following will be performed simultaneously: 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3   Write bedGraph files for treatment pileup (after scaling if necessary)... lib004_treat_pileup.bdg 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3   Write bedGraph files for control lambda (after scaling if necessary)... lib004_control_lambda.bdg 
+INFO  @ Fri, 03 Feb 2023 12:16:20: #3 Call peaks for each chromosome... 
+INFO  @ Fri, 03 Feb 2023 12:16:21: #4 Write output xls file... test/analysis/atac/macs2/lib004_peaks.xls 
+INFO  @ Fri, 03 Feb 2023 12:16:21: #4 Write broad peak in broadPeak format file... test/analysis/atac/macs2/lib004_peaks.broadPeak 
+INFO  @ Fri, 03 Feb 2023 12:16:21: #4 Write broad peak in bed12/gappedPeak format file... test/analysis/atac/macs2/lib004_peaks.gappedPeak 
+INFO  @ Fri, 03 Feb 2023 12:16:21: Done! 

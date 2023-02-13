@@ -1,8 +1,22 @@
-# Common names across repositories and snakefiles
-datadir: "test"
-fasta: "test/inputs/chr19.fa"
-logdir: "test/logs"
+atac_container: "/home/jeszyman/sing_containers/atac.1.1.0.sif"
+atac_peak_cut: 2
+atac_repo: "/home/jeszyman/repos/atac-seq"
+autosome_bed: "/home/jeszyman/repos/atac-seq/test/inputs/mm10chrs.bed"
+blacklist_bed: "/home/jeszyman/repos/atac-seq/test/inputs/mm10-blacklist.v2.bed"
+data_dir: "/home/jeszyman/repos/atac-seq/test"
+genome_fasta: "test/inptus/chr19.fa"
+sample_sheet: "test/inputs/libraries.tsv"
 threads: 4
+
+
+# Common names across repositories and snakefiles
+
+gsize: "1.87e9"
+
+
+
+
+
 
 # Repository and snakefile-specific names
 container:
@@ -10,6 +24,18 @@ container:
 scriptdir:
   atac: "workflow/scripts"
 
-keep_bed: "resources/keep.bed"
+atac_keep_bed: "resources/keep.bed"
 
 gtf: "test/inputs/chr19.gtf"
+
+# Directories
+##
+## Common
+data_dir: "test"
+log_dir: "test/logs"
+qc_dir: "test/qc"
+##
+## ATAC-seq
+dir:
+  atac_fastq_raw: "test/fastq-atac-raw"
+  atac_fastq_proc: "test/fastq-atac-proc"

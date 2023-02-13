@@ -9,17 +9,6 @@ rule call_macs2_narrow:
         workflow/scripts/call_macs2_narrow.sh {input} ${{base}} "{config[data_dir]}/macs2"
         """
 
-rule call_macs2_broad:
-    input:
-        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
-    output:
-        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_BROAD_EXT)
-    shell:
-        """
-        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
-        workflow/scripts/call_macs2_broad.sh {input} ${{base}} "{config[data_dir]}/macs2"
-        """
-
 rule make_peak_counts:
     input:
         expand(config["bam_dir"] + "/{library_id}_{{bam_process}}_tn5.bam", library_id = LIBRARY_IDS)

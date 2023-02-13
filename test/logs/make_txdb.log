@@ -52,7 +52,7 @@ TxDb object:
 # Genome: NA
 # Nb of transcripts: 2485
 # Db created by: GenomicFeatures package from Bioconductor
-# Creation time: 2022-09-06 15:40:08 -0500 (Tue, 06 Sep 2022)
+# Creation time: 2022-10-20 10:28:21 -0500 (Thu, 20 Oct 2022)
 # GenomicFeatures version at creation time: 1.48.3
 # RSQLite version at creation time: 2.2.14
 # DBSCHEMAVERSION: 1.2

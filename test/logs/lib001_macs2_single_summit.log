@@ -1,0 +1,38 @@
+INFO  @ Fri, 03 Feb 2023 12:18:53: 
+# Command line: callpeak --extsize 150 --format BAMPE --gsize 1.87e9 --keep-dup all --name lib001_single --nolambda --nomodel --outdir test/analysis/atac/macs2 -p 0.01 --shift -75 --treatment test/analysis/atac/bams/lib001_filt.bam
+# ARGUMENTS LIST:
+# name = lib001_single
+# format = BAMPE
+# ChIP-seq file = ['test/analysis/atac/bams/lib001_filt.bam']
+# control file = None
+# effective genome size = 1.87e+09
+# band width = 300
+# model fold = [5, 50]
+# pvalue cutoff = 1.00e-02
+# qvalue will not be calculated and reported as -1 in the final output.
+# The maximum gap between significant sites is assigned as the read length/tag size.
+# The minimum length of peaks is assigned as the predicted fragment length "d".
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 10000 bps
+# Broad region calling is off
+# Paired-End mode is on
+ 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1 read fragment files... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1 read treatment fragments... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: 8174 fragments have been read. 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1 mean fragment size is determined as 155.4 bp from treatment 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1 fragment size = 155.4 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1  total fragments in treatment: 8174 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #1 finished! 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #2 Build Peak Model... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #2 Skipped... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #3 Call peaks... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: # local lambda is disabled! 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #3 !!!! DYNAMIC LAMBDA IS DISABLED !!!! 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #3 Call peaks with given -log10pvalue cutoff: 2.00000 ... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #3 Pre-compute pvalue-qvalue table... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #3 Call peaks for each chromosome... 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #4 Write output xls file... test/analysis/atac/macs2/lib001_single_peaks.xls 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #4 Write peak in narrowPeak format file... test/analysis/atac/macs2/lib001_single_peaks.narrowPeak 
+INFO  @ Fri, 03 Feb 2023 12:18:53: #4 Write summits bed file... test/analysis/atac/macs2/lib001_single_summits.bed 
+INFO  @ Fri, 03 Feb 2023 12:18:53: Done! 

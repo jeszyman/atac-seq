@@ -1,0 +1,49 @@
+Detecting adapter sequence for read1...
+>I7_Nextera_Transposase_1 | >Trans2_rc | >I7_Nextera_Transposase_1 | >Trans2_rc
+CTGTCTCTTATACACATCTCCGAGCCCACGAGAC
+
+Detecting adapter sequence for read2...
+>I5_Nextera_Transposase_1 | >Trans1_rc | >I5_Nextera_Transposase_1 | >Trans1_rc
+CTGTCTCTTATACACATCTGACGCTGCCGACGA
+
+Read1 before filtering:
+total reads: 375000
+total bases: 56625000
+Q20 bases: 53256057(94.0504%)
+Q30 bases: 50220641(88.6899%)
+
+Read2 before filtering:
+total reads: 375000
+total bases: 56625000
+Q20 bases: 54101668(95.5438%)
+Q30 bases: 50901756(89.8927%)
+
+Read1 after filtering:
+total reads: 369720
+total bases: 46223933
+Q20 bases: 45027360(97.4114%)
+Q30 bases: 42925671(92.8646%)
+
+Read2 after filtering:
+total reads: 369720
+total bases: 46240031
+Q20 bases: 44659005(96.5808%)
+Q30 bases: 42143355(91.1404%)
+
+Filtering result:
+reads passed filter: 739440
+reads failed due to low quality: 10468
+reads failed due to too many N: 0
+reads failed due to too short: 92
+reads with adapter trimmed: 288561
+bases trimmed due to adapters: 15514532
+
+Duplication rate: 3.84545%
+
+Insert size peak (evaluated by paired-end reads): 45
+
+JSON report: test/logs/lib004_atac_fastp.html
+HTML report: test/logs/lib004_atac_fastp.json
+
+fastp --detect_adapter_for_pe --html test/logs/lib004_atac_fastp.json --json test/logs/lib004_atac_fastp.html --in1 test/analysis/atac/fastqs/lib004_raw_R1.fastq.gz --in2 test/analysis/atac/fastqs/lib004_raw_R2.fastq.gz --out1 test/analysis/atac/fastqs/lib004_proc_R1.fastq.gz --out2 test/analysis/atac/fastqs/lib004_proc_R2.fastq.gz --thread 4 --trim_tail1 1 
+fastp v0.22.0, time used: 12 seconds

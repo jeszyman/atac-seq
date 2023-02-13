@@ -1,0 +1,45 @@
+INFO  @ Fri, 03 Feb 2023 12:14:31: 
+# Command line: callpeak --treatment test/analysis/atac/bams/lib003_filt.bam --bdg --call-summits --extsize 150 --format BAMPE --gsize 1.87e9 --keep-dup all --name lib003_multi --nolambda --outdir test/analysis/atac/macs2 -p 0.01 --shift -75 --SPMR --nomodel
+# ARGUMENTS LIST:
+# name = lib003_multi
+# format = BAMPE
+# ChIP-seq file = ['test/analysis/atac/bams/lib003_filt.bam']
+# control file = None
+# effective genome size = 1.87e+09
+# band width = 300
+# model fold = [5, 50]
+# pvalue cutoff = 1.00e-02
+# qvalue will not be calculated and reported as -1 in the final output.
+# The maximum gap between significant sites is assigned as the read length/tag size.
+# The minimum length of peaks is assigned as the predicted fragment length "d".
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 10000 bps
+# Broad region calling is off
+# Paired-End mode is on
+# Searching for subpeak summits is on
+# MACS will save fragment pileup signal per million reads
+ 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1 read fragment files... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1 read treatment fragments... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: 8063 fragments have been read. 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1 mean fragment size is determined as 214.3 bp from treatment 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1 fragment size = 214.3 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1  total fragments in treatment: 8063 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #1 finished! 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #2 Build Peak Model... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #2 Skipped... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 Call peaks... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: # local lambda is disabled! 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 !!!! DYNAMIC LAMBDA IS DISABLED !!!! 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 Going to call summits inside each peak ... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 Call peaks with given -log10pvalue cutoff: 2.00000 ... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 Pre-compute pvalue-qvalue table... 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 In the peak calling step, the following will be performed simultaneously: 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3   Write bedGraph files for treatment pileup (after scaling if necessary)... lib003_multi_treat_pileup.bdg 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3   Write bedGraph files for control lambda (after scaling if necessary)... lib003_multi_control_lambda.bdg 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3   --SPMR is requested, so pileup will be normalized by sequencing depth in million reads. 
+INFO  @ Fri, 03 Feb 2023 12:14:31: #3 Call peaks for each chromosome... 
+INFO  @ Fri, 03 Feb 2023 12:14:36: #4 Write output xls file... test/analysis/atac/macs2/lib003_multi_peaks.xls 
+INFO  @ Fri, 03 Feb 2023 12:14:36: #4 Write peak in narrowPeak format file... test/analysis/atac/macs2/lib003_multi_peaks.narrowPeak 
+INFO  @ Fri, 03 Feb 2023 12:14:36: #4 Write summits bed file... test/analysis/atac/macs2/lib003_multi_summits.bed 
+INFO  @ Fri, 03 Feb 2023 12:14:36: Done! 
