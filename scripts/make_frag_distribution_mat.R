@@ -1,3 +1,4 @@
+
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -122,33 +123,6 @@ idxstats <- unique(do.call(rbind, mapply(function(.ele, .ind)
 }
 
 frag_dist = fragSizeDist(bam_files, names(bam_files))
-
-saveRDS(object = frag_dist,
-        file  = rds)
-
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
-###
-###   R Script to make fragment size distribution matrix   ###
-###
-
-args = commandArgs(trailingOnly = TRUE)
-bam_dir = args[1]
-rds = args[2]
-
-library(preseqR)
-library(ATACseqQC)
-library(Rsamtools)
-
-bam_files = list.files(path = bam_dir,
-                       pattern = "_dedup.bam$",
-                       full.names = TRUE)
-
-bam_file_names = gsub("_dedup.bam", "", bam_files = list.files(path = bam_dir,
-                       pattern = "_dedup.bam$",
-                       full.names = FALSE))
-
-frag_dist = fragSizeDist(bam_files, bam_file_names)
 
 saveRDS(object = frag_dist,
         file  = rds)

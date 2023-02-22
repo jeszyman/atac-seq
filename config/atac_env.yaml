@@ -1,8 +1,16 @@
+
 name: atac
 channels:
   - conda-forge
   - bioconda
 
 dependencies:
-  - r-tidyverse
+  - bioconductor-atacseqqc
+  - bowtie2
+  - fastp
+  - fastqc
   - macs2
+  - multiqc
+  - r-tidyverse
+  - samtools
+  - snakemake

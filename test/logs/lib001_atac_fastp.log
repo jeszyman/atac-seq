@@ -7,43 +7,43 @@ Detecting adapter sequence for read2...
 CTGTCTCTTATACACATCTGACGCTGCCGACGA
 
 Read1 before filtering:
-total reads: 375000
-total bases: 56625000
-Q20 bases: 52161880(92.1181%)
-Q30 bases: 49264595(87.0015%)
+total reads: 60872021
+total bases: 9191675171
+Q20 bases: 8170321005(88.8883%)
+Q30 bases: 7274953912(79.1472%)
 
 Read2 before filtering:
-total reads: 375000
-total bases: 56625000
-Q20 bases: 54465840(96.1869%)
-Q30 bases: 51779531(91.4429%)
+total reads: 60872021
+total bases: 9191675171
+Q20 bases: 8944856524(97.3148%)
+Q30 bases: 8575918650(93.3009%)
 
 Read1 after filtering:
-total reads: 370709
-total bases: 41456222
-Q20 bases: 40488274(97.6651%)
-Q30 bases: 38821645(93.6449%)
+total reads: 60406856
+total bases: 6501337661
+Q20 bases: 6085653183(93.6062%)
+Q30 bases: 5489883344(84.4424%)
 
 Read2 after filtering:
-total reads: 370709
-total bases: 41477259
-Q20 bases: 40477445(97.5895%)
-Q30 bases: 38722575(93.3586%)
+total reads: 60406856
+total bases: 6501770624
+Q20 bases: 6393645284(98.337%)
+Q30 bases: 6162350024(94.7796%)
 
 Filtering result:
-reads passed filter: 741418
-reads failed due to low quality: 8460
-reads failed due to too many N: 0
-reads failed due to too short: 122
-reads with adapter trimmed: 438704
-bases trimmed due to adapters: 23228683
+reads passed filter: 120813712
+reads failed due to low quality: 841506
+reads failed due to too many N: 12708
+reads failed due to too short: 76116
+reads with adapter trimmed: 75241040
+bases trimmed due to adapters: 4256775036
 
-Duplication rate: 3.36624%
+Duplication rate: 8.47132%
 
-Insert size peak (evaluated by paired-end reads): 43
+Insert size peak (evaluated by paired-end reads): 46
 
 JSON report: test/logs/lib001_atac_fastp.html
 HTML report: test/logs/lib001_atac_fastp.json
 
-fastp --detect_adapter_for_pe --html test/logs/lib001_atac_fastp.json --json test/logs/lib001_atac_fastp.html --in1 test/analysis/atac/fastqs/lib001_raw_R1.fastq.gz --in2 test/analysis/atac/fastqs/lib001_raw_R2.fastq.gz --out1 test/analysis/atac/fastqs/lib001_proc_R1.fastq.gz --out2 test/analysis/atac/fastqs/lib001_proc_R2.fastq.gz --thread 4 --trim_tail1 1 
-fastp v0.22.0, time used: 13 seconds
+fastp --detect_adapter_for_pe --html test/logs/lib001_atac_fastp.json --json test/logs/lib001_atac_fastp.html --in1 /mnt/ris/szymanski/Active/test/analysis/atac/fastqs/lib001_raw_R1.fastq.gz --in2 /mnt/ris/szymanski/Active/test/analysis/atac/fastqs/lib001_raw_R2.fastq.gz --out1 /mnt/ris/szymanski/Active/test/analysis/atac/fastqs/lib001_proc_R1.fastq.gz --out2 /mnt/ris/szymanski/Active/test/analysis/atac/fastqs/lib001_proc_R2.fastq.gz --thread 4 --trim_tail1 1 
+fastp v0.22.0, time used: 674 seconds

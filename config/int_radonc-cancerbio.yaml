@@ -1,11 +1,10 @@
+
 atac_container: "/home/jeszyman/sing_containers/atac.1.1.0.sif"
-atac_peak_cut: 2
 atac_repo: "/home/jeszyman/repos/atac-seq"
 autosome_bed: "/home/jeszyman/repos/atac-seq/test/inputs/mm10chrs.bed"
-
 blacklist_bed: "/home/jeszyman/repos/atac-seq/test/inputs/mm10-blacklist.v2.bed"
 
-conda: "/home/jeszyman/repos/atac-seq/config/atac_env.yaml"
+#conda_environment: "/home/jeszyman/repos/atac-seq/config/atac_env.yaml"
 
 data_dir: "/mnt/ris/szymanski/Active/test"
 genome_fasta: "/mnt/ris/szymanski/Active/test/inputs/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz"

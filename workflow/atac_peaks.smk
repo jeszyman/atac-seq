@@ -1,3 +1,4 @@
+
 rule macs2_narrow:
     container: atac_container,
     input: atac_bam_dir + "/{library}_filt.bam",
@@ -6,7 +7,7 @@ rule macs2_narrow:
     params:
         gsize = config["gsize"],
         outdir = atac_macs2_dir,
-        script = atac_scripts + "/macs2_narrow.sh",
+        script = atac_script_dir + "/macs2_narrow.sh",
     shell:
         """
         name=$(basename -s _filt.bam {input})
@@ -25,7 +26,7 @@ rule macs2_broad:
     params:
         gsize = config["gsize"],
         outdir = atac_macs2_dir,
-        script = atac_scripts + "/macs2_broad.sh",
+        script = atac_script_dir + "/macs2_broad.sh",
     shell:
         """
         name=$(basename -s _filt.bam {input})
@@ -45,7 +46,7 @@ checkpoint macs2_single_summit:
     params:
         gsize = config["gsize"],
         outdir = atac_macs2_dir,
-        script  = atac_scripts + "/run_macs2_corces_onesummit.sh",
+        script  = atac_script_dir + "/run_macs2_corces_onesummit.sh",
     shell:
         """
         base=$(basename -s _filt.bam {input})
@@ -65,7 +66,7 @@ rule macs2_consensus:
     params:
         log_dir = log_dir,
         atac_macs2_dir = atac_macs2_dir,
-        script = atac_scripts + "/macs2_consensus.R",
+        script = atac_script_dir + "/macs2_consensus.R",
     shell:
         """
         Rscript {params.script} \
@@ -84,7 +85,7 @@ rule naive_overlap :
     output: atac_macs2_dir + "/{library}_naive.bed",
     params:
         atac_macs2_dir = atac_macs2_dir,
-        script = atac_scripts + "/naive_overlap.R",
+        script = atac_script_dir + "/naive_overlap.R",
     shell:
         """
         Rscript {params.script} \

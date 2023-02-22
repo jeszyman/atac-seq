@@ -1,3 +1,4 @@
+
 #############################################################################
 ###            Script for csaw ATAC-seq local peak calling                ###
 #############################################################################
@@ -79,5 +80,3 @@ colnames(filtered_counts) = names(bam_list)
 colnames(background) = names(bam_list)
 
 filtered_counts = normFactors(background, se.out = filtered_counts)
-=======
->>>>>>> d54e16db669d83d3969600289ae80840fb1a7e88

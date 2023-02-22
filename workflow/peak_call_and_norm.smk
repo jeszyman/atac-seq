@@ -1,47 +1,3 @@
-rule call_macs2_narrow:
-    input:
-        config["data_dir"] + "/bam/{library_id}_{bam_process}_tn5.bam",
-    output:
-        expand(config["data_dir"] + "/macs2/{{library_id}}_{{bam_process}}_{ext}", ext = MACS_NARROW_EXT)
-    shell:
-        """
-        base=$(echo $(basename {input}) | sed 's/_tn5.*$//g')
-        workflow/scripts/call_macs2_narrow.sh {input} ${{base}} "{config[data_dir]}/macs2"
-        """
-
-rule make_peak_counts:
-    input:
-        expand(config["bam_dir"] + "/{library_id}_{{bam_process}}_tn5.bam", library_id = LIBRARY_IDS)
-    params:
-        script = config["atac_scripts_dir"] + "/select_window_size.R",
-	groups_str = "ir48h ir48h sham sham"
-    output:
-        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
-        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
-    log:
-        config["log_dir"] + "/make_peak_counts_{bam_process}.log",
-    shell:
-        """
-        Rscript {params.script} \
-        "{input}" \
-        {config[threads]} \
-        {output.norm_counts_rse} \
-        {output.dge} \
-        {params.groups_str} \
-        >& {log}
-        """
-
-rule open_genome:
-    input:
-        config["data_dir"] + "/bam/{library_id}_open_tn5.bam",
-    params:
-        genome_bed = "resources/mm10.bed",
-    output:
-        config["data_dir"] + "/open_chrom/{library_id}_open_chrom.txt"
-    shell:
-        """
-        bedmap --echo --bases-uniq --delim '\t' {params.genome_bed} {input} | awk 'BEGIN {{ genome_length = 0; masked_length = 0; }} {{ genome_length += ($3 - $2); masked_length += $4; }} END {{ print (masked_length / genome_length); }}' > {output}
-        """
 
 rule call_macs2_narrow:
     input:
@@ -69,8 +25,8 @@ rule make_peak_counts:
     input:
         expand(config["bam_dir"] + "/{library_id}_{{bam_process}}_tn5.bam", library_id = LIBRARY_IDS)
     params:
-        script = config["atac_scripts_dir"] + "/select_window_size.R",
-	groups_str = "ir48h ir48h sham sham"
+        script = config["atac_script_dir_dir"] + "/select_window_size.R",
+        groups_str = "ir48h ir48h sham sham"
     output:
         norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
         dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
@@ -170,7 +126,7 @@ rule make_macs2_union_consensus_peaks:
         ir48h = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = IR48H_LIBS),
     output:
         sham = config["data_dir"] + "/atac/macs2_consensus_beds/union_sham_{chrom_filt}_{width}.bed",
-	ir48h = config["data_dir"] + "/atac/macs2_consensus_beds/union_ir48h_{chrom_filt}_{width}.bed",
+        ir48h = config["data_dir"] + "/atac/macs2_consensus_beds/union_ir48h_{chrom_filt}_{width}.bed",
     shell:
         """
         bedops -m {input.sham} > {output.sham}
@@ -181,8 +137,8 @@ rule make_macs2_naive_consensus_peaks:
     input:
         sham = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = SHAM_LIBS),
         ir48h = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = IR48H_LIBS),
-	sham_merge = config["data_dir"] + "/atac/macs2/sham_{chrom_filt}_{width}_peaks.{width}Peak",
-	ir48h_merge = config["data_dir"] + "/atac/macs2/ir48h_{chrom_filt}_{width}_peaks.{width}Peak",
+        sham_merge = config["data_dir"] + "/atac/macs2/sham_{chrom_filt}_{width}_peaks.{width}Peak",
+        ir48h_merge = config["data_dir"] + "/atac/macs2/ir48h_{chrom_filt}_{width}_peaks.{width}Peak",
     output:
         sham = config["data_dir"] + "/atac/macs2_consensus_beds/naive_sham_{chrom_filt}_{width}.bed",
         ir48h = config["data_dir"] + "/atac/macs2_consensus_beds/naive_ir48h_{chrom_filt}_{width}.bed",
@@ -200,7 +156,7 @@ rule make_cross_cohort_consensus:
         ir48h_sham = config["data_dir"] + "/atac/macs2_consensus_beds/ir48h_sham_{join}_{chrom_filt}_{width}.bed",
     shell:
         """
-	bedops --merge {input.sham} {input.ir48h} > {output.ir48h_sham}
+        bedops --merge {input.sham} {input.ir48h} > {output.ir48h_sham}
         """
 
 rule bed_to_granges:
@@ -225,8 +181,8 @@ rule count_from_macs2_consensus:
         consensus_file = config["data_dir"] + "/atac/macs2_consensus_granges/all_{join}_{chrom_filt}_{width}.rds",
     params:
         script = config["repo"] + "/workflow/scripts/count_from_macs2_consensus.R",
-	bam_dir = config["data_dir"] + "/atac/bam",
-	bam_pattern = "_{chrom_filt}_tn5.bam$",
+        bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_{chrom_filt}_tn5.bam$",
     output:
         rse = config["data_dir"] + "/atac/counts/macs2_all_{join}_{chrom_filt}_{width}_peaks_rse.rds",
         dge = config["data_dir"] + "/atac/counts/macs2_all_{join}_{chrom_filt}_{width}_peaks_dge.rds",
@@ -248,8 +204,8 @@ rule call_csaw_local_peaks:
         expand(config["data_dir"] + "/atac/bam/{library_id}_{{chrom_filt}}_tn5.bam", library_id = RUNSAMPLES)
     params:
         script = config["repo"] + "/workflow/scripts/call_csaw_local_peaks.R",
-	bam_dir = config["data_dir"] + "/atac/bam",
-	bam_pattern = "_{chrom_filt}_tn5.bam$",
+        bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_{chrom_filt}_tn5.bam$",
     output:
         rse = config["data_dir"] + "/atac/counts/csaw_all_csaw_{chrom_filt}_csaw_peaks_rse.rds",
         dge = config["data_dir"] + "/atac/counts/csaw_all_csaw_{chrom_filt}_csaw_peaks_dge.rds",
@@ -339,10 +295,10 @@ rule call_macs2_merged_filtered:
 rule make_macs2_union_filtered_consensus_peaks:
     input:
         sham = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = SHAM_LIBS_FILT),
-	ir6w = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = IR6W_LIBS_FILT),
+        ir6w = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = IR6W_LIBS_FILT),
     output:
         sham = config["data_dir"] + "/atac/macs2_consensus_beds/union_sham_{chrom_filt}_{width}_filt.bed",
-	ir6w = config["data_dir"] + "/atac/macs2_consensus_beds/union_ir6w_{chrom_filt}_{width}_filt.bed",
+        ir6w = config["data_dir"] + "/atac/macs2_consensus_beds/union_ir6w_{chrom_filt}_{width}_filt.bed",
     shell:
         """
         bedops -m {input.sham} > {output.sham}
@@ -366,8 +322,8 @@ rule make_macs2_naive_filt_consensus_peaks:
     input:
         sham = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = SHAM_LIBS_FILT),
         ir6w = expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_peaks.{{width}}Peak", library_id = IR6W_LIBS_FILT),
-	sham_merge = config["data_dir"] + "/atac/macs2/sham_{chrom_filt}_{width}_filt_peaks.{width}Peak",
-	ir6w_merge = config["data_dir"] + "/atac/macs2/ir6w_{chrom_filt}_{width}_filt_peaks.{width}Peak",
+        sham_merge = config["data_dir"] + "/atac/macs2/sham_{chrom_filt}_{width}_filt_peaks.{width}Peak",
+        ir6w_merge = config["data_dir"] + "/atac/macs2/ir6w_{chrom_filt}_{width}_filt_peaks.{width}Peak",
     output:
         sham = config["data_dir"] + "/atac/macs2_consensus_beds/naive_sham_{chrom_filt}_{width}_filt.bed",
         ir6w = config["data_dir"] + "/atac/macs2_consensus_beds/naive_ir6w_{chrom_filt}_{width}_filt.bed",
@@ -384,13 +340,13 @@ rule make_cross_cohort_filt_consensus:
         ir6w = config["data_dir"] + "/atac/macs2_consensus_beds/{join}_ir6w_{chrom_filt}_{width}_filt.bed",
     output:
         all = config["data_dir"] + "/atac/macs2_consensus_beds/all_{join}_{chrom_filt}_{width}_filt.bed",
-	ir6w_sham = config["data_dir"] + "/atac/macs2_consensus_beds/ir6w_sham_{join}_{chrom_filt}_{width}_filt.bed",
-	ir48h_sham = config["data_dir"] + "/atac/macs2_consensus_beds/ir48h_sham_{join}_{chrom_filt}_{width}_filt.bed",
+        ir6w_sham = config["data_dir"] + "/atac/macs2_consensus_beds/ir6w_sham_{join}_{chrom_filt}_{width}_filt.bed",
+        ir48h_sham = config["data_dir"] + "/atac/macs2_consensus_beds/ir48h_sham_{join}_{chrom_filt}_{width}_filt.bed",
     shell:
         """
-	bedops --merge {input.sham} {input.ir48h} {input.ir6w} > {output.all}
-	bedops --merge {input.sham} {input.ir6w} > {output.ir6w_sham}
-	bedops --merge {input.sham} {input.ir48h} > {output.ir48h_sham}
+        bedops --merge {input.sham} {input.ir48h} {input.ir6w} > {output.all}
+        bedops --merge {input.sham} {input.ir6w} > {output.ir6w_sham}
+        bedops --merge {input.sham} {input.ir48h} > {output.ir48h_sham}
         """
 
 rule bed_to_granges_filt:
@@ -415,8 +371,8 @@ rule count_from_filtered_macs2_consensus:
         consensus_file = config["data_dir"] + "/atac/macs2_consensus_granges/all_{join}_{chrom_filt}_{width}_filt.rds",
     params:
         script = config["repo"] + "/workflow/scripts/count_from_macs2_consensus.R",
-	bam_dir = config["data_dir"] + "/atac/bam",
-	bam_pattern = "_{chrom_filt}_tn5.bam$",
+        bam_dir = config["data_dir"] + "/atac/bam",
+        bam_pattern = "_{chrom_filt}_tn5.bam$",
     output:
         rse = config["data_dir"] + "/atac/counts/macs2_all_{join}_{chrom_filt}_{width}_peaks_filt_rse.rds",
         dge = config["data_dir"] + "/atac/counts/macs2_all_{join}_{chrom_filt}_{width}_peaks_filt_dge.rds",
@@ -565,7 +521,7 @@ rule library_complexity:
     input:
         config["bam_dir"] + "/{library_id}.bam",
     params:
-        script = config["atac_scripts_dir"] + "/library_complexity.R",
+        script = config["atac_script_dir_dir"] + "/library_complexity.R",
     output:
         config["qc_dir"] + "/{library_id}_libcomplex.rds",
     log:
@@ -606,11 +562,11 @@ rule filter_and_dedup:
     shell:
         """
         workflow/scripts/filter_and_dedup.sh {input.bam} \
-	                                     {params.atac_keep_bed} \
-	                                     {params.threads} \
-	                                     {output.dedup_bam} \
-	                                     {output.qfilt_bam} \
-	                                     {output.regfilt_bam}
+                                             {params.atac_keep_bed} \
+                                             {params.threads} \
+                                             {output.dedup_bam} \
+                                             {output.qfilt_bam} \
+                                             {output.regfilt_bam}
         """
 
 rule get_open_chrom:
@@ -638,8 +594,8 @@ rule tn5_shift_and_open:
     shell:
         """
         workflow/scripts/tn5_shift.sh {input.atac_bam} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
+                                      {config[threads]} \
+                                      {output.tmp_bam} \
                                       {output.tn5_bam} > {log} 2>&1
         """
 
@@ -654,14 +610,203 @@ rule tn5_shift_open:
     shell:
         """
         workflow/scripts/tn5_shift.sh {input.atac_bam} \
-	                              {config[threads]} \
-	                              {output.tmp_bam} \
+                                      {config[threads]} \
+                                      {output.tmp_bam} \
                                       {output.tn5_bam} > {log} 2>&1
+        """
+
+rule diff_chrom_accessibility:
+    input:
+        dge = config["data_dir"] + "/csaw/dge_{bam_process}.rds",
+        norm_counts_rse = config["data_dir"] + "/csaw/norm_counts_rse_{bam_process}.rds",
+    params:
+        groups_str = "ir48h ir48h sham sham",
+        contrast = "ir48h-sham",
+        script = config["atac_script_dir_dir"] + "/diff_chrom_accessibility.R",
+    output:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds"
+    log:
+        config["log_dir"] + "/diff_chrom_accessibility_{bam_process}.log",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.dge} \
+        "{params.groups_str}" \
+        "{params.contrast}" \
+        {input.norm_counts_rse} \
+        {output} \
+        >& {log}
+        """
+
+rule peak_annotation:
+    input:
+        config["data_dir"] + "/dca/dca_granges_{bam_process}.rds",
+    params:
+        script = config["atac_script_dir_dir"] + "/peak_annotation.R"
+    output:
+        csv = config["data_dir"] + "/dca/{bam_process}_dca.csv",
+        chipseek = config["data_dir"] + "/dca/{bam_process}_chipseek.rds"
+    log:
+        config["data_dir"] + "/logs/{bam_process}_peak_annotation.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.csv} \
+        {output.chipseek} \
+        >& {log}
+        """
+
+RUNSAMPLES =  ["lib001", "lib002", "lib003", "lib004", "lib005", "lib006", "lib007", "lib008", "lib009", "lib010", "lib011", "lib012", "lib013", "lib014", "lib015", "lib016", "lib017", "lib018", "lib019", "lib020", "lib021", "lib022", "lib023", "lib024", "lib025"]
+
+rule all:
+    input:
+        expand(config["data_dir"] + "/qc/{library_id}_stat.txt", library_id=RUNSAMPLES),
+        expand(config["data_dir"] + "/qc/{library_id}_flagstat.txt", library_id=RUNSAMPLES),
+
+rule samstats:
+    input:
+        bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
+    output:
+        stat = config["data_dir"] + "/qc/{library_id}_stat.txt",
+        flagstat = config["data_dir"] + "/qc/{library_id}_flagstat.txt",
+    log:
+        config["data_dir"] + "/logs/{library_id}_samstats.log",
+    shell:
+        """
+        "workflow/scripts/samstats.sh" {config[threads]} {input.bam} {output.stat} {output.flagstat} 2>&1 >> {log}
+        """
+
+rule fastqc:
+    input:
+    output:
+    shell:
+        """
+        scripts/fastqc.sh
+        """
+
+rule multiqc:
+    input:
+    output:
+    shell:
+        """
+        scripts/multiqc.sh
+        """
+
+rule atac-seq_qc:
+    input:
+    params:
+        script = config["repo"] + "workflow/scripts/atac-seq_qc.R"
+    output:
+    log:
+        config["data_dir"] + "/logs/atac-seq_qc.log"
+    shell:
+        """
+        Rscript {params.script} \
+        >& {log}
+        """
+
+rule library_complexity:
+input:
+    bam = config["data_dir"] + "/atac/bam/{library_id}.bam",
+params:
+    script = config["repo"] + "/workflow/scripts/library_complexity.R",
+output:
+    bam = config["data_dir"] + "/qc/{library_id}_libcomplex.rds",
+log:
+    config["data_dir"] + "/logs/{library_id}_library_complexity.log",
+shell:
+    """
+    Rscript {params.script} \
+    {input.bam} \
+    {output.bam} \
+    >& {log}
+    """
+
+rule make_frag_distribution_mat:
+    input:
+        bam_dir = config["data_dir"] + "/atac/bam",
+    params:
+        script = config["repo"] + "/workflow/scripts/make_frag_distribution_mat.R",
+    output:
+        frag_dist = config["data_dir"] + "/qc/frag_dist.rds",
+    log:
+        config["data_dir"] + "/logs/make_frag_distribution_mat.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.bam} \
+        {output.frag_dist}
+        >& {log}
+        """
+
+
+
+rule all:
+    input:
+        config["data_dir"] + "/ms_nuc_rna/nuc_deseq.rdata",
+        config["data_dir"] + "/ms_nuc_rna/nuc_full_deseq.rdata",
+        nuc_res = config["data_dir"] + "/ms_nuc_rna/nuc_res.csv",
+
+rule make_txdb:
+    output:
+        txdb = config["data_dir"] + "/ref/ucsc_mm10_txdb.rds"
+    script:
+        "scripts/make_txdb.R"
+
+rule make_counts:
+    input:
+        txdb = config["data_dir"] + "/ref/ucsc_mm10_txdb.rds",
+        salmon_5469 = config["data_dir"] + "/inputs/Rentschler_s5469_MGI2048",
+        salmon_5708 = config["data_dir"] + "/inputs/Rentschler_s5708_MGI2548",
+    output:
+        nuc_gene_cnts = config["data_dir"] + "/ms_nuc_rna/nuc_gene_cnts.rds"
+    script:
+        "scripts/make_counts.R"
+
+rule make_full_nuc_deseq2_object:
+    input:
+        data_model = config["data_dir"] + "/data_model/data_model.RData",
+        txi = config["data_dir"] + "/ms_nuc_rna/nuc_gene_cnts.rds",
+    params:
+        script = config["repo"] + "/workflow/scripts/make_full_nuc_deseq2_object.R"
+    output:
+        nuc_deseq = config["data_dir"] + "/ms_nuc_rna/nuc_full_deseq.rdata",
+    log:
+        config["data_dir"] + "/logs/make_full_nuc_deseq2_object.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.data_model} \
+        {input.txi} \
+        {output.nuc_deseq} \
+        >& {log}
+        """
+
+rule make_nuc_deseq2_object:
+    input:
+        data_model = config["data_dir"] + "/data_model/data_model.RData",
+        txi = config["data_dir"] + "/ms_nuc_rna/nuc_gene_cnts.rds",
+    params:
+        script = config["repo"] + "/workflow/scripts/make_nuc_deseq2_object.R"
+    output:
+        nuc_deseq = config["data_dir"] + "/ms_nuc_rna/nuc_deseq.rdata",
+        nuc_res = config["data_dir"] + "/ms_nuc_rna/nuc_res.csv",
+    log:
+        config["data_dir"] + "/logs/make_nuc_deseq2_object.log"
+    shell:
+        """
+        Rscript {params.script} \
+        {input.data_model} \
+        {input.txi} \
+        {output.nuc_deseq} \
+        {output.nuc_res}
+        >& {log}
         """
 
 rule make_macs2_consensus_peaks:
     input:
-	expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_granges.rds")
+        expand(config["data_dir"] + "/atac/macs2/{library_id}_{{chrom_filt}}_{{width}}_granges.rds")
     params:
         script = config["repo"] + "/workflow/scripts/make_macs2_consensus_peaks.R"
     output:

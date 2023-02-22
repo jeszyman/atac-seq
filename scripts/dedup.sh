@@ -1,3 +1,4 @@
+
 raw_bam="${1}"
 threads="${2}"
 dedup_bam="${3}"

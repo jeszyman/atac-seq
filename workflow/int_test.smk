@@ -1,3 +1,4 @@
+
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
 ###             Integration testing snakefile for ATAC-seq                   ###
@@ -13,20 +14,18 @@ import os
 import pandas as pd
 import re
 
-atac_groups = 'waht?'
-###   Variable naming   ###
+###########################
+###   Variable Naming   ###
+###########################
 
 # Names directly from configuration YAML
-atac_container = config['atac_container']
-atac_peak_cut =  config['atac_peak_cut']
 atac_repo =      config['atac_repo']
+configfile: atac_repo + "/config/int_common.yaml"
+atac_peak_cut =  config['atac_peak_cut']
 autosome_bed =   config['autosome_bed']
 blacklist_bed =      config['blacklist_bed']
 data_dir =       config['data_dir']
 genome_fasta =   config['genome_fasta']
-log_dir =        config['log_dir']
-qc_dir =         config['qc_dir']
-sample_sheet =   config['sample_sheet']
 threads =        config['threads']
 
 # Names derived from configuration YAML base
@@ -34,12 +33,17 @@ atac_bam_dir = data_dir + "/analysis/atac/bams"
 atac_fastq_dir = data_dir + "/analysis/atac/fastqs"
 atac_atac_keep_bed = data_dir + "/inputs/mm10chrs.bed"
 atac_macs2_dir = data_dir + "/analysis/atac/macs2"
-atac_scripts = atac_repo + "/scripts"
-bowtie2_dir =   config["data_dir"] + "/ref/ucsc_mm10_chr19"
-bowtie2_index = config["data_dir"] + "/ref/ucsc_mm10_chr19/ucsc_mm10_chr19"
+atac_script_dir = atac_repo + "/scripts"
+bowtie2_dir =   config["data_dir"] + "/ref/hg38"
+bowtie2_index = config["data_dir"] + "/ref/hg38/hg38"
 atac_atac_keep_bed = config["data_dir"] + "/ref/atac_keep.bed"
+qc_dir = config['data_dir'] + "/analysis/qc"
+log_dir =        config['data_dir'] + "/logs"
+sample_sheet = data_dir + "/inputs/libraries.tsv"
 
+#####################
 ###   Functions   ###
+#####################
 
 def make_library_dictionary(tsv_path, col):
     lib_in = pd.read_table(tsv_path)
@@ -61,9 +65,13 @@ ATAC_GROUPS = pd.read_table(sample_sheet)['group'].unique().tolist()
 
 rule all:
     input:
-        expand(atac_fastq_dir + "/{library}_raw_{read}.fastq.gz",
+        expand(atac_fastq_dir + "/{library}_{proc}_{read}.fastq.gz",
                library = ATAC_LIBS,
+               proc = ['raw', 'proc'],
                read = ['R1', 'R2']),
+        bowtie2_index + ".1.bt2",
+        expand(atac_bam_dir + "/{library}_raw.bam",
+               library = ATAC_LIBS),
         # expand(qc_dir +
         #        "/{library}_{processing}_{read}_fastqc.html",
         #        library = ATAC_LIBS,
@@ -106,7 +114,7 @@ rule symlink_inputs:
         read2 = atac_fastq_dir + "/{library}_raw_R2.fastq.gz",
     params:
         out_dir = atac_fastq_dir,
-        script = atac_scripts + "/symlink.sh",
+        script = atac_script_dir + "/symlink.sh",
     shell:
         """
         {params.script} \
@@ -117,4 +125,5 @@ rule symlink_inputs:
         """
 
 include: atac_repo + "/workflow/atac_read_processing.smk"
+include: atac_repo + "/workflow/atac_qc.smk"
 #include: atac_repo + "/workflow/atac_peaks.smk"

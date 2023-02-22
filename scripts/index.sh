@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 reference=$1
 bt2_index_base=$2

@@ -1,3 +1,4 @@
+
 # Function
 bt2_align(){
     bowtie2 --maxins 2000 --threads $1 --very-sensitive --mm -x $2 -1 $3 -2 $4 |
