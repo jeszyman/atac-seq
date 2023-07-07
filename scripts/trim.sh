@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 input_r1="${1}"

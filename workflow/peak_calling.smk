@@ -1,6 +1,5 @@
 
 
-
 rule all:
     input:
         config["data_dir"] + "/atac/bk_rse.rds",
@@ -43,7 +42,7 @@ rule make_peak_counts:
     output:
         background_counts = config["data_dir"] + "/atac/background_counts_rse.rds"
         counts_rse = config["data_dir"] + "/atac/counts_rse.rds"
-        window_size = config["data_dir"] + "/atac/window_size.rds",
+	window_size = config["data_dir"] + "/atac/window_size.rds",
     log:
         config["data_dir"] + "/logs/make_peak_counts.log",
     shell:
@@ -75,8 +74,8 @@ rule differential_accessibility:
         Rscript {params.script} \
         {input.counts} \
         {input.background} \
-        {input.data_model} \
-        {output}
+	{input.data_model} \
+	{output}
         >& {log}
         """
 

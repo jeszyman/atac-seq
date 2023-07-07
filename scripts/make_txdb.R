@@ -1,4 +1,3 @@
-
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly = TRUE)
 gtf_file = args[1]

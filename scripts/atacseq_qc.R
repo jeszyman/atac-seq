@@ -1,4 +1,3 @@
-
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly = TRUE)
 dup_bam_str = args[1]

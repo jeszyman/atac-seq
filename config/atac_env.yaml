@@ -8,23 +8,22 @@ dependencies:
   - bedops
   - bedtools
   - bioconductor-GenomicRanges
-  - bioconductor-orthology.eg.db
-  - bioconductor-TxDb.Mmusculus.UCSC.mm10.ensGene
   - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene
   - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene
   - bioconductor-atacseqqc
-  - bioconductor-gviz
-  - bioconductor-ggbio
   - bioconductor-chippeakanno
   - bioconductor-chipseeker
-  - bioconductor-soggi
   - bioconductor-clusterprofiler
   - bioconductor-complexheatmap
   - bioconductor-csaw
   - bioconductor-fgsea
+  - bioconductor-ggbio
+  - bioconductor-gviz
+  - bioconductor-orthology.eg.db
   - bioconductor-rgreat
-  - bioconductor-ruvseq
   - bioconductor-rsamtools
+  - bioconductor-ruvseq
+  - bioconductor-soggi
   - bowtie2
   - fastp
   - fastqc
@@ -34,12 +33,13 @@ dependencies:
   - openpyxl
   - pandas
   - parallel
-  - r-magick
-  - r-ggrepel
   - r-ggextra
-  - r-ggsci
-  - r-msigdbr
   - r-ggpattern
+  - r-ggrepel
+  - r-ggsci
+  - r-magick
+  - r-msigdbr
+  - r-tidyverse
   - r-tidyverse
   - r-yaml
   - samtools

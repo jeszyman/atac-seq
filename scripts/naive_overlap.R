@@ -1,4 +1,3 @@
-
 args = commandArgs(trailingOnly = TRUE)
 in_peaks_bed = args[1]
 sample_sheet_tsv = args[2]

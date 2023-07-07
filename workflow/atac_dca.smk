@@ -1,4 +1,3 @@
-
 rule make_txdb:
     container: atac_container,
     log: log_dir + "/make_txdb.log",

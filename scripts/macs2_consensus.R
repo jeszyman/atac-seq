@@ -1,4 +1,3 @@
-
 # For unit testing
 libraries_tsv = "test/inputs/libraries.tsv"
 macs2_dir = "test/analysis/atac/macs2"

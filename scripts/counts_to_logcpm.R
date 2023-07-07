@@ -1,4 +1,3 @@
-
 args = commandArgs(trailingOnly = TRUE)
 counts_rds = args[1]
 background_rds = args[2]

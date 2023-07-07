@@ -1,33 +1,30 @@
-
 #!/usr/bin/env bash
 set -o errexit   # abort on nonzero exitstatus
 set -o nounset   # abort on unbound variable
 set -o pipefail  # don't hide errors within pipes
 
 # Script variables
-inbam=$1
-outdir=$2
+inbam="${1}"
+name="${2}"
+gsize="${3}"
+outdir="${4}"
 
 main(){
-    macs2_wrapper \
-        $inbam \
-        $outdir
+    macs2_wrapper $inbam $name $gsize $outdir
 }
 
-# Functions
 macs2_wrapper(){
     local inbam="${1}"
-    local outdir="${2}"
-    #
-    base=$(basename -s .bam $inbam)
+    local name="${2}"
+    local gsize="${3}"
+    local outdir="${4}"
     #
     macs2 callpeak \
-          --broad \
           --extsize 150 \
           --format BAMPE \
-          --gsize mm \
+          --gsize $gsize \
           --keep-dup all \
-          --name $base \
+          --name $name \
           --nolambda \
           --nomodel \
           --outdir $outdir \
@@ -36,5 +33,4 @@ macs2_wrapper(){
           --treatment $inbam
 }
 
-# Run
 main "$@"

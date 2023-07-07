@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 input_read1="${1}"

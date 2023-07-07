@@ -1,4 +1,3 @@
-
 rule macs2_narrow:
     container: atac_container,
     input: atac_bam_dir + "/{library}_filt.bam",

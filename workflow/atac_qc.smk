@@ -1,4 +1,3 @@
-
 rule fastqc:
     input: atac_fastq_dir + "/{library}_{processing}_{read}.fastq.gz",
     log: log_dir + "/{library}_{processing}_{read}_fastqc.log",
@@ -6,7 +5,7 @@ rule fastqc:
     params:
         outdir = qc_dir,
         script = atac_script_dir + "/fastqc_wrapper.sh",
-        threads = threads,
+	threads = threads,
     shell:
         """
         {params.script} \

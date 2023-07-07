@@ -1,4 +1,3 @@
-
 inbam=$1
 outtmp=$2
 outbam=$3

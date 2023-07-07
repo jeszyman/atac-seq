@@ -1,4 +1,3 @@
-
 # For unit testing
 indir="test/benchmark"
 output="test/analysis/qc/bench_agg.tsv"
