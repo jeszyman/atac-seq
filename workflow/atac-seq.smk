@@ -337,7 +337,7 @@ rule atac_fastqc:
     conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
     log: f"{log_dir}/{{library}}_{{processing}}_{{read}}_fastqc.log",
-    output: f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+    output: f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
     params:
         outdir = qc_dir,
         script = f"{atac_script_dir}/fastqc_wrapper.sh",
