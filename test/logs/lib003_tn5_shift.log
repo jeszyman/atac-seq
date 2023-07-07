@@ -1,5 +1,0 @@
-[bam_sort_core] merging from 0 files and 4 in-memory blocks...
-usage: Example usage: alignmentSieve.py -b sample1.bam -o sample1.filtered.bam --minMappingQuality 10 --filterMetrics log.txt
-alignmentSieve: error: argument --numberOfProcessors/-p: test/bam_atac_tn5/lib003_tn5_tmp.bam is not a valid number of processors
-usage: Example usage: alignmentSieve.py -b sample1.bam -o sample1.filtered.bam --minMappingQuality 10 --filterMetrics log.txt
-alignmentSieve: error: argument --numberOfProcessors/-p: test/bam_atac_tn5/lib003_tn5_tmp.bam is not a valid number of processors

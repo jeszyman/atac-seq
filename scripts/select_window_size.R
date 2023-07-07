@@ -1,3 +1,4 @@
+
 #############################################################################
 ###            Script for csaw ATAC-seq local peak calling                ###
 #############################################################################
@@ -79,16 +80,3 @@ colnames(filtered_counts) = names(bam_list)
 colnames(background) = names(bam_list)
 
 filtered_counts = normFactors(background, se.out = filtered_counts)
-
-y = asDGEList(filtered_counts)
-colnames(y$counts) = colnames(filtered_counts)
-rownames(y$samples) = colnames(filtered_counts)
-
-groups = as.factor(unlist(strsplit(groups_str, " ")))
-y$samples$group = groups
-
-# Save outputs
-saveRDS(object = filtered_counts,
-        file = out_rse_rds)
-saveRDS(object = y,
-        file = out_dge_rds)

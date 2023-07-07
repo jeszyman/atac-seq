@@ -1,5 +1,0 @@
-library	path	group
-lib001	test/inputs/atac1_R1.fastq.gz	ctrl
-lib002	test/inputs/atac2_R1.fastq.gz	exp
-lib003	test/inputs/atac3_R1.fastq.gz	exp
-lib004	test/inputs/atac4_R1.fastq.gz	ctrl
