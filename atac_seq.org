@@ -1,4 +1,4 @@
-* ATAC-seq                                                          :biopipe:
+* ATAC-seq
 :PROPERTIES:
 :header-args:bash: :tangle-mode (identity #o555) :mkdirp yes
 :header-args:snakemake: :tangle-mode (identity #o555)
@@ -6,6 +6,86 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
+** Repository administration
+*** Conda environmental YAMLS
+**** ATAC-seq
+#+begin_src bash :tangle ./config/atac_env.yaml
+name: atac
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - bamscale
+  - bedops
+  - bedtools
+  - bioconductor-GenomicRanges
+  - bioconductor-orthology.eg.db
+  - bioconductor-TxDb.Mmusculus.UCSC.mm10.ensGene
+  - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene
+  - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene
+  - bioconductor-atacseqqc
+  - bioconductor-gviz
+  - bioconductor-ggbio
+  - bioconductor-chippeakanno
+  - bioconductor-chipseeker
+  - bioconductor-soggi
+  - bioconductor-clusterprofiler
+  - bioconductor-complexheatmap
+  - bioconductor-csaw
+  - bioconductor-fgsea
+  - bioconductor-rgreat
+  - bioconductor-ruvseq
+  - bioconductor-rsamtools
+  - bowtie2
+  - fastp
+  - fastqc
+  - homer
+  - macs2
+  - multiqc
+  - openpyxl
+  - pandas
+  - parallel
+  - r-magick
+  - r-ggrepel
+  - r-ggextra
+  - r-ggsci
+  - r-msigdbr
+  - r-ggpattern
+  - r-tidyverse
+  - r-yaml
+  - samtools
+  - snakemake
+
+#+end_src
+
+*** Bash
+**** Bash source
+#+begin_src bash :tangle ./config/bash_src
+data_dir="/mnt/ris/szymanski/Active/test"
+#+end_src
+*** Setup of inputs for integration testing
+- Some human fastqs
+  #+begin_src bash
+cp /mnt/ris/stacey.rentschler/Active/
+
+cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+
+cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R2.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+
+#+end_src
+- [[file:test/inputs/libraries.tsv][Sample sheet]]
+  | library | path                                                                                         | group |
+  |---------+----------------------------------------------------------------------------------------------+-------|
+  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
+- Human reference fasta
+  #+begin_src bash
+source config/bash_src
+wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
+#+end_src
+
+*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
+** Development
 while sleep 2;  do /usr/bin/emacs --batch -l org -eval '(org-babel-tangle-file "atac_seq.org")' && snakemake --configfile config/int_${HOSTNAME}.yaml --cores 14 --snakefile workflow/int_test.smk --rerun-incomplete; done
 
 #+begin_src bash
@@ -28,15 +108,12 @@ usage(){}
 main "$@"
 /usr/bin/emacs --batch -l org -eval '(org-babel-tangle-file "/tmp/test.org")'
 #+end_src
-***** Methods writeup
+
+** ATAC-seq :smk:
 :PROPERTIES:
-:ID:       85e23df0-1352-4e67-8df5-a10da50c6751
-:CUSTOM_ID: 85e23df0-1352-4e67-8df5-a10da50c6751
+:header-args:snakemake: :tangle ./workflow/atac-seq.smk
 :END:
-
-/Nextera adapters were trimmed from ATAC-seq libraries using fastp cite:chen2018b and trimmed reads were aligned using bowtie2 cite:langmead2012. Prior to peak calling, PCR duplicates were removed using samtools cite:li2011samtools and reads not mapping to autosomes were removed. Finally reads were downsampled to 9 million read pairs. Peaks were called with MACS2 cite:zhang2021macs2 using either broad peaks for total open chromatin measurements or narrowpeaks for differential chromatin accessibility. Peaks were filterd as described in cite:corces2018. Libraries which did not contribute significantly to the final peak set were removed from analysis (Fig. ref:fig_human_corces_filt, ref:fig_mouse_corces_filt). Filtered peaks were  counted using BAMscale. Variation was removed using RUVseq with the number of modeled factors chosen between 1 and 4 for each differential expression model based on Wilcoxon rank sum test and Spearman correlation of log2-fold change of the original and RUVseq-adjusted counts (Fig. ref:fig_human_ruv_cor_ir1w_sham1w, ref:fig_human_ruv_cor_ir2w_sham2w, ref:fig_mouse_ruv_cor_ir2d_sham, ref:fig_mouse_ruv_cor_ir6w_sham, ref:fig_mouse_ruv_cor_ir6w_ir2d). While log2-fold changes were preserved, cohort grouping by PCA improved substaintally (Fig. ref:fig_human_ruv_pca, ref:fig_mouse_ruv_pca)./
-
-***** Preamble
+*** Preamble
 :PROPERTIES:
 :ID:       4b86db21-4de4-49f1-83f2-0b5e0a094506
 :CUSTOM_ID: 4b86db21-4de4-49f1-83f2-0b5e0a094506
@@ -48,7 +125,7 @@ main "$@"
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 #+end_src
-***** Fastq processing with fastp                                  :smk_rule:
+*** Fastq processing with fastp                                    :smk_rule:
 - Removes tail 1 nucleotide
 - Auto-detects and removes nextera adapter
 
@@ -116,8 +193,8 @@ fastp_wrap $input_r1 \
 
 #+end_src
 
-***** Alignments
-****** Make bowtie2 index                                          :smk_rule:
+*** Alignments
+**** Make bowtie2 index                                            :smk_rule:
 #+begin_src snakemake
 rule atac_index:
     input: f"{ref_dir}/{{build}}.fna.gz",
@@ -153,7 +230,7 @@ bowtie2-build \
     $bt2_index_base
 
 #+end_src
-****** Align trimmed reads using bowtie2                           :smk_rule:
+**** Align trimmed reads using bowtie2                             :smk_rule:
 Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive
 
 #+begin_src snakemake
@@ -211,7 +288,7 @@ bt2_align $input_r1 $input_r2 $params_prefix $params_threads $output_bam
   - Maximum fragment length 2000 per cite:corces2017 and ENCODE1.8
   - Very sensitive per cite:reske2020
   - Initial quality filtering from ENCODE ATAC-seq pipeline version 1
-****** Remove PCR duplicates                                       :smk_rule:
+**** Remove PCR duplicates                                         :smk_rule:
 #+begin_src snakemake
 rule atac_dedup:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
@@ -243,7 +320,7 @@ samtools sort -@ $threads -n -o - $raw_bam |
 samtools index $dedup_bam
 
 #+end_src
-****** Make a bedfile of regions to query by ATAC-seq peak calling
+**** Make a bedfile of regions to query by ATAC-seq peak calling
 Currently this filter just excludes unlocalized contigs. Sex chromosomes and mitochondrial reads are retained at this step.
 #+begin_src snakemake
 rule make_atac_keep_bed:
@@ -271,7 +348,7 @@ cat $hg38_chrome_sizes |
     # Convert to bedfile format
     awk -v FS='\t' -v OFS='\t' '$2 = "1" FS $2' > $hg38_atac_keep_bed
 #+end_src
-****** Filter de-duplicated bams for ATAC-seq peak calling
+**** Filter de-duplicated bams for ATAC-seq peak calling
 #+begin_src snakemake
 rule filter_atac_bams:
     input:
@@ -301,7 +378,7 @@ threads="${4}"
 samtools view --bam --with-header -o $out_bam -L $in_keep --use-index --threads $threads $in_bam
 samtools index -@ $threads $out_bam
 #+end_src
-****** Downsample
+**** Downsample
 #+begin_src snakemake
 rule downsample_bam:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
@@ -338,8 +415,8 @@ samtools view -s $FACTOR -b -@ $threads $in_bam > $out_bam
 samtools index -@ threads $out_bam
 
 #+end_src
-***** Peak counting
-****** MACS2 broad peak calling
+*** Peak counting
+**** MACS2 broad peak calling
 #+begin_src snakemake
 rule macs2_broad:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_{{proc}}.bam",
@@ -370,7 +447,7 @@ macs2 callpeak -t $inbam -f BAMPE -n $name -g $gsize --broad --broad-cutoff 0.05
 
 #+end_src
 
-****** MACS2 narrow peak calling
+**** MACS2 narrow peak calling
 - Snakemake
   #+begin_src snakemake
 rule macs2_narrow:
@@ -420,7 +497,7 @@ macs2 callpeak --treatment $inbam \
 #+end_src
 - Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
 
-****** Make summary peaks file of union of all peaks
+**** Make summary peaks file of union of all peaks
 #+begin_src snakemake
 
 rule peak_union:
@@ -497,8 +574,8 @@ all.peaks = Reduce(union, granges)
 # export as a BED file
 export.bed(all.peaks, "~/cards/analysis/atac/peaks/human_union.bed")
 #+end_src
-****** Peak counting with BAMScale
-******* Mouse
+**** Peak counting with BAMScale
+***** Mouse
 #+begin_src snakemake
 rule bamscale_corces_mouse:
     input:
@@ -544,7 +621,7 @@ BAMscale cov --bed $input_bed \
 
 
 #+end_src
-******* Human
+***** Human
 #+begin_src snakemake
 rule bamscale_corces_human:
     input:
@@ -589,7 +666,7 @@ BAMscale cov --bed $input_bed \
          $bams
 #+end_src
 
-***** Peak filtering
+*** Peak filtering
 
 #+begin_src snakemake
 
@@ -707,7 +784,7 @@ keep_libs =
 keep = max %>% filter(library %in% keep_libs) %>% write_tsv(keep_bed, col_names = F)
 
 #+end_src
-***** Peak annotation
+*** Peak annotation
 #+begin_src snakemake
 rule peak_annotation:
     input: f"{atac_dir}/{{species}}/dca/{{species}}_{{build}}.raw_coverages.tsv",
@@ -790,8 +867,8 @@ final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
 final <- distinct(final, coordinate, .keep_all = TRUE)
 write_tsv(final, file = out_tsv)
 #+end_src
-***** Differential chromatin accessibility
-****** Make ensembl txdb
+*** Differential chromatin accessibility
+**** Make ensembl txdb
 - Snakemake
   #+begin_src snakemake
 
@@ -824,7 +901,7 @@ txdb = makeTxDbFromGFF(ensembl_gtf)
 saveDb(txdb, file = "/tmp/db")
 
 #+end_src
-****** BAMscale
+**** BAMscale
 #+begin_src snakemake
 rule bamscale:
     input:
@@ -870,7 +947,7 @@ rule bamscale:
 
 #+end_src
 
-****** Reference
+**** Reference
 :PROPERTIES:
 :header-args: :tangle no
 :END:
@@ -880,8 +957,8 @@ rule bamscale:
   - for interactions https://support.bioconductor.org/p/65676/#66860)
 - time course DE in DESeq2 https://master.bioconductor.org/packages/release/workflows/vignettes/rnaseqGene/inst/doc/rnaseqGene.html#time-course-experiments
 
-***** Quality control
-****** FastQC
+*** Quality control
+**** FastQC
 - Snakemake
   #+begin_src snakemake
 rule atac_fastqc:
@@ -915,7 +992,7 @@ fastqc  --outdir $outdir \
         --threads $threads $input
 
 #+end_src
-****** IDX stats
+**** IDX stats
 - Snakemake
   #+begin_src snakemake
 rule atac_idx:
@@ -923,7 +1000,7 @@ rule atac_idx:
     output: f"{qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
     shell: "samtools idxstats {input} > {output}"
 #+end_src
-****** Samtools stats
+**** Samtools stats
 - Snakemake
   #+begin_src snakemake
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
@@ -958,7 +1035,7 @@ samtools stats -@ $threads $in_bam > $out_stat
 samtools flagstat -@ $threads $in_bam > $out_flag
 #+end_src
 
-****** Insert-size distribution
+**** Insert-size distribution
 - Snakemake
   #+begin_src snakemake
 checkpoint insert_size:
@@ -1059,7 +1136,7 @@ ggsave(plot, file = peak_ratio_plot)
 
 
 #+end_src
-****** ATAC-seq
+**** ATAC-seq
 - Snakemake
   #+begin_src snakemake
 rule atacseq_qc:
@@ -1142,7 +1219,7 @@ atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb =
 
 save(atac_qc_out, file = atac_qc_file)
 #+end_src
-****** MultiQC
+**** MultiQC
 - Snakemake
   #+begin_src snakemake
 rule mouse_atac_multiqc:
@@ -1182,8 +1259,8 @@ multiqc $input \
         --filename $out_name
 
 #+end_src
-****** Aggregate
-******* INPROCESS Aggregate samstats
+**** Aggregate
+***** INPROCESS Aggregate samstats
 #+begin_src snakemake
 rule agg_samstat:
     input:
@@ -1238,7 +1315,7 @@ rule agg_samstat:
 
 #+end_src
 
-******* WAITING Tabular summary
+***** WAITING Tabular summary
 
 NEXT ADD SAMSTATS
 
@@ -1270,10 +1347,10 @@ corces = read_tsv(corces_tsv)
 libs %>% filter(species == species_var) %>% left_join(frip, by = "library") %>% left_join(corces, by = "library")
 
 #+end_src
-****** Development
+**** Development
 - https://genome.cshlp.org/content/22/9/1813.full
-***** INPROCESS Motif enrichment with Homer
-****** Prepare DCA bed files
+*** INPROCESS Motif enrichment with Homer
+**** Prepare DCA bed files
 
 Takes differentially accessible regions from a specific contrast and returns bedfiles formatted for homer.
 
@@ -1364,7 +1441,7 @@ subset(up_bed, anno, "Distal") %>% write_tsv(upbed_e_out, col_names = FALSE)
 subset(down_bed, anno, "Distal") %>% write_tsv(downbed_e_out, col_names = FALSE)
 #+end_src
 
-****** Find genome-wide enrichment
+**** Find genome-wide enrichment
 #+begin_src snakemake
 rule homer_genome_enrich:
     input:
@@ -1446,7 +1523,7 @@ findMotifsGenome.pl $bed $fasta $outdir -p $threads
     nohup findMotifs.pl /mnt/ris/jschwarz/cardiac-radiobiology/tmp/ir6w_ir48h_up.txt mouse /mnt/ris/jschwarz/cardiac-radiobiology/tmp/homer/ir6w_48hr_up -fdr 10 -p 12
 
     #+end_src
-****** Extract homer denovo motifs from html
+**** Extract homer denovo motifs from html
 #+begin_src snakemake
 rule homer_denovo_tsv:
     input: f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}/homerResults.html",
@@ -1487,16 +1564,16 @@ rule homer_denovo_tsv:
                 # Write columns to the TSV, excluding the SVG column (the second one, index 1)
                 writer.writerow([col.text for i, col in enumerate(cols) if i != 1])
 #+end_src
-***** Development
+*** Development
 - [[id:12393aa3-d318-4ba6-8183-6e3a175d3ba4][Region or locus-based enrichment analysis]]
 - atac peak characterization per cite:duijvenboden2019 see method and fig 5F
 
-***** Ideas
+*** Ideas
 :PROPERTIES:
 :header-args: :tangle no
 :END:
 - upgrade region enrichment with unibind and lola? https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-021-07760-6
-****** confirm DCA by deseq2
+**** confirm DCA by deseq2
 #+begin_src R
 libraries_full_tsv = "~/cards/data-model/libraries_full.tsv"
 
@@ -1598,7 +1675,7 @@ library(ggplotify)
 
 test2 + test1
 #+end_src
-******* Differential chromatin accessibility
+***** Differential chromatin accessibility
 - DESeq2
   - Bamscale counts to matrix
     #+begin_src R
@@ -2234,7 +2311,7 @@ head(res[order(res$padj),], 40)
   #+end_src
 - Rscript
   - https://www.nature.com/articles/s41598-020-66998-4
-****** peak filtering visualizations
+**** peak filtering visualizations
 #+begin_src R
 libraries_full_rds = "~/cards/data-model/libraries_full.rds"
 macs2_dir = "~/cards/analysis/atac/human/peaks"
@@ -2427,40 +2504,11 @@ for (i in seq_along(libs)) {
   write_tsv(libs[[i]][,-1],col_names = F, file = filename)
 }
 #+end_src
-***** Reference
+*** Reference
 - https://github.com/Zhang-lab/ATACseq_benchmarking/blob/master/simulated_ATAC_tests_limma.R
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
 - cite:knaupp2017
 
-** Repository setup and administration
-#+begin_src bash
-conda activate atac
-#+end_src
-*** Bash source
-#+begin_src bash :tangle ./config/bash_src
-data_dir="/mnt/ris/szymanski/Active/test"
-#+end_src
-*** Setup of inputs for integration testing
-- Some human fastqs
-  #+begin_src bash
-cp /mnt/ris/stacey.rentschler/Active/
-
-cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
-
-cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R2.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
-
-#+end_src
-- [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library | path                                                                                         | group |
-  |---------+----------------------------------------------------------------------------------------------+-------|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
-- Human reference fasta
-  #+begin_src bash
-source config/bash_src
-wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
-#+end_src
-
-*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
 ** ATAC-seq environmental YAML
 #+begin_src bash
 conda env create -f config/atac_env.yaml
