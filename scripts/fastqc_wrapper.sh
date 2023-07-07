@@ -9,15 +9,3 @@ threads="${3}"
 fastqc  --outdir $outdir \
         --quiet \
         --threads $threads $input
-
-#!/usr/bin/env bash
-
-# Script variables
-input="${1}"
-outdir="${2}"
-threads="${3}"
-
-# Functions
-fastqc  --outdir $outdir \
-        --quiet \
-        --threads $threads $input

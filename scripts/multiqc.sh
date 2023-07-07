@@ -1,15 +1,3 @@
-#!/usr/bin/env bash
-
-# Command line arguements
-input="${1}"
-out_name="${2}"
-out_dir="${3}"
-
-multiqc $input \
-        --force \
-        --outdir $out_dir \
-        --filename $out_name
-
 multiqc_wrap()
     # Check for parameters, return usage if empty
     if [[ $# -eq 0 ]] || [[ multiqc_wrap == "h" ]] ; then
@@ -51,3 +39,15 @@ multiqc_wrap()
         --filename atac_qc
     fi
 }
+
+#!/usr/bin/env bash
+
+# Command line arguements
+input="${1}"
+out_name="${2}"
+out_dir="${3}"
+
+multiqc $input \
+        --force \
+        --outdir $out_dir \
+        --filename $out_name
