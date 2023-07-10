@@ -29,7 +29,7 @@ rule fastp:
         {output.r1} \
         {output.r2} \
         {params.threads} \
-        &> {log.cmd}
+        &> {log.cmd} && [[ -s {log.html} ]]
         """
 
 rule atac_index:

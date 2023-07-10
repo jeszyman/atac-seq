@@ -13267,7 +13267,7 @@ for (i in seq_along(libs)) {
   write_tsv(libs[[i]][,-1],col_names = F, file = filename)
 }
 #+end_src
-** ATAC-seq :smk:
+** [[file:workflow/atac.smk][ATAC-seq]] :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
@@ -13315,7 +13315,7 @@ rule fastp:
         {output.r1} \
         {output.r2} \
         {params.threads} \
-        &> {log.cmd} && [[ -s {log.html) ]]
+        &> {log.cmd} && [[ -s {log.html} ]]
         """
 
 #+end_src
