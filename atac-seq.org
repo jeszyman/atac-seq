@@ -13269,7 +13269,7 @@ for (i in seq_along(libs)) {
 #+end_src
 ** ATAC-seq :smk:
 :PROPERTIES:
-:header-args:snakemake: :tangle ./workflow/atac-seq.smk
+:header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
 *** Preamble
 :PROPERTIES:
