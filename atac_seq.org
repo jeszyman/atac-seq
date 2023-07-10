@@ -13393,7 +13393,8 @@ bowtie2-build \
 
 #+end_src
 ***** Align trimmed reads using bowtie2                            :smk_rule:
-Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive
+
+Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive. Alignment threads and align_load limit memory usage and avoid errors.
 
 #+begin_src snakemake
 rule align_bt2:
@@ -13406,12 +13407,11 @@ rule align_bt2:
     params:
         prefix = f"{ref_dir}/{{build}}_bowtie2/{{build}}",
         script = atac_script_dir + "/align_bt2.sh",
-        threads = 8,
+        threads = 4,
     output:
         f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
     resources:
-        load = 50,
-        gpu = 1,
+        align_load = 50,
     shell:
         """
         {params.script} \
