@@ -268,14 +268,29 @@ rule atac_qc_table:
     params:
         script = f"{atac_script_dir}/atac_qc_table.R",
 
-rule peak_union:
+rule make_dca_design:
+    input: libraries_full_rds,
+    log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
+    output: f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
+        script = f"{atac_script_dir}/make_dca_design.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
+        {output} \
+        > {log} 2>&1
+        """
+
+rule atac_peak_union:
     input:
         lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peak_type}}",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  build = atac_map[wildcards.atac_set]['build'],
                                  peak_type = atac_map[wildcards.atac_set]['peak_type']),
     log: f"{log_dir}/{{atac_set}}_peak_union.bed",
-    output: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+    output: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     params:
         script = f"{atac_script_dir}/peak_union.R",
     shell:
@@ -291,19 +306,20 @@ rule bamscale:
         bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
-        bed = lambda wildcards: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+        bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
-        out_dir = f"{atac_dir}/bamscale/{{atac_set}}",
+        out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
         tmp_dir = f"/tmp/{{atac_set}}",
     output:
-        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv"
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv"
     shell:
         """
         rm -rf {params.tmp_dir}
         mkdir -p {params.tmp_dir}
-        cp {input.bams} {input.bais} {params.tmp_dir}
+        #cp {input.bams} {input.bais} {params.tmp_dir}
+        echo {input.bams} {input.bais} | tr ' ' '\n' | parallel --max-args 1 cp {{}} {params.tmp_dir}
 
         # set the directory containing the input BAM files
         bam_dir={params.tmp_dir}
@@ -326,15 +342,17 @@ rule bamscale:
 
 rule atac_ruv:
     input:
-        counts = f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv",
+        counts = f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
         datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+        design = f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
     log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
-    output: f"{atac_dir}/ruv/{{atac_set}}_ruvk_{{ruv_k}}.rds",
+    output:
+        counts = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
+        fit = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
     params:
-        group = lambda wildcards: atac_map[wildcards.atac_set]['group'],
         ruv_k = lambda wildcards: wildcards.ruv_k,
         script = f"{atac_script_dir}/atac_ruv.R",
     shell:
         """
-        Rscript {params.script} {input} "{params.group}" {params.ruv_k} {output} >& {log}
+        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
         """

@@ -14202,18 +14202,85 @@ ggsave(plot, file = peak_ratio_plot)
 
 #+end_src
 *** Workflow 2
-**** DCA
+**** Differential chromatin accessibility
+***** Create an experimental design
+#+begin_src snakemake
+rule make_dca_design:
+    input: libraries_full_rds,
+    log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
+    output: f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
+        script = f"{atac_script_dir}/make_dca_design.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
+        {output} \
+        > {log} 2>&1
+        """
+
+#+end_src
+#+begin_src R :tangle ./scripts/make_dca_design.R
+#!/usr/bin/env Rscript
+
+###############################
+###   Make Rna-Seq Design   ###
+###############################
+
+# ---   Command Line Arguements   --- #
+# ----------------------------------- #
+
+args = commandArgs(trailingOnly = TRUE)
+libraries_full_rds = args[1]
+formula = args[2]
+libs_str = args[3]
+design_rds = args[4]
+
+# ---   Load   --- #
+# ---------------- #
+
+library(tidyverse)
+libraries_full = readRDS(libraries_full_rds)
+libs_vect = strsplit(libs_str, " ")[[1]]
+
+# ---   Run   --- #
+# --------------- #
+
+libs =
+  data.frame(library = libs_vect) %>%
+  left_join(libraries_full) %>%
+  mutate(across(where(is.factor), droplevels))
+
+design = model.matrix(as.formula(formula), data = libs)
+
+
+# Splitting the formula to isolate the relevant part ("cohort")
+split_formula <- strsplit(formula, " ")[[1]]
+for (part in split_formula) {
+  # Skipping over "+" as it is an operator
+  if (part != "+") {
+    colnames(design) <- gsub(part, "", colnames(design))
+  }
+}
+
+rownames(design) = libs$library
+
+
+saveRDS(object = design,
+        file = design_rds)
+#+end_src
+
 ***** Make summary peaks file of union of all peaks
 #+begin_src snakemake
-
-rule peak_union:
+rule atac_peak_union:
     input:
         lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peak_type}}",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  build = atac_map[wildcards.atac_set]['build'],
                                  peak_type = atac_map[wildcards.atac_set]['peak_type']),
     log: f"{log_dir}/{{atac_set}}_peak_union.bed",
-    output: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+    output: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     params:
         script = f"{atac_script_dir}/peak_union.R",
     shell:
@@ -14287,19 +14354,20 @@ rule bamscale:
         bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
-        bed = lambda wildcards: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+        bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
-        out_dir = f"{atac_dir}/bamscale/{{atac_set}}",
+        out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
         tmp_dir = f"/tmp/{{atac_set}}",
     output:
-        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv"
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv"
     shell:
         """
         rm -rf {params.tmp_dir}
         mkdir -p {params.tmp_dir}
-        cp {input.bams} {input.bais} {params.tmp_dir}
+        #cp {input.bams} {input.bais} {params.tmp_dir}
+        echo {input.bams} {input.bais} | tr ' ' '\n' | parallel --max-args 1 cp {{}} {params.tmp_dir}
 
         # set the directory containing the input BAM files
         bam_dir={params.tmp_dir}
@@ -14326,22 +14394,23 @@ rule bamscale:
 #+begin_src snakemake
 rule atac_ruv:
     input:
-        counts = f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv",
+        counts = f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
         datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+        design = f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
     log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
-    output: f"{atac_dir}/ruv/{{atac_set}}_ruvk_{{ruv_k}}.rds",
+    output:
+        counts = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
+        fit = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
     params:
-        group = lambda wildcards: atac_map[wildcards.atac_set]['group'],
         ruv_k = lambda wildcards: wildcards.ruv_k,
         script = f"{atac_script_dir}/atac_ruv.R",
     shell:
         """
-        Rscript {params.script} {input} "{params.group}" {params.ruv_k} {output} >& {log}
+        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
         """
-
 #+end_src
 
-#+begin_src R
+#+begin_src R :tangle ./scripts/atac_ruv.R
 #!/usr/bin/env Rscript
 
 ##############################
@@ -14352,42 +14421,56 @@ rule atac_ruv:
 args = commandArgs(trailingOnly = TRUE)
 counts_tsv = args[1]
 libraries_full_rds = args[2]
-group_var = args[3]
-rvu_k = args[4]
+design_rds = args[3]
+ruv_k = args[4]
 ruv_counts_rds = args[5]
+fit_rds = args[5]
 
 # Load required packages, data, and functions
 library(RUVSeq)
 library(tidyverse)
 libraries_full = readRDS(libraries_full_rds)
 counts = read_tsv(counts_tsv)
+design = readRDS(design_rds)
 
 # Setup data objects
 mat = as.matrix(counts[,-1])
 row.names(mat) = counts$coordinate
 colnames(mat) = substr(colnames(mat),1,6)
-(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(group_var) %>% droplevels())
-set = newSeqExpressionSet(mat,
-                          phenoData = data.frame(group, row.names = colnames(mat)))
 
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
+model_df = as.data.frame(design)
+model_df$'(Intercept)' <- NULL
+
+set = newSeqExpressionSet(mat,
+                          phenoData = AnnotatedDataFrame(model_df))
+
+dge <- DGEList(counts = counts(set))
+y <- DGEList(counts = counts(set))
 y <- calcNormFactors(y, method = "upperquartile")
 y <- estimateGLMCommonDisp(y, design)
 y <- estimateGLMTagwiseDisp(y, design)
 fit <- glmFit(y, design)
 dev <- residuals(fit, type="deviance")
 peaks = row.names(dev)
-adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
-saveRDS(adjust, ruv_counts_rds)
+adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
+adjust_counts = normCounts(adjust)
+
+saveRDS(adjust_counts, ruv_counts_rds)
+
+dge = DGEList(counts = modcounts)
+dge = calcNormFactors(dge)
+dge = estimateGLMCommonDisp(dge, design)
+dge = estimateGLMTrendedDisp(dge, design)
+dge = estimateGLMTagwiseDisp(dge, design)
+fit = glmFit(dge, design)
+
+saveRDS(fit, fit_rds)
 #+end_src
-***** Make ATAC-seq DCA design
 *** Development
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-
+**** paralleize copy in rule bamscale:
 **** Downsample
 #+begin_src snakemake
 rule downsample_bam:
@@ -15105,6 +15188,32 @@ rule homer_denovo_tsv:
                 # Write columns to the TSV, excluding the SVG column (the second one, index 1)
                 writer.writerow([col.text for i, col in enumerate(cols) if i != 1])
 #+end_src
+**** Make edgeR DCA model
+#+begin_src snakemake
+rule atac_edger_dca:
+    input:
+        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
+        counts = lambda wildcards: dca_map[wildcards.contrast]['counts'],
+    log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
+    output:
+        dge = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_dge.rds",
+        glm = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_fit.rds",
+        cpm = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_cpm.tsv",
+    params: script = f"{rna_script_dir}/norm_txi_edger.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.design} \
+        {input.txi} \
+        {output.dge} \
+        {output.glm} \
+        {output.cpm} \
+        > {log} 2>&1
+        """
+
+#+end_src
+
+
 *** Reference
 - https://github.com/Zhang-lab/ATACseq_benchmarking/blob/master/simulated_ATAC_tests_limma.R
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
