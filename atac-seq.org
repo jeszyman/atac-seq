@@ -14457,7 +14457,7 @@ adjust_counts = normCounts(adjust)
 
 saveRDS(adjust_counts, ruv_counts_rds)
 
-dge = DGEList(counts = modcounts)
+dge = DGEList(counts = adjust_counts)
 dge = calcNormFactors(dge)
 dge = estimateGLMCommonDisp(dge, design)
 dge = estimateGLMTrendedDisp(dge, design)
@@ -15188,18 +15188,36 @@ rule homer_denovo_tsv:
                 # Write columns to the TSV, excluding the SVG column (the second one, index 1)
                 writer.writerow([col.text for i, col in enumerate(cols) if i != 1])
 #+end_src
-**** Make edgeR DCA model
+**** Make edgeR DCA contrast
 #+begin_src snakemake
 rule atac_edger_dca:
     input:
         design = lambda wildcards: dca_map[wildcards.contrast]['design'],
-        counts = lambda wildcards: dca_map[wildcards.contrast]['counts'],
+        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
+    log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
+    output: f"{atac_dir}/{{contrast}}/{{contrast}}.tsv",
+    params:
+        cohorts_str = lambda wildcards: dca_map[wildcards.contrast]['cohorts_str'],
+        script = f"{rna_script_dir}/make_edger_contrast_de.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.design} \
+        {input.fit} \
+        {params.annotation_tsv} \
+        "{params.cohorts_str}" \
+        {output} > {log} 2>&1
+        """
+
+    input:
+        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
+        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
     log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
     output:
-        dge = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_dge.rds",
+        dge = f"{atac_dir}/{{contrast}}_edger/{{contrastexperiment}}_dge.rds",
         glm = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_fit.rds",
         cpm = f"{rna_dir}/models/{{experiment}}_edger/{{experiment}}_cpm.tsv",
-    params: script = f"{rna_script_dir}/norm_txi_edger.R",
+    params: script = f"{atac_script_dir}/atac_edger_dca.R"
     shell:
         """
         Rscript {params.script} \
@@ -15210,6 +15228,45 @@ rule atac_edger_dca:
         {output.cpm} \
         > {log} 2>&1
         """
+
+#+end_src
+
+#+begin_src R :tangle ./scripts/atac_edger_dca.R
+#!/usr/bin/env Rscript
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+design_rds = args[1]
+fit_rds = args[2]
+annotation_tsv = args[3]
+cohorts_str = args[4]
+res_tsv = args[5]
+
+# Load required packages, data, and functions
+library(edgeR)
+library(tidyverse)
+
+design = readRDS(design_rds)
+fit = readRDS(fit_rds)
+annotation = read_tsv(annotation_tsv)
+
+cohorts_vec = strsplit(cohorts_str, " ")[[1]]
+contrast_string <- paste(cohorts_vec[[1]], "-", cohorts_vec[[2]])
+
+contrast <- makeContrasts(eval(parse(text = contrast_string)), levels=design)
+
+qlf = glmQLFTest(fit, contrast = contrast)
+
+res =
+  as.data.frame(topTags(qlf, n = Inf)) %>%
+  rownames_to_column(var = "ensembl_gene_id") %>%
+  as_tibble() %>%
+  left_join(annotation, by = "ensembl_gene_id") %>%
+  mutate(sign = sign(logFC)) %>%
+  mutate(score = sign * -log10(PValue)) %>%
+  mutate(rank = rank(-score, ties.method = "random"))
+
+write_tsv(res, file = res_tsv)
 
 #+end_src
 

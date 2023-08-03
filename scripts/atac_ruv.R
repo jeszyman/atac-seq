@@ -44,7 +44,7 @@ adjust_counts = normCounts(adjust)
 
 saveRDS(adjust_counts, ruv_counts_rds)
 
-dge = DGEList(counts = modcounts)
+dge = DGEList(counts = adjust_counts)
 dge = calcNormFactors(dge)
 dge = estimateGLMCommonDisp(dge, design)
 dge = estimateGLMTrendedDisp(dge, design)
