@@ -268,194 +268,37 @@ rule atac_qc_table:
     params:
         script = f"{atac_script_dir}/atac_qc_table.R",
 
-rule downsample_bam:
-    input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_ds{{milreads}}_bam.log",
-    output:
-        ds = f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_ds{{milreads}}.bam",
-        index = f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_ds{{milreads}}.bam.bai",
-    params:
-        script = f"{atac_script_dir}/downsample_bam.sh",
-        threads = threads,
-        milreads = 9,
-    shell:
-        """
-        {params.script} \
-        {input} {params.milreads} {params.threads} {output.ds} &> {log}
-        """
-
-rule macs2_broad:
-    input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_{{proc}}.bam",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_{{proc}}_peaks.broadPeak",
-    output: f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_{{proc}}_peaks.broadPeak",
-    params:
-        gsize = lambda wildcards: human_gsize if wildcards.species == "human" else mouse_gsize,
-        outdir = f"{atac_dir}/{{species}}/peaks",
-        script = f"{atac_script_dir}/macs2_broad.sh",
-    shell:
-        """
-        name=$(basename -s .bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-
-rule macs2_narrow:
-    input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_{{proc}}.bam",
-    log: f"{log_dir}/{{library}}_{{build}}_{{species}}_{{proc}}_macs2_narrow.log",
-    output: f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_{{proc}}_multi_peaks.narrowPeak",
-    params:
-        gsize = lambda wildcards: human_gsize if wildcards.species == "human" else mouse_gsize,
-        outdir = f"{atac_dir}/{{species}}/peaks",
-        script = f"{atac_script_dir}/macs2_narrow.sh",
-    shell:
-        """
-        name=$(basename -s .bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-
 rule peak_union:
     input:
-        lambda wildcards: expand(f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_peaks.broadPeak",
-                                 species = wildcards.species,
-                                 build = wildcards.build,
-                                 library = joins[wildcards.join])
-    log: f"{log_dir}/{{species}}_{{build}}_{{join}}_peak_union.bed",
-    output: f"{atac_dir}/{{species}}/{{join}}_{{build}}_union.bed",
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peak_type}}",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build'],
+                                 peak_type = atac_map[wildcards.atac_set]['peak_type']),
+    log: f"{log_dir}/{{atac_set}}_peak_union.bed",
+    output: f"{atac_dir}/beds/{{atac_set}}_union.bed",
     params:
-        in_dir = f"{atac_dir}/{{species}}",
         script = f"{atac_script_dir}/peak_union.R",
     shell:
         """
-        Rscript {params.script} \
-        "{input}" \
-        {output} >& {log}
-        """
-
-rule bamscale_corces_mouse:
-    input:
-        bams = expand(f"{atac_dir}/mouse/bams/{{library}}_mm10_ds9.bam",
-                      library = FILT_MOUSE_ATAC_LIBS),
-        bais = expand(f"{atac_dir}/mouse/bams/{{library}}_mm10_ds9.bam.bai",
-                      library = FILT_MOUSE_ATAC_LIBS),
-        bed = f"{atac_dir}/mouse/peaks/mouse_corces_peaks_keep.bed"
-    log: f"{log_dir}/mm10_mouse_bamscale.log",
-    params:
-        out_dir = f"{atac_dir}/mouse/dca",
-        script = f"{atac_script_dir}/mouse_bamscale.sh",
-        tmp_dir = f"/tmp/mouse_bamscale",
-    output:
-        f"{atac_dir}/mouse/dca/mouse_mm10.FPKM_normalized_coverages.tsv"
-    shell:
-        """
-        rm -rf {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        cp {input.bams} {input.bais} {params.tmp_dir}
-        {params.script} {params.tmp_dir} {input.bed} {params.out_dir} &> {log}
-        """
-
-rule bamscale_corces_human:
-    input:
-        bams = expand(f"{atac_dir}/human/bams/{{library}}_hg38_ds9.bam",
-                      library = FILT_HUMAN_ATAC_LIBS),
-        bais = expand(f"{atac_dir}/human/bams/{{library}}_hg38_ds9.bam.bai",
-                      library = FILT_HUMAN_ATAC_LIBS),
-        bed = f"{atac_dir}/human/peaks/human_corces_peaks_keep.bed"
-    log: f"{log_dir}/hg38_human_bamscale.log",
-    params:
-        out_dir = f"{atac_dir}/human/dca",
-        script = f"{atac_script_dir}/human_bamscale.sh",
-        tmp_dir = f"/tmp/human_bamscale",
-    output:
-        f"{atac_dir}/human/dca/human_hg38.FPKM_normalized_coverages.tsv"
-    shell:
-        """
-        rm -rf {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        cp {input.bams} {input.bais} {params.tmp_dir}
-        {params.script} {params.tmp_dir} {input.bed} {params.out_dir} &> {log}
-        """
-
-rule peak_filtering:
-    input:
-        chrs = f"{datamodel_dir}/lists/{{species}}_peak_chrs.txt",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_{{proc}}_multi_peaks.narrowPeak",
-                                         species=wildcards.species,
-                                         library=get_species_params(wildcards.species)["libraries"],
-                                         build=get_species_params(wildcards.species)["build"],
-                                         proc=["ds9"]),
-    log: f"{log_dir}/{{species}}_peak_filtering.log",
-    output:
-        all = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_all.bed",
-        clust = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_clust.bed",
-        max = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_max.bed",
-        keep = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_keep.bed",
-    params:
-        corces_min = 5,
-        lib_peaks_min = 1000,
-        script = f"{cardiac_script_dir}/peak_filtering.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.all} \
-        {output.clust} \
-        {output.max} \
-        {output.keep} \
-        {params.corces_min} \
-        {params.lib_peaks_min} > {log} 2>&1
-        """
-
-rule peak_annotation:
-    input: f"{atac_dir}/{{species}}/dca/{{species}}_{{build}}.raw_coverages.tsv",
-    log: f"{log_dir}/{{species}}_{{build}}_peak_annotation.log",
-    output: f"{atac_dir}/{{species}}/dca/{{species}}_{{build}}_annotation.tsv",
-    params:
-        txdb = lambda wildcards: "TxDb.Mmusculus.UCSC.mm10.knownGene" if wildcards.species == 'mouse' else "TxDb.Hsapiens.UCSC.hg38.knownGene",
-        bmart_dataset = lambda wildcards: "mmusculus_gene_ensembl" if wildcards.species == 'mouse' else "hsapiens_gene_ensembl",
-        script = f"{cardiac_script_dir}/peak_annotation.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {params.bmart_dataset} {params.txdb} \
-        {output} > {log} 2>&1
-        """
-
-rule make_ensembl_txdb:
-    input: f"{ref_dir}/{{build}}.gtf.gz",
-    output: f"{ref_dir}/{{build}}_ensembl_txdb",
-    params: script = f"{atac_script_dir}/make_ensembl_txdb.R",
-    shell:
-        """
-        Rscript {params.script} {input}
-        cp /tmp/db {output}
+        Rscript {params.script} "{input}" {output} >& {log}
         """
 
 rule bamscale:
     input:
-        bams = lambda wildcards: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
-                                        species=wildcards.species,
-                                        build=wildcards.build,
-                                        library=joins[wildcards.join]),
-        bais = lambda wildcards: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam.bai",
-                                        species=wildcards.species,
-                                        build=wildcards.build,
-                                        library=joins[wildcards.join]),
-        bed = f"{atac_dir}/{{species}}/{{join}}_{{build}}_union.bed",
-    log: f"{log_dir}/{{build}}_{{species}}_{{join}}_bamscale.log",
+        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bed = lambda wildcards: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+    log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
-        out_dir = f"{atac_dir}/{{species}}/dca",
-        tmp_dir = lambda wildcards: f"/tmp/{wildcards.join}",
+        out_dir = f"{atac_dir}/bamscale/{{atac_set}}",
+        tmp_dir = f"/tmp/{{atac_set}}",
     output:
-        f"{atac_dir}/{{species}}/dca/{{join}}_{{species}}_{{build}}.FPKM_normalized_coverages.tsv"
+        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv"
     shell:
         """
         rm -rf {params.tmp_dir}
@@ -476,84 +319,22 @@ rule bamscale:
         done
 
         BAMscale cov --bed {input.bed} \
-        --prefix {wildcards.join}_{wildcards.species}_{wildcards.build} --outdir {params.out_dir} --threads 16 \
+        --prefix {wildcards.atac_set} --outdir {params.out_dir} --threads 16 \
         $bams
         rm -rf {params.tmp_dir}
         """
 
-rule homer_bed_from_dca:
+rule atac_ruv:
     input:
-        dca = f"{atac_dir}/{{species}}/dca/{{species}}_atac_k{{rvu_k}}_{{contrast}}.tsv",
-        anno = f"{atac_dir}/{{species}}/dca/{{species}}_annotation.tsv",
-    log: f"{log_dir}/homer_bed_from_dca_{{species}}_k{{rvu_k}}_{{contrast}}.log",
-    output:
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_up_all.bed",
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_down_all.bed",
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_up_promoter.bed",
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_down_promoter.bed",
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_up_enhancer.bed",
-        f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_down_enhancer.bed",
+        counts = f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv",
+        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
+    output: f"{atac_dir}/ruv/{{atac_set}}_ruvk_{{ruv_k}}.rds",
     params:
-        qval = 0.05,
-        script = f"{cardiac_script_dir}/homer_bed_from_dca.R",
+        group = lambda wildcards: atac_map[wildcards.atac_set]['group'],
+        ruv_k = lambda wildcards: wildcards.ruv_k,
+        script = f"{atac_script_dir}/atac_ruv.R",
     shell:
         """
-        Rscript {params.script} {input} {params.qval} {output} > log 2>&1
+        Rscript {params.script} {input} "{params.group}" {params.ruv_k} {output} >& {log}
         """
-
-rule homer_genome_enrich:
-    input:
-        bed = f"{atac_dir}/{{species}}/homer/bed/homer_{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}.bed",
-        fasta = lambda wildcards: get_genome_fasta(wildcards.species),
-    log: f"{log_dir}/homer_genome_enrich_{{species}}_{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}.log",
-    output:
-        dir = directory(f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}"),
-        known_tsv = f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}/knownResults.txt",
-        denovo_html = f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}/homerResults.html",
-    params:
-        script = f"{cardiac_script_dir}/homer_genome_enrich.sh",
-        threads = 4,
-    shell:
-       """
-       {params.script} {input.bed} {input.fasta} {output.dir} {params.threads} &> {log}
-       cp {output.known_tsv} $(dirname {output.known_tsv})_knownResults.txt
-       """
-
-rule homer_denovo_tsv:
-    input: f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}/homerResults.html",
-    log: f"{log_dir}/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}_homer_denovo.log",
-    output: f"{atac_dir}/{{species}}/homer/genome/{{species}}_k{{rvu_k}}_{{contrast}}_{{direction}}_{{set}}_homer_denovo.tsv",
-    run:
-        import os
-        from bs4 import BeautifulSoup
-        import csv
-
-        # Define the file path
-        file_path = input[0]
-
-        # Expand the tilde to the user home directory
-        file_path = os.path.expanduser(file_path)
-
-        # Read the HTML file
-        with open(file_path, 'r') as f:
-            contents = f.read()
-
-        # Parse the HTML
-        soup = BeautifulSoup(contents, 'html.parser')
-
-        # Find the table
-        table = soup.find('table')
-
-        # Find all rows
-        rows = table.find_all('tr')
-
-        # Prepare to write to TSV
-        with open(output[0], 'w') as f:
-            writer = csv.writer(f, delimiter='\t')
-
-            for row in rows:
-                # Find all columns
-                cols = row.find_all('td')
-
-                # Write columns to the TSV, excluding the SVG column (the second one, index 1)
-                writer.writerow([col.text for i, col in enumerate(cols) if i != 1])

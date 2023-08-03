@@ -1,14 +1,13 @@
-* ATAC-seq
+* ATAC-seq Snakemake Pipelines :biopipe:
 :PROPERTIES:
-:header-args:bash: :tangle-mode (identity #o555) :mkdirp yes
-:header-args:snakemake: :tangle-mode (identity #o555)
-:header-args+h: :noweb yes
+:header-args: :tangle no :tangle-mode (identity #o555) :mkdirp yes :noweb yes
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
+see also [[id:26f3a21b-714a-44ac-8cff-63b3cacf833e][Cardiac]]
 #+begin_src bash :tangle ./config/atac_env.yaml
 name: atac
 channels:
@@ -59,11 +58,8 @@ dependencies:
 
 #+end_src
 
-*** Bash
-**** Bash source
-#+begin_src bash :tangle ./config/bash_src
-data_dir="/mnt/ris/szymanski/Active/test"
-#+end_src
+
+*** Emacs
 *** Setup of inputs for integration testing
 - Some human fastqs
   #+begin_src bash
@@ -75,9 +71,9 @@ cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-
 
 #+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library | path                                                                                         | group |
-  |---------+----------------------------------------------------------------------------------------------+-------|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
+  | library  | path  | group  |
+  |---+---+---|
+  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz  | ctrl  |
 - Human reference fasta
   #+begin_src bash
 source config/bash_src
@@ -86,6 +82,269 @@ wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/
 
 *** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
 ** Development
+#+begin_src R
+library(rtracklayer)
+library(Gviz)
+library(GenomicRanges)
+data(cpgIslands)
+
+atrack <- AnnotationTrack(cpgIslands, name = "CpG")
+
+plotTracks(atrack)
+
+gtrack = GenomeAxisTrack()
+
+plotTracks(list(gtrack, atrack))
+
+(gen<-genome(cpgIslands))
+
+(chr <- as.character(unique(seqnames(cpgIslands))))
+
+itrack <- IdeogramTrack(genome = gen, chromosome = chr)
+
+plotTracks(list(itrack, gtrack, atrack))
+
+data(geneModels)
+
+grtrack = GeneRegionTrack(geneModels, genome = gen, chromosome = chr, name = "Gene Model")
+
+plotTracks(list(itrack, gtrack, grtrack))
+
+#Use from and to arguments to zoom
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           from = 26700000, to = 26750000)
+# Use extend.left and extend.right to zoom
+#those arguments are relative to the currently displayed ranges,
+#and can be used to quickly extend the view on one or both ends of the plot.
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           extend.left = 0.5, extend.right = 1000000)
+# to drop the bounding borders of the exons and
+# to have a nice plot
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           extend.left = 0.5, extend.right = 1000000, col = NULL)
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
+
+library(BSgenome.Hsapiens.UCSC.hg19)
+
+strack <- SequenceTrack(Hsapiens, chromosome = chr)
+plotTracks(list(itrack, gtrack, atrack, grtrack,
+                strack), from = 26591822, to = 26591852, cex = 0.8)
+
+#For demonstration purposes we can create a simple DataTrack object from
+#randomly sampled data.
+set.seed(255)
+lim <- c(26700000, 26750000)
+coords <- sort(c(lim[1], sample(seq(from = lim[1],
+                                    to = lim[2]), 99), lim[2]))
+dat <- runif(100, min = -10, max = 10)
+head(dat)
+
+dtrack <- DataTrack(data = dat, start = coords[-length(coords)],
+                    end = coords[-1], chromosome = chr, genome = gen,
+                    name = "Uniform")
+##Plot data track
+plotTracks(list(itrack, gtrack, atrack, grtrack,
+                dtrack), from = lim[1], to = lim[2])
+
+#Change plot type to histogram
+plotTracks(list(itrack, gtrack, atrack, grtrack,dtrack),
+           from = lim[1], to = lim[2], type = "histogram")
+
+data(twoGroups)
+head(twoGroups)
+
+dTrack <- DataTrack(twoGroups, name = "asdf")
+plotTracks(dTrack)
+
+plotTracks(DataTrack(twoGroups, name = "p"), type="p")
+#lines plot
+plotTracks(DataTrack(twoGroups, name = "l"), type="l")
+#line and dot plot
+test =plotTracks(DataTrack(twoGroups, name = "b"), type="b")
+#lines plot of average
+
+class(test)
+
+plotTracks(DataTrack(twoGroups, name = "a"), type="a", groups = rep(c("control","treated"),each = 3))
+
+#histogram lines
+plotTracks(DataTrack(twoGroups, name = "h"), type="h")
+#histogram histogram (bar width equal to range with)
+plotTracks(DataTrack(twoGroups, name = "histogram"), type="histogram")
+#'polygon-type' plot relative to a baseline
+plotTracks(DataTrack(twoGroups, name = "polygon"), type="polygon")
+#box and whisker plot
+plotTracks(DataTrack(twoGroups, name = "boxplot"), type="boxplot")
+#false color image of the individual values
+
+alTrack <- AlignmentsTrack(system.file(package = "Gviz", "extdata",
+                                       "gapped.bam"), isPaired = TRUE)
+
+alTrack
+
+class(alTrack)
+
+afrom=2960000
+ato=3160000
+
+plotTracks(alTrack, from = afrom, to = ato, chromosome = "chr12")
+
+# Load necessary packages
+library(rtracklayer)
+library(GenomicRanges)
+
+# Import the bed file with rtracklayer
+bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib116_mm10_ds9_peaks.broadPeak")
+
+testbam = "~/cards/analysis/atac/mouse/bams/lib116_mm10_ds9.bam"
+mappedReads <- idxstatsBam(testbam)
+(TotalMapped <- sum(mappedReads[, "mapped"]))
+
+#forBigWig <- coverage(testbam, weight = (10^6)/TotalMapped)
+forBigWig <- coverage(testbam)
+
+export.bw(forBigWig, con = "/tmp/test.bw")
+
+
+bw_data <- import(con = "/tmp/test.bw")
+
+dt <- DataTrack(range = bw_data, name = "My Data")
+
+# Plot the track
+plotTracks(dt)
+
+
+# Print the GRanges object
+print(bw_data)
+
+
+
+plotTracks(DataTrack(forBigWig, name = "p"), type="l")
+
+
+# Load necessary packages
+
+library(Gviz)
+library(GenomicRanges)
+
+# Import the bigWig file with rtracklayer
+bw_data <- import(con = "/tmp/test.bw")
+
+# Create a GRanges object for the desired region
+region <- GRanges("chr2", IRanges(start = 137081456, end = 137116644))
+
+# Subset the data
+subset_data <- subsetByOverlaps(bw_data, region)
+
+# Create a DataTrack
+plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue"))
+
+library(grid)
+library(ggplotify)
+library(Gviz)
+
+set.seed(123)
+gr <- GRanges("chr1", IRanges(1:100, width=1),
+              score=rnorm(100))
+dTrack <- DataTrack(gr, type=c("a", "p"))
+aTrack <- GenomeAxisTrack(add35=TRUE, add53=TRUE, littleTicks=TRUE)
+# plotTracks(list(aTrack,dTrack),from=1,to=100)
+
+
+p1 <- as.grob(~plotTracks(list(aTrack,dTrack),from=1,to=100))
+p1 # gTree
+
+p2 <- as.grob(~plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")))
+
+library(cowplot)
+plot_grid(p1, p2)
+
+grid.newpage()
+grid.draw(p1, p2)
+
+# Import the bed file with rtracklayer
+bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib117_mm10_ds9_peaks.broadPeak")
+
+testbam = "~/cards/analysis/atac/mouse/bams/lib119_mm10_ds9.bam"
+mappedReads <- idxstatsBam(testbam)
+(TotalMapped <- sum(mappedReads[, "mapped"]))
+
+
+ir_data <- import(con = "/tmp/test.bw")
+sham_data= import(con = "/tmp/test_sham.bw")
+
+# Create a GRanges object for the desired region
+region <- GRanges("chr3", IRanges(start = from, end = to))
+
+# Subset the data
+subset_ir <- subsetByOverlaps(ir_data, region)
+subset_sham <- subsetByOverlaps(sham_data, region)
+
+# Create a DataTrack
+sham = DataTrack(range = subset_sham, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
+
+# Create a DataTrack
+ir = DataTrack(range = subset_ir, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
+
+
+plotTracks(list(sham, ir, knownGenes))
+
+test = AlignmentsTrack("~/cards/analysis/atac/mouse/bams/lib051_mm10_ds9.bam", isPaired = T)
+
+library(biomaRt)
+options(ucscChromosomeNames=FALSE)
+
+library(biomaRt)
+
+mart <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")  # Mouse genes
+gene <- "Jag1"
+
+# Fetch the gene start and end
+gene_info <- getBM(attributes = c('chromosome_name', 'start_position', 'end_position'),
+                   filters = 'external_gene_name',
+                   values = gene,
+                   mart = mart)
+
+# Use the gene start and end to plot
+knownGene <- UcscTrack(
+  genome = "mm10",
+  chromosome = paste0("chr", gene_info$chromosome_name[1]),  # assuming it is located on the first chromosome listed
+  track = "knownGene",
+  from = gene_info$start_position[1],  # assuming the gene is located at the first start_position listed
+  to = gene_info$end_position[1],  # assuming the gene is located at the first end_position listed
+  trackType = "GeneRegionTrack",
+  rstarts = "exonStarts",
+  rends = "exonEnds",
+  gene = "name",
+  symbol = "name"
+)
+
+plotTracks(knownGene)
+
+from <-137046267
+to <- 137151833
+knownGenes <- UcscTrack(genome = "mm9", chromosome = "chr2",
+                        track = "knownGene", from = from, to = to,
+                        trackType = "GeneRegionTrack",
+                        rstarts = "exonStarts", rends = "exonEnds",
+                        gene = "name", symbol = "name")
+plotTracks(knownGenes)
+
+
+from <- 137046267
+to <- 137151833
+knownGenes <- UcscTrack(genome = "mm10", chromosome = "chr3",
+                        table = "knownGene", from = from, to = to,
+                        trackType = "GeneRegionTrack",
+                        rstarts = "exonStarts", rends = "exonEnds",
+                        gene = "name", symbol = "name",
+                        transcript = "name", strand = "strand",
+                        fill = "#8282d2", name = "UCSC Genes")
+#+end_src
 while sleep 2;  do /usr/bin/emacs --batch -l org -eval '(org-babel-tangle-file "atac_seq.org")' && snakemake --configfile config/int_${HOSTNAME}.yaml --cores 14 --snakefile workflow/int_test.smk --rerun-incomplete; done
 
 #+begin_src bash
@@ -13943,6 +14202,192 @@ ggsave(plot, file = peak_ratio_plot)
 
 #+end_src
 *** Workflow 2
+**** DCA
+***** Make summary peaks file of union of all peaks
+#+begin_src snakemake
+
+rule peak_union:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peak_type}}",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build'],
+                                 peak_type = atac_map[wildcards.atac_set]['peak_type']),
+    log: f"{log_dir}/{{atac_set}}_peak_union.bed",
+    output: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+    params:
+        script = f"{atac_script_dir}/peak_union.R",
+    shell:
+        """
+        Rscript {params.script} "{input}" {output} >& {log}
+        """
+#+end_src
+- [[file:./scripts/peak_union.R][Rscript]]
+  #+begin_src R :tangle ./scripts/peak_union.R
+#!/usr/bin/env Rscript
+
+########################################
+###   Make Atac Peak Union Bedfile   ###
+########################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+macs2_str = args[1]
+union_bed = args[2]
+
+# Load required packages
+library(BiocGenerics)
+library(ChIPpeakAnno)
+library(rtracklayer)
+
+macs2 = unlist(strsplit(macs2_str, " "))
+names(macs2) = substr(gsub("^.*lib","lib",macs2),1,6)
+
+granges = lapply(macs2, toGRanges, format = "MACS2.broad")
+
+all.peaks = Reduce(union, granges)
+
+# export as a BED file
+rtracklayer::export.bed(all.peaks, con = union_bed)
+
+#+end_src
+- Peak joins
+  #+begin_src R
+library(csaw)
+library(rtracklayer)
+
+
+macs2 = list.files("~/cards/analysis/atac/macs2/", pattern = "broad", full.names = T)
+
+names = substr(
+  gsub("^.*lib","lib",list.files("~/cards/analysis/atac/macs2/", pattern = "broad", full.names = F)),1,6)
+
+names(bams) = names
+
+make_grange = function(in_bam){
+  tbl <- read.table(in_bam)
+  colnames(tbl) = c("chrom", "start", "end")
+  peaks = GRanges(tbl)
+  return(peaks)
+}
+
+granges = lapply(macs2, make_grange)
+
+all.peaks = Reduce(union, granges)
+
+# export as a BED file
+export.bed(all.peaks, "~/cards/analysis/atac/peaks/human_union.bed")
+#+end_src
+***** Make per-peak counts in BAMscale
+#+begin_src snakemake
+rule bamscale:
+    input:
+        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bed = lambda wildcards: f"{atac_dir}/beds/{{atac_set}}_union.bed",
+    log: f"{log_dir}/{{atac_set}}_bamscale.log",
+    params:
+        out_dir = f"{atac_dir}/bamscale/{{atac_set}}",
+        tmp_dir = f"/tmp/{{atac_set}}",
+    output:
+        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv"
+    shell:
+        """
+        rm -rf {params.tmp_dir}
+        mkdir -p {params.tmp_dir}
+        cp {input.bams} {input.bais} {params.tmp_dir}
+
+        # set the directory containing the input BAM files
+        bam_dir={params.tmp_dir}
+
+        # get a list of BAM files in the directory
+        bam_files=($(ls "$bam_dir"/*.bam))
+
+        # build the BAMscale command with the --bam flags
+        bams=""
+        for bam in "${{bam_files[@]}}"
+        do
+        bams+="--bam $bam "
+        done
+
+        BAMscale cov --bed {input.bed} \
+        --prefix {wildcards.atac_set} --outdir {params.out_dir} --threads 16 \
+        $bams
+        rm -rf {params.tmp_dir}
+        """
+
+#+end_src
+
+***** Make RUV-adjusted ATAC-seq counts
+#+begin_src snakemake
+rule atac_ruv:
+    input:
+        counts = f"{atac_dir}/bamscale/{{atac_set}}/{{atac_set}}.raw_coverages.tsv",
+        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
+    output: f"{atac_dir}/ruv/{{atac_set}}_ruvk_{{ruv_k}}.rds",
+    params:
+        group = lambda wildcards: atac_map[wildcards.atac_set]['group'],
+        ruv_k = lambda wildcards: wildcards.ruv_k,
+        script = f"{atac_script_dir}/atac_ruv.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{params.group}" {params.ruv_k} {output} >& {log}
+        """
+
+#+end_src
+
+#+begin_src R
+#!/usr/bin/env Rscript
+
+##############################
+###   Human Dca With Rvu   ###
+##############################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+counts_tsv = args[1]
+libraries_full_rds = args[2]
+group_var = args[3]
+rvu_k = args[4]
+ruv_counts_rds = args[5]
+
+# Load required packages, data, and functions
+library(RUVSeq)
+library(tidyverse)
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+
+# Setup data objects
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(group_var) %>% droplevels())
+set = newSeqExpressionSet(mat,
+                          phenoData = data.frame(group, row.names = colnames(mat)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
+saveRDS(adjust, ruv_counts_rds)
+#+end_src
+***** Make ATAC-seq DCA design
+*** Development
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:END:
+
 **** Downsample
 #+begin_src snakemake
 rule downsample_bam:
@@ -14062,83 +14507,6 @@ macs2 callpeak --treatment $inbam \
 #+end_src
 - Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
 
-***** Make summary peaks file of union of all peaks
-#+begin_src snakemake
-
-rule peak_union:
-    input:
-        lambda wildcards: expand(f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_peaks.broadPeak",
-                                 species = wildcards.species,
-                                 build = wildcards.build,
-                                 library = joins[wildcards.join])
-    log: f"{log_dir}/{{species}}_{{build}}_{{join}}_peak_union.bed",
-    output: f"{atac_dir}/{{species}}/{{join}}_{{build}}_union.bed",
-    params:
-        in_dir = f"{atac_dir}/{{species}}",
-        script = f"{atac_script_dir}/peak_union.R",
-    shell:
-        """
-        Rscript {params.script} \
-        "{input}" \
-        {output} >& {log}
-        """
-#+end_src
-- [[file:./scripts/peak_union.R][Rscript]]
-  #+begin_src R :tangle ./scripts/peak_union.R
-#!/usr/bin/env Rscript
-
-########################################
-###   Make Atac Peak Union Bedfile   ###
-########################################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-macs2_str = args[1]
-union_bed = args[2]
-
-# Load required packages
-library(BiocGenerics)
-library(ChIPpeakAnno)
-library(rtracklayer)
-
-macs2 = unlist(strsplit(macs2_str, " "))
-names(macs2) = substr(gsub("^.*lib","lib",macs2),1,6)
-
-granges = lapply(macs2, toGRanges, format = "MACS2.broad")
-
-all.peaks = Reduce(union, granges)
-
-# export as a BED file
-rtracklayer::export.bed(all.peaks, con = union_bed)
-
-#+end_src
-- Peak joins
-  #+begin_src R
-library(csaw)
-library(rtracklayer)
-
-
-macs2 = list.files("~/cards/analysis/atac/macs2/", pattern = "broad", full.names = T)
-
-names = substr(
-  gsub("^.*lib","lib",list.files("~/cards/analysis/atac/macs2/", pattern = "broad", full.names = F)),1,6)
-
-names(bams) = names
-
-make_grange = function(in_bam){
-  tbl <- read.table(in_bam)
-  colnames(tbl) = c("chrom", "start", "end")
-  peaks = GRanges(tbl)
-  return(peaks)
-}
-
-granges = lapply(macs2, make_grange)
-
-all.peaks = Reduce(union, granges)
-
-# export as a BED file
-export.bed(all.peaks, "~/cards/analysis/atac/peaks/human_union.bed")
-#+end_src
 ***** Peak counting with BAMScale
 ****** Mouse
 #+begin_src snakemake
@@ -14763,25 +15131,25 @@ zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
 #+end_src
 - Make reference chromosome bed file
     https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-    | chr1  | 1 | 195471971 |
-    | chr2  | 1 | 182113224 |
-    | chr3  | 1 | 160039680 |
-    | chr4  | 1 | 156508116 |
-    | chr5  | 1 | 151834684 |
-    | chr6  | 1 | 149736546 |
-    | chr7  | 1 | 145441459 |
-    | chr10 | 1 | 130694993 |
-    | chr8  | 1 | 129401213 |
-    | chr14 | 1 | 124902244 |
-    | chr9  | 1 | 124595110 |
-    | chr11 | 1 | 122082543 |
-    | chr13 | 1 | 120421639 |
-    | chr12 | 1 | 120129022 |
-    | chr15 | 1 | 104043685 |
-    | chr16 | 1 |  98207768 |
-    | chr17 | 1 |  94987271 |
-    | chr18 | 1 |  90702639 |
-    | chr19 | 1 |  61431566 |
+    | chr1  |  1 |  195471971 |
+    | chr2  |  1 |  182113224 |
+    | chr3  |  1 |  160039680 |
+    | chr4  |  1 |  156508116 |
+    | chr5  |  1 |  151834684 |
+    | chr6  |  1 |  149736546 |
+    | chr7  |  1 |  145441459 |
+    | chr10  |  1 |  130694993 |
+    | chr8  |  1 |  129401213 |
+    | chr14  |  1 |  124902244 |
+    | chr9  |  1 |  124595110 |
+    | chr11  |  1 |  122082543 |
+    | chr13  |  1 |  120421639 |
+    | chr12  |  1 |  120129022 |
+    | chr15  |  1 |  104043685 |
+    | chr16  |  1 |  98207768 |
+    | chr17  |  1 |  94987271 |
+    | chr18  |  1 |  90702639 |
+    | chr19  |  1 |  61431566 |
   - Get sample fastqs
     #+begin_src bash
   zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
