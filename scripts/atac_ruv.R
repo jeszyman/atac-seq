@@ -11,7 +11,7 @@ libraries_full_rds = args[2]
 design_rds = args[3]
 ruv_k = args[4]
 ruv_counts_rds = args[5]
-fit_rds = args[5]
+fit_rds = args[6]
 
 # Load required packages, data, and functions
 library(RUVSeq)
@@ -44,6 +44,7 @@ adjust_counts = normCounts(adjust)
 
 saveRDS(adjust_counts, ruv_counts_rds)
 
+adjust_counts = adjust_counts + 1
 dge = DGEList(counts = adjust_counts)
 dge = calcNormFactors(dge)
 dge = estimateGLMCommonDisp(dge, design)

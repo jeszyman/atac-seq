@@ -58,13 +58,13 @@ rule align_bt2:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
         index = f"{ref_dir}/{{build}}_bowtie2/{{build}}.1.bt2",
-    log: f"{log_dir}/{{library}}_{{build}}_{{species}}_align_bt2.log",
+    log: f"{log_dir}/{{library}}_{{build}}_align_bt2.log",
     params:
         prefix = f"{ref_dir}/{{build}}_bowtie2/{{build}}",
         script = atac_script_dir + "/align_bt2.sh",
         threads = 4,
     output:
-        f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
+        f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
     resources:
         align_load = 50,
     shell:
@@ -79,9 +79,9 @@ rule align_bt2:
 
 rule atac_dedup:
     conda: "atac",
-    input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_atac_dedup.log",
-    output: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_dedup.bam",
+    input: f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_atac_dedup.log",
+    output: f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
     params:
         script = f"{atac_script_dir}/dedup.sh",
         threads = threads,
@@ -110,10 +110,12 @@ rule make_atac_keep_bed:
 rule filter_atac_bams:
     conda: "atac",
     input:
-        bam = f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_dedup.bam",
+        bam = f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
         keep = f"{ref_dir}/{{build}}_atac_keep.bed",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_filter_atac_bams.log",
-    output: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_filter_atac_bams.log",
+    output:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
     params:
         script = f"{atac_script_dir}/filter_atac_bams.sh",
         threads = threads
@@ -169,8 +171,12 @@ rule samtools_stats:
 
 rule atacseq_qc:
     input:
-        duplicated_bams = expand(f"{atac_bam_dir}/{{library}}_raw.bam", library = RAW_ATAC_LIBS),
-        processed_bams = expand(f"{atac_bam_dir}/{{library}}_dedup.bam", library = RAW_ATAC_LIBS),
+        dup_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_raw.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
+        proc_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_dedup.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
         txdb = f"{{build}}_ensembl_txdb",
     log: f"{log_dir}/{{build}}_atacseq_qc.log",
     output: f"{qc_dir}/{{build}}_atac_qc.rdata",
@@ -179,23 +185,24 @@ rule atacseq_qc:
     shell:
         """
         Rscript {params.script} \
-        "{input.duplicated_bams}" \
-        "{input.processed_bams}" \
+        "{input.dup_bams}" \
+        "{input.proc_bams}" \
         {input.txdb} \
         {output} > {log} 2>&1
         """
 
-rule mouse_atac_multiqc:
-    benchmark: f"{bench_dir}/atac_multiqc.benchmark",
+rule atac_multiqc:
     input:
-        expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
-               library = RAW_MOUSE_ATAC_LIBS,
-               processing = ["raw", "proc"],
-               read = ["R1","R2"]),
-        expand(f"{atac_dir}/mouse/qc/{{library}}_{{processing}}_samstats.txt",
-               library = RAW_MOUSE_ATAC_LIBS,
-               processing = ["raw", "filt"],
-               stat = ["samstats", "flagstats"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "proc"],
+                                 read = ["R1","R2"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_samstats.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_flagstat.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
     log: f"{log_dir}/atac_multiqc.log",
     output: f"{atac_dir}/mouse/qc/mouse_atac_multiqc.html",
     params:
@@ -268,6 +275,48 @@ rule atac_qc_table:
     params:
         script = f"{atac_script_dir}/atac_qc_table.R",
 
+rule macs2_broad:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_peaks.broadPeak",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
+    params:
+        gsize = lambda wildcards: get_gsize(wildcards.build),
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2_broad.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+
+rule macs2_narrow:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_macs2_narrow.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+    params:
+        gsize = lambda wildcards: get_gsize(wildcards.build),
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2_narrow.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+
 rule make_dca_design:
     input: libraries_full_rds,
     log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
@@ -281,6 +330,35 @@ rule make_dca_design:
         Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
         {output} \
         > {log} 2>&1
+        """
+
+rule peak_filtering:
+    input:
+        chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+                                         library = atac_map[wildcards.atac_set]['libs'],
+                                         build = atac_map[wildcards.atac_set]['build']),
+    log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
+    output:
+        all = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
+        clust = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
+        max = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
+        keep = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+    params:
+        corces_min = 5,
+        lib_peaks_min = 1000,
+        script = f"{cardiac_script_dir}/peak_filtering.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.all} \
+        {output.clust} \
+        {output.max} \
+        {output.keep} \
+        {params.corces_min} \
+        {params.lib_peaks_min} > {log} 2>&1
         """
 
 rule atac_peak_union:
@@ -306,7 +384,8 @@ rule bamscale:
         bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
-        bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+        bed= f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        #bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
         out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
@@ -345,7 +424,7 @@ rule atac_ruv:
         counts = f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
         datmod = f"{datamodel_dir}/lists/libraries_full.rds",
         design = f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
+    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
     output:
         counts = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
         fit = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
@@ -355,4 +434,22 @@ rule atac_ruv:
     shell:
         """
         Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
+        """
+
+rule atac_edger_dca:
+    input:
+        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
+        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
+    log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
+    output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
+    params:
+        cohorts_str = lambda wildcards: dca_map[wildcards.contrast]['cohorts_str'],
+        script = f"{atac_script_dir}/atac_edger_dca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.design} \
+        {input.fit} \
+        "{params.cohorts_str}" \
+        {output} > {log} 2>&1
         """

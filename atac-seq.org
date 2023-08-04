@@ -71,9 +71,9 @@ cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-
 
 #+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library  | path  | group  |
-  |---+---+---|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz  | ctrl  |
+  | library | path                                                                                         | group |
+  |---------+----------------------------------------------------------------------------------------------+-------|
+  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
 - Human reference fasta
   #+begin_src bash
 source config/bash_src
@@ -13662,13 +13662,13 @@ rule align_bt2:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
         index = f"{ref_dir}/{{build}}_bowtie2/{{build}}.1.bt2",
-    log: f"{log_dir}/{{library}}_{{build}}_{{species}}_align_bt2.log",
+    log: f"{log_dir}/{{library}}_{{build}}_align_bt2.log",
     params:
         prefix = f"{ref_dir}/{{build}}_bowtie2/{{build}}",
         script = atac_script_dir + "/align_bt2.sh",
         threads = 4,
     output:
-        f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
+        f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
     resources:
         align_load = 50,
     shell:
@@ -13714,9 +13714,9 @@ bt2_align $input_r1 $input_r2 $params_prefix $params_threads $output_bam
 #+begin_src snakemake
 rule atac_dedup:
     conda: "atac",
-    input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_raw.bam",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_atac_dedup.log",
-    output: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_dedup.bam",
+    input: f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_atac_dedup.log",
+    output: f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
     params:
         script = f"{atac_script_dir}/dedup.sh",
         threads = threads,
@@ -13779,10 +13779,12 @@ cat $hg38_chrome_sizes |
 rule filter_atac_bams:
     conda: "atac",
     input:
-        bam = f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_dedup.bam",
+        bam = f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
         keep = f"{ref_dir}/{{build}}_atac_keep.bed",
-    log: f"{log_dir}/{{library}}_{{species}}_{{build}}_filter_atac_bams.log",
-    output: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_filter_atac_bams.log",
+    output:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
     params:
         script = f"{atac_script_dir}/filter_atac_bams.sh",
         threads = threads
@@ -13889,8 +13891,12 @@ samtools flagstat -@ $threads $in_bam > $out_flag
   #+begin_src snakemake
 rule atacseq_qc:
     input:
-        duplicated_bams = expand(f"{atac_bam_dir}/{{library}}_raw.bam", library = RAW_ATAC_LIBS),
-        processed_bams = expand(f"{atac_bam_dir}/{{library}}_dedup.bam", library = RAW_ATAC_LIBS),
+        dup_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_raw.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
+        proc_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_dedup.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
         txdb = f"{{build}}_ensembl_txdb",
     log: f"{log_dir}/{{build}}_atacseq_qc.log",
     output: f"{qc_dir}/{{build}}_atac_qc.rdata",
@@ -13899,8 +13905,8 @@ rule atacseq_qc:
     shell:
         """
         Rscript {params.script} \
-        "{input.duplicated_bams}" \
-        "{input.processed_bams}" \
+        "{input.dup_bams}" \
+        "{input.proc_bams}" \
         {input.txdb} \
         {output} > {log} 2>&1
         """
@@ -13967,20 +13973,22 @@ atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb =
 
 save(atac_qc_out, file = atac_qc_file)
 #+end_src
+
 ***** MultiQC
 - Snakemake
   #+begin_src snakemake
-rule mouse_atac_multiqc:
-    benchmark: f"{bench_dir}/atac_multiqc.benchmark",
+rule atac_multiqc:
     input:
-        expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
-               library = RAW_MOUSE_ATAC_LIBS,
-               processing = ["raw", "proc"],
-               read = ["R1","R2"]),
-        expand(f"{atac_dir}/mouse/qc/{{library}}_{{processing}}_samstats.txt",
-               library = RAW_MOUSE_ATAC_LIBS,
-               processing = ["raw", "filt"],
-               stat = ["samstats", "flagstats"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "proc"],
+                                 read = ["R1","R2"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_samstats.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
+        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_flagstat.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
     log: f"{log_dir}/atac_multiqc.log",
     output: f"{atac_dir}/mouse/qc/mouse_atac_multiqc.html",
     params:
@@ -14201,6 +14209,95 @@ ggsave(plot, file = peak_ratio_plot)
 
 
 #+end_src
+**** Peak calling
+***** MACS2 broad peak calling
+#+begin_src snakemake
+rule macs2_broad:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_peaks.broadPeak",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
+    params:
+        gsize = lambda wildcards: get_gsize(wildcards.build),
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2_broad.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+#+end_src
+#+begin_src bash :tangle ./scripts/macs2_broad.sh
+
+inbam=$1
+name=$2
+gsize=$3
+outdir=$4
+
+macs2 callpeak -t $inbam -f BAMPE -n $name -g $gsize --broad --broad-cutoff 0.05 --keep-dup all --outdir $outdir
+
+#+end_src
+
+***** MACS2 narrow peak calling
+
+#+begin_src snakemake
+rule macs2_narrow:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_macs2_narrow.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+    params:
+        gsize = lambda wildcards: get_gsize(wildcards.build),
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2_narrow.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/macs2_narrow.sh
+#!/usr/bin/env bash
+set -o errexit   # abort on nonzero exitstatus
+set -o nounset   # abort on unbound variable
+set -o pipefail  # don't hide errors within pipes
+
+inbam=$1
+name=$2
+gsize=$3
+outdir=$4
+
+macs2 callpeak --treatment $inbam \
+      --bdg \
+      --call-summits \
+      --extsize 150 \
+      --format BAMPE \
+      --gsize $gsize \
+      --keep-dup all \
+      --name ${name}_multi \
+      --nolambda \
+      --outdir $outdir \
+      -p 0.01 \
+      --shift -75 \
+      --SPMR \
+      --nomodel
+#+end_src
+
+- Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
+
 *** Workflow 2
 **** Differential chromatin accessibility
 ***** Create an experimental design
@@ -14271,6 +14368,120 @@ saveRDS(object = design,
         file = design_rds)
 #+end_src
 
+***** Peak filtering
+#+begin_src snakemake
+rule peak_filtering:
+    input:
+        chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+                                         library = atac_map[wildcards.atac_set]['libs'],
+                                         build = atac_map[wildcards.atac_set]['build']),
+    log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
+    output:
+        all = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
+        clust = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
+        max = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
+        keep = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+    params:
+        corces_min = 5,
+        lib_peaks_min = 1000,
+        script = f"{cardiac_script_dir}/peak_filtering.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output.all} \
+        {output.clust} \
+        {output.max} \
+        {output.keep} \
+        {params.corces_min} \
+        {params.lib_peaks_min} > {log} 2>&1
+        """
+
+#+end_src
+
+- [[file:./scripts/.R][Rscript]]
+  #+begin_src R :tangle ./scripts/peak_filtering.R
+## peak_file_str = "~/cards/analysis/atac/mouse/peaks/lib051_mm10_ds9_multi_peaks.narrowPeak ~/cards/analysis/atac/mouse/peaks/lib122_mm10_ds9_multi_peaks.narrowPeak"
+## libraries_full_rds = "~/cards/data-model/libraries_full.rds"
+## corces_min = 5
+## all_peaks_bed = "/tmp/test.bed"
+## cluster_bed = "/tmp/clust.bed"
+## max_bed = "/tmp/max.bed"
+
+
+#!/usr/bin/env Rscript
+
+################################
+###   Macs2 Peak Filtering   ###
+################################
+
+args = commandArgs(trailingOnly = TRUE)
+chrs_tsv = args[1]
+libraries_full_rds = args[2]
+peak_file_str = args[3]
+all_peaks_bed = args[4]
+cluster_bed = args[5]
+max_bed = args[6]
+keep_bed = args[7]
+corces_min = args[8]
+lib_peaks_min = args[9]
+
+
+# Load required packages and data
+library(tidyverse)
+chrs = read_tsv(chrs_tsv, col_names = c("chr"))
+libraries_full = readRDS(libraries_full_rds)
+peak_files = unlist(strsplit(peak_file_str, " "))
+
+# Create single peak file by library
+
+ingest_macs2 = function(peak){
+  macs2peak = read_tsv(peak,
+                        col_names = c("chr","start","end","peak","score","strand","signal","neg_l10_pval","neg_l10_qval", "dsummit"))
+}
+
+peak_list = lapply(peak_files, ingest_macs2)
+names(peak_list) = substr(gsub("^.*lib", "lib", peak_files), 1, 6)
+peaks = bind_rows(peak_list, .id = "library")
+peaks = peaks %>% left_join(libraries_full, by = "library")
+
+#
+
+peaks %>%
+  mutate(summit = start + dsummit) %>%
+  mutate(start = summit - 250) %>%
+  mutate(end = summit + 250) %>%
+  # Remove sex chromosome and mitochondrial peaks here
+  filter(chr %in% chrs) %>%
+  group_by(library) %>%
+  mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
+  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak) %>%
+  write_tsv(all_peaks_bed, col_names = F)
+
+system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", cluster_bed))
+
+clust = read_tsv(cluster_bed, col_names = c("chr","start","end","library","corces","peak","clust"))
+
+max =
+  clust %>%
+  group_by(clust) %>%
+  filter(n() > 2) %>%
+  slice_max(corces) %>%
+  write_tsv(max_bed, col_names = F)
+
+
+keep_libs =
+  max %>%
+  group_by(library) %>%
+  summarize(sum = n()) %>%
+  filter(sum > lib_peaks_min) %>%
+  pull(library)
+
+keep = max %>% filter(library %in% keep_libs) %>% write_tsv(keep_bed, col_names = F)
+
+#+end_src
 ***** Make summary peaks file of union of all peaks
 #+begin_src snakemake
 rule atac_peak_union:
@@ -14354,7 +14565,8 @@ rule bamscale:
         bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
-        bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+        bed= f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        #bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
         out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
@@ -14397,7 +14609,7 @@ rule atac_ruv:
         counts = f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
         datmod = f"{datamodel_dir}/lists/libraries_full.rds",
         design = f"{atac_dir}/{{atac_set}}/{{atac_set}}_design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk_{{ruv_k}}.log",
+    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
     output:
         counts = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
         fit = f"{atac_dir}/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
@@ -14424,7 +14636,7 @@ libraries_full_rds = args[2]
 design_rds = args[3]
 ruv_k = args[4]
 ruv_counts_rds = args[5]
-fit_rds = args[5]
+fit_rds = args[6]
 
 # Load required packages, data, and functions
 library(RUVSeq)
@@ -14474,7 +14686,7 @@ rule atac_edger_dca:
         design = lambda wildcards: dca_map[wildcards.contrast]['design'],
         fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
     log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
-    output: f"{atac_dir}/{{contrast}}/{{contrast}}.tsv",
+    output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
     params:
         cohorts_str = lambda wildcards: dca_map[wildcards.contrast]['cohorts_str'],
         script = f"{atac_script_dir}/atac_edger_dca.R",
@@ -14483,7 +14695,6 @@ rule atac_edger_dca:
         Rscript {params.script} \
         {input.design} \
         {input.fit} \
-        {params.annotation_tsv} \
         "{params.cohorts_str}" \
         {output} > {log} 2>&1
         """
@@ -14497,9 +14708,8 @@ rule atac_edger_dca:
 args = commandArgs(trailingOnly = TRUE)
 design_rds = args[1]
 fit_rds = args[2]
-annotation_tsv = args[3]
-cohorts_str = args[4]
-res_tsv = args[5]
+cohorts_str = args[3]
+res_tsv = args[4]
 
 # Load required packages, data, and functions
 library(edgeR)
@@ -14507,23 +14717,18 @@ library(tidyverse)
 
 design = readRDS(design_rds)
 fit = readRDS(fit_rds)
-annotation = read_tsv(annotation_tsv)
 
 cohorts_vec = strsplit(cohorts_str, " ")[[1]]
 contrast_string <- paste(cohorts_vec[[1]], "-", cohorts_vec[[2]])
 
 contrast <- makeContrasts(eval(parse(text = contrast_string)), levels=design)
 
-qlf = glmQLFTest(fit, contrast = contrast)
+lrt = glmLRT(fit, contrast = contrast)
 
 res =
-  as.data.frame(topTags(qlf, n = Inf)) %>%
+  as.data.frame(topTags(lrt, n = Inf)) %>%
   rownames_to_column(var = "ensembl_gene_id") %>%
-  as_tibble() %>%
-  left_join(annotation, by = "ensembl_gene_id") %>%
-  mutate(sign = sign(logFC)) %>%
-  mutate(score = sign * -log10(PValue)) %>%
-  mutate(rank = rank(-score, ties.method = "random"))
+  as_tibble()
 
 write_tsv(res, file = res_tsv)
 
@@ -14534,7 +14739,6 @@ write_tsv(res, file = res_tsv)
 :PROPERTIES:
 :header-args:snakemake: :tangle no
 :END:
-**** paralleize copy in rule bamscale:
 **** Downsample
 #+begin_src snakemake
 rule downsample_bam:
@@ -14947,96 +15151,6 @@ final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
 final <- distinct(final, coordinate, .keep_all = TRUE)
 write_tsv(final, file = out_tsv)
 #+end_src
-**** Differential chromatin accessibility
-***** Make ensembl txdb
-- Snakemake
-  #+begin_src snakemake
-
-rule make_ensembl_txdb:
-    input: f"{ref_dir}/{{build}}.gtf.gz",
-    output: f"{ref_dir}/{{build}}_ensembl_txdb",
-    params: script = f"{atac_script_dir}/make_ensembl_txdb.R",
-    shell:
-        """
-        Rscript {params.script} {input}
-        cp /tmp/db {output}
-        """
-#+end_src
-- Rscript
-  #+begin_src R :tangle ./scripts/make_ensembl_txdb.R
-#!/usr/bin/env Rscript
-
-#######################################
-###   Make A Txdb From A Gtf File   ###
-#######################################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-ensembl_gtf = args[1]
-
-library(GenomicFeatures)
-
-txdb = makeTxDbFromGFF(ensembl_gtf)
-
-saveDb(txdb, file = "/tmp/db")
-
-#+end_src
-***** BAMscale
-#+begin_src snakemake
-rule bamscale:
-    input:
-        bams = lambda wildcards: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam",
-                                        species=wildcards.species,
-                                        build=wildcards.build,
-                                        library=joins[wildcards.join]),
-        bais = lambda wildcards: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam.bai",
-                                        species=wildcards.species,
-                                        build=wildcards.build,
-                                        library=joins[wildcards.join]),
-        bed = f"{atac_dir}/{{species}}/{{join}}_{{build}}_union.bed",
-    log: f"{log_dir}/{{build}}_{{species}}_{{join}}_bamscale.log",
-    params:
-        out_dir = f"{atac_dir}/{{species}}/dca",
-        tmp_dir = lambda wildcards: f"/tmp/{wildcards.join}",
-    output:
-        f"{atac_dir}/{{species}}/dca/{{join}}_{{species}}_{{build}}.FPKM_normalized_coverages.tsv"
-    shell:
-        """
-        rm -rf {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        cp {input.bams} {input.bais} {params.tmp_dir}
-
-        # set the directory containing the input BAM files
-        bam_dir={params.tmp_dir}
-
-        # get a list of BAM files in the directory
-        bam_files=($(ls "$bam_dir"/*.bam))
-
-        # build the BAMscale command with the --bam flags
-        bams=""
-        for bam in "${{bam_files[@]}}"
-        do
-        bams+="--bam $bam "
-        done
-
-        BAMscale cov --bed {input.bed} \
-        --prefix {wildcards.join}_{wildcards.species}_{wildcards.build} --outdir {params.out_dir} --threads 16 \
-        $bams
-        rm -rf {params.tmp_dir}
-        """
-
-#+end_src
-
-***** Reference
-:PROPERTIES:
-:header-args: :tangle no
-:END:
-- subset DESeq2 object https://support.bioconductor.org/p/79746/
-- deseq2 model design
-  - https://support.bioconductor.org/p/101002/
-  - for interactions https://support.bioconductor.org/p/65676/#66860)
-- time course DE in DESeq2 https://master.bioconductor.org/packages/release/workflows/vignettes/rnaseqGene/inst/doc/rnaseqGene.html#time-course-experiments
-
 **** INPROCESS Motif enrichment with Homer
 ***** Prepare DCA bed files
 
@@ -15252,6 +15366,49 @@ rule homer_denovo_tsv:
                 # Write columns to the TSV, excluding the SVG column (the second one, index 1)
                 writer.writerow([col.text for i, col in enumerate(cols) if i != 1])
 #+end_src
+**** Reference
+:PROPERTIES:
+:header-args: :tangle no
+:END:
+- subset DESeq2 object https://support.bioconductor.org/p/79746/
+- deseq2 model design
+  - https://support.bioconductor.org/p/101002/
+  - for interactions https://support.bioconductor.org/p/65676/#66860)
+- time course DE in DESeq2 https://master.bioconductor.org/packages/release/workflows/vignettes/rnaseqGene/inst/doc/rnaseqGene.html#time-course-experiments
+
+**** Make ensembl txdb
+- Snakemake
+  #+begin_src snakemake
+
+rule make_ensembl_txdb:
+    input: f"{ref_dir}/{{build}}.gtf.gz",
+    output: f"{ref_dir}/{{build}}_ensembl_txdb",
+    params: script = f"{atac_script_dir}/make_ensembl_txdb.R",
+    shell:
+        """
+        Rscript {params.script} {input}
+        cp /tmp/db {output}
+        """
+#+end_src
+- Rscript
+  #+begin_src R :tangle ./scripts/make_ensembl_txdb.R
+#!/usr/bin/env Rscript
+
+#######################################
+###   Make A Txdb From A Gtf File   ###
+#######################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+ensembl_gtf = args[1]
+
+library(GenomicFeatures)
+
+txdb = makeTxDbFromGFF(ensembl_gtf)
+
+saveDb(txdb, file = "/tmp/db")
+
+#+end_src
 *** Reference
 - https://github.com/Zhang-lab/ATACseq_benchmarking/blob/master/simulated_ATAC_tests_limma.R
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
@@ -15278,25 +15435,25 @@ zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
 #+end_src
 - Make reference chromosome bed file
     https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-    | chr1  |  1 |  195471971 |
-    | chr2  |  1 |  182113224 |
-    | chr3  |  1 |  160039680 |
-    | chr4  |  1 |  156508116 |
-    | chr5  |  1 |  151834684 |
-    | chr6  |  1 |  149736546 |
-    | chr7  |  1 |  145441459 |
-    | chr10  |  1 |  130694993 |
-    | chr8  |  1 |  129401213 |
-    | chr14  |  1 |  124902244 |
-    | chr9  |  1 |  124595110 |
-    | chr11  |  1 |  122082543 |
-    | chr13  |  1 |  120421639 |
-    | chr12  |  1 |  120129022 |
-    | chr15  |  1 |  104043685 |
-    | chr16  |  1 |  98207768 |
-    | chr17  |  1 |  94987271 |
-    | chr18  |  1 |  90702639 |
-    | chr19  |  1 |  61431566 |
+    | chr1  | 1 | 195471971 |
+    | chr2  | 1 | 182113224 |
+    | chr3  | 1 | 160039680 |
+    | chr4  | 1 | 156508116 |
+    | chr5  | 1 | 151834684 |
+    | chr6  | 1 | 149736546 |
+    | chr7  | 1 | 145441459 |
+    | chr10 | 1 | 130694993 |
+    | chr8  | 1 | 129401213 |
+    | chr14 | 1 | 124902244 |
+    | chr9  | 1 | 124595110 |
+    | chr11 | 1 | 122082543 |
+    | chr13 | 1 | 120421639 |
+    | chr12 | 1 | 120129022 |
+    | chr15 | 1 | 104043685 |
+    | chr16 | 1 |  98207768 |
+    | chr17 | 1 |  94987271 |
+    | chr18 | 1 |  90702639 |
+    | chr19 | 1 |  61431566 |
   - Get sample fastqs
     #+begin_src bash
   zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
