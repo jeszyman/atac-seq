@@ -23,6 +23,7 @@ lib_peaks_min = args[6]
 
 # Load required packages and data
 library(tidyverse)
+
 chrs = read_tsv(chrs_tsv, col_names = c("chr")) %>% pull(chr)
 libraries_full = readRDS(libraries_full_rds)
 peak_files = unlist(strsplit(peak_file_str, " "))
