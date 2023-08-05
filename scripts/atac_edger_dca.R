@@ -23,7 +23,7 @@ lrt = glmLRT(fit, contrast = contrast)
 
 res =
   as.data.frame(topTags(lrt, n = Inf)) %>%
-  rownames_to_column(var = "ensembl_gene_id") %>%
+  rownames_to_column(var = "coordinate") %>%
   as_tibble()
 
 write_tsv(res, file = res_tsv)

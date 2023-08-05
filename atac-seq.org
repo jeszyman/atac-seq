@@ -13719,7 +13719,7 @@ rule atac_dedup:
     output: f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
     params:
         script = f"{atac_script_dir}/dedup.sh",
-        threads = threads,
+        threads = 4,
     shell:
         """
         {params.script} \
@@ -13787,7 +13787,7 @@ rule filter_atac_bams:
         f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
     params:
         script = f"{atac_script_dir}/filter_atac_bams.sh",
-        threads = threads
+        threads = 4,
     shell:
         """
         {params.script} \
@@ -14218,7 +14218,7 @@ rule macs2_broad:
     log:
         f"{log_dir}/{{library}}_{{build}}_peaks.broadPeak",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_filt_peaks.broadPeak",
     params:
         gsize = lambda wildcards: get_gsize(wildcards.build),
         outdir = f"{atac_dir}/peaks",
@@ -14253,7 +14253,7 @@ rule macs2_narrow:
     log:
         f"{log_dir}/{{library}}_{{build}}_macs2_narrow.log",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_filt_multi_peaks.narrowPeak",
     params:
         gsize = lambda wildcards: get_gsize(wildcards.build),
         outdir = f"{atac_dir}/peaks",
@@ -14265,7 +14265,7 @@ rule macs2_narrow:
         {input} \
         $name \
         {params.gsize} \
-        {params.outdir} &> {log}
+        {params.outdir} &> {log} && [[ -s {output} ]]
         """
 #+end_src
 
@@ -14368,41 +14368,40 @@ saveRDS(object = design,
         file = design_rds)
 #+end_src
 
-***** Peak filtering
+***** TODO Peak filtering
 #+begin_src snakemake
 rule peak_filtering:
     input:
         chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
         libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_filt_multi_peaks.narrowPeak",
                                          library = atac_map[wildcards.atac_set]['libs'],
                                          build = atac_map[wildcards.atac_set]['build']),
     log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
     output:
-        all = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
-        clust = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
-        max = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
-        keep = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        all = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
+        #clust = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
+        #max = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
+        #keep = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
     params:
         corces_min = 5,
         lib_peaks_min = 1000,
+        out_dir = f"{atac_dir}/models/{{atac_set}}",
         script = f"{cardiac_script_dir}/peak_filtering.R",
     shell:
         """
+        mkdir -p {params.out_dir}
         Rscript {params.script} \
-        {input} \
+        {input.chrs} \
+        {input.libs} \
+        \"{input.peaks}\" \
         {output.all} \
-        {output.clust} \
-        {output.max} \
-        {output.keep} \
         {params.corces_min} \
-        {params.lib_peaks_min} > {log} 2>&1
+        {params.lib_peaks_min} >> {log} 2>&1
         """
 
 #+end_src
-
-- [[file:./scripts/.R][Rscript]]
-  #+begin_src R :tangle ./scripts/peak_filtering.R
+#+begin_src R :tangle ./scripts/peak_filtering.R
 ## peak_file_str = "~/cards/analysis/atac/mouse/peaks/lib051_mm10_ds9_multi_peaks.narrowPeak ~/cards/analysis/atac/mouse/peaks/lib122_mm10_ds9_multi_peaks.narrowPeak"
 ## libraries_full_rds = "~/cards/data-model/libraries_full.rds"
 ## corces_min = 5
@@ -14422,16 +14421,14 @@ chrs_tsv = args[1]
 libraries_full_rds = args[2]
 peak_file_str = args[3]
 all_peaks_bed = args[4]
-cluster_bed = args[5]
-max_bed = args[6]
-keep_bed = args[7]
-corces_min = args[8]
-lib_peaks_min = args[9]
+corces_min = args[5]
+lib_peaks_min = args[6]
 
 
 # Load required packages and data
 library(tidyverse)
-chrs = read_tsv(chrs_tsv, col_names = c("chr"))
+
+chrs = read_tsv(chrs_tsv, col_names = c("chr")) %>% pull(chr)
 libraries_full = readRDS(libraries_full_rds)
 peak_files = unlist(strsplit(peak_file_str, " "))
 
@@ -14447,9 +14444,12 @@ names(peak_list) = substr(gsub("^.*lib", "lib", peak_files), 1, 6)
 peaks = bind_rows(peak_list, .id = "library")
 peaks = peaks %>% left_join(libraries_full, by = "library")
 
-#
+print(peaks, n = 10)
 
-peaks %>%
+
+#
+corces_peaks =
+  peaks %>%
   mutate(summit = start + dsummit) %>%
   mutate(start = summit - 250) %>%
   mutate(end = summit + 250) %>%
@@ -14457,8 +14457,98 @@ peaks %>%
   filter(chr %in% chrs) %>%
   group_by(library) %>%
   mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
-  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak) %>%
-  write_tsv(all_peaks_bed, col_names = F)
+  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak)
+
+print(corces_peaks, n = 10)
+
+write_tsv(corces_peaks, file = all_peaks_bed, col_names = F)
+
+#system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", #cluster_bed))
+
+## clust = read_tsv(cluster_bed, col_names = c("chr","start","end","library","corces","peak","clust"))
+
+## max =
+##   clust %>%
+##   group_by(clust) %>%
+##   filter(n() > 2) %>%
+##   slice_max(corces) %>%
+##   write_tsv(max_bed, col_names = F)
+
+
+## keep_libs =
+##   max %>%
+##   group_by(library) %>%
+##   summarize(sum = n()) %>%
+##   filter(sum > lib_peaks_min) %>%
+##   pull(library)
+
+## keep = max %>% filter(library %in% keep_libs) %>% write_tsv(keep_bed, col_names = F)
+
+#+end_src
+
+#+begin_src R
+## peak_file_str = "~/cards/analysis/atac/mouse/peaks/lib051_mm10_ds9_multi_peaks.narrowPeak ~/cards/analysis/atac/mouse/peaks/lib122_mm10_ds9_multi_peaks.narrowPeak"
+## libraries_full_rds = "~/cards/data-model/libraries_full.rds"
+## corces_min = 5
+## all_peaks_bed = "/tmp/test.bed"
+## cluster_bed = "/tmp/clust.bed"
+## max_bed = "/tmp/max.bed"
+
+
+#!/usr/bin/env Rscript
+
+################################
+###   Macs2 Peak Filtering   ###
+################################
+
+args = commandArgs(trailingOnly = TRUE)
+chrs_tsv = args[1]
+libraries_full_rds = args[2]
+peak_file_str = args[3]
+all_peaks_bed = args[4]
+corces_min = args[5]
+lib_peaks_min = args[6]
+
+
+# Load required packages and data
+library(tidyverse)
+chrs = read_tsv(chrs_tsv, col_names = c("chr")) %>% pull(chr)
+libraries_full = readRDS(libraries_full_rds)
+peak_files = unlist(strsplit(peak_file_str, " "))
+
+# Create single peak file by library
+
+ingest_macs2 = function(peak){
+  macs2peak = read_tsv(peak,
+                        col_names = c("chr","start","end","peak","score","strand","signal","neg_l10_pval","neg_l10_qval", "dsummit"))
+}
+
+peak_list = lapply(peak_files, ingest_macs2)
+names(peak_list) = substr(gsub("^.*lib", "lib", peak_files), 1, 6)
+peaks = bind_rows(peak_list, .id = "library")
+peaks = peaks %>% left_join(libraries_full, by = "library")
+
+
+output_dir <- dirname(all_peaks_bed)
+
+# check if the directory exists and if not, create it
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+#
+corces_peaks =
+  peaks %>%
+  mutate(summit = start + dsummit) %>%
+  mutate(start = summit - 250) %>%
+  mutate(end = summit + 250) %>%
+  # Remove sex chromosome and mitochondrial peaks here
+  filter(chr %in% chrs) %>%
+  group_by(library) %>%
+  mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
+  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak)
+
+write_tsv(corces_peaks, file = all_peaks_bed, col_names = F)
 
 system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", cluster_bed))
 
@@ -14557,6 +14647,9 @@ export.bed(all.peaks, "~/cards/analysis/atac/peaks/human_union.bed")
 #+end_src
 ***** Make per-peak counts in BAMscale
 #+begin_src snakemake
+
+#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+
 rule bamscale:
     input:
         bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
@@ -14566,39 +14659,57 @@ rule bamscale:
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
         bed= f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
-        #bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
         out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
         tmp_dir = f"/tmp/{{atac_set}}",
+        script = f"{atac_script_dir}/bamscale.sh",
     output:
         f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv"
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
     shell:
         """
-        rm -rf {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        #cp {input.bams} {input.bais} {params.tmp_dir}
-        echo {input.bams} {input.bais} | tr ' ' '\n' | parallel --max-args 1 cp {{}} {params.tmp_dir}
-
-        # set the directory containing the input BAM files
-        bam_dir={params.tmp_dir}
-
-        # get a list of BAM files in the directory
-        bam_files=($(ls "$bam_dir"/*.bam))
-
-        # build the BAMscale command with the --bam flags
-        bams=""
-        for bam in "${{bam_files[@]}}"
-        do
-        bams+="--bam $bam "
-        done
-
-        BAMscale cov --bed {input.bed} \
-        --prefix {wildcards.atac_set} --outdir {params.out_dir} --threads 16 \
-        $bams
-        rm -rf {params.tmp_dir}
+        {params.script} \
+        {input.bams} \
+        {input.bais} \
+        {input.bed} \
+        {params.tmp_dir} \
+        {wildcards.atac_set} \
+        {out_dir} > {log} 2>&1
         """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/bamscale.sh
+#!/usr/bin/env bash
+
+bams="${1}"
+bais="${2}"
+bed="${3}"
+tmp_dir="${4}"
+atac_set="${5}"
+out_dir="${6}"
+
+rm -rf $tmp_dir
+mkdir -p $tmp_dir
+
+echo $bams $bais | tr ' ' '\n' | parallel --max-args 1 cp {{}} $tmp_dir
+
+# set the directory containing the input BAM files
+bam_dir=$tmp_dir
+# get a list of BAM files in the directory
+bam_files=($(ls "$bam_dir"/*.bam))
+# build the BAMscale command with the --bam flags
+bams=""
+for bam in "${bam_files[@]}"
+do
+bams+="--bam $bam "
+done
+
+BAMscale cov --bed $bed \
+--prefix $atac_set --outdir $out_dir --threads 16 \
+$bams
+rm -rf $tmp_dir
+"""
 
 #+end_src
 
@@ -14680,6 +14791,7 @@ fit = glmFit(dge, design)
 saveRDS(fit, fit_rds)
 #+end_src
 ***** Make edgeR DCA contrast
+
 #+begin_src snakemake
 rule atac_edger_dca:
     input:
@@ -14727,17 +14839,17 @@ lrt = glmLRT(fit, contrast = contrast)
 
 res =
   as.data.frame(topTags(lrt, n = Inf)) %>%
-  rownames_to_column(var = "ensembl_gene_id") %>%
+  rownames_to_column(var = "coordinate") %>%
   as_tibble()
 
 write_tsv(res, file = res_tsv)
 
 #+end_src
 
-
 *** Development
 :PROPERTIES:
 :header-args:snakemake: :tangle no
+:header-args:r: :tangle no
 :END:
 **** Downsample
 #+begin_src snakemake
@@ -14950,124 +15062,7 @@ BAMscale cov --bed $input_bed \
          $bams
 #+end_src
 
-**** Peak filtering
 
-#+begin_src snakemake
-
-rule peak_filtering:
-    input:
-        chrs = f"{datamodel_dir}/lists/{{species}}_peak_chrs.txt",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/{{species}}/peaks/{{library}}_{{build}}_{{proc}}_multi_peaks.narrowPeak",
-                                         species=wildcards.species,
-                                         library=get_species_params(wildcards.species)["libraries"],
-                                         build=get_species_params(wildcards.species)["build"],
-                                         proc=["ds9"]),
-    log: f"{log_dir}/{{species}}_peak_filtering.log",
-    output:
-        all = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_all.bed",
-        clust = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_clust.bed",
-        max = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_max.bed",
-        keep = f"{atac_dir}/{{species}}/peaks/{{species}}_corces_peaks_keep.bed",
-    params:
-        corces_min = 5,
-        lib_peaks_min = 1000,
-        script = f"{cardiac_script_dir}/peak_filtering.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.all} \
-        {output.clust} \
-        {output.max} \
-        {output.keep} \
-        {params.corces_min} \
-        {params.lib_peaks_min} > {log} 2>&1
-        """
-
-#+end_src
-
-- [[file:./scripts/.R][Rscript]]
-  #+begin_src R :tangle ./scripts/peak_filtering.R
-## peak_file_str = "~/cards/analysis/atac/mouse/peaks/lib051_mm10_ds9_multi_peaks.narrowPeak ~/cards/analysis/atac/mouse/peaks/lib122_mm10_ds9_multi_peaks.narrowPeak"
-## libraries_full_rds = "~/cards/data-model/libraries_full.rds"
-## corces_min = 5
-## all_peaks_bed = "/tmp/test.bed"
-## cluster_bed = "/tmp/clust.bed"
-## max_bed = "/tmp/max.bed"
-
-
-#!/usr/bin/env Rscript
-
-################################
-###   Macs2 Peak Filtering   ###
-################################
-
-args = commandArgs(trailingOnly = TRUE)
-chrs_tsv = args[1]
-libraries_full_rds = args[2]
-peak_file_str = args[3]
-all_peaks_bed = args[4]
-cluster_bed = args[5]
-max_bed = args[6]
-keep_bed = args[7]
-corces_min = args[8]
-lib_peaks_min = args[9]
-
-
-# Load required packages and data
-library(tidyverse)
-chrs = read_tsv(chrs_tsv, col_names = c("chr"))
-libraries_full = readRDS(libraries_full_rds)
-peak_files = unlist(strsplit(peak_file_str, " "))
-
-# Create single peak file by library
-
-ingest_macs2 = function(peak){
-  macs2peak = read_tsv(peak,
-                        col_names = c("chr","start","end","peak","score","strand","signal","neg_l10_pval","neg_l10_qval", "dsummit"))
-}
-
-peak_list = lapply(peak_files, ingest_macs2)
-names(peak_list) = substr(gsub("^.*lib", "lib", peak_files), 1, 6)
-peaks = bind_rows(peak_list, .id = "library")
-peaks = peaks %>% left_join(libraries_full, by = "library")
-
-#
-
-peaks %>%
-  mutate(summit = start + dsummit) %>%
-  mutate(start = summit - 250) %>%
-  mutate(end = summit + 250) %>%
-  # Remove sex chromosome and mitochondrial peaks here
-  filter(chr %in% chrs) %>%
-  group_by(library) %>%
-  mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
-  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak) %>%
-  write_tsv(all_peaks_bed, col_names = F)
-
-system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", cluster_bed))
-
-clust = read_tsv(cluster_bed, col_names = c("chr","start","end","library","corces","peak","clust"))
-
-max =
-  clust %>%
-  group_by(clust) %>%
-  filter(n() > 2) %>%
-  slice_max(corces) %>%
-  write_tsv(max_bed, col_names = F)
-
-
-keep_libs =
-  max %>%
-  group_by(library) %>%
-  summarize(sum = n()) %>%
-  filter(sum > lib_peaks_min) %>%
-  pull(library)
-
-keep = max %>% filter(library %in% keep_libs) %>% write_tsv(keep_bed, col_names = F)
-
-#+end_src
 **** Peak annotation
 #+begin_src snakemake
 rule peak_annotation:

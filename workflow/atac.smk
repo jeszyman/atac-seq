@@ -84,7 +84,7 @@ rule atac_dedup:
     output: f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
     params:
         script = f"{atac_script_dir}/dedup.sh",
-        threads = threads,
+        threads = 4,
     shell:
         """
         {params.script} \
@@ -118,7 +118,7 @@ rule filter_atac_bams:
         f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
     params:
         script = f"{atac_script_dir}/filter_atac_bams.sh",
-        threads = threads
+        threads = 4,
     shell:
         """
         {params.script} \
@@ -281,7 +281,7 @@ rule macs2_broad:
     log:
         f"{log_dir}/{{library}}_{{build}}_peaks.broadPeak",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_filt_peaks.broadPeak",
     params:
         gsize = lambda wildcards: get_gsize(wildcards.build),
         outdir = f"{atac_dir}/peaks",
@@ -302,7 +302,7 @@ rule macs2_narrow:
     log:
         f"{log_dir}/{{library}}_{{build}}_macs2_narrow.log",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_filt_multi_peaks.narrowPeak",
     params:
         gsize = lambda wildcards: get_gsize(wildcards.build),
         outdir = f"{atac_dir}/peaks",
@@ -314,7 +314,7 @@ rule macs2_narrow:
         {input} \
         $name \
         {params.gsize} \
-        {params.outdir} &> {log}
+        {params.outdir} &> {log} && [[ -s {output} ]]
         """
 
 rule make_dca_design:
@@ -336,29 +336,30 @@ rule peak_filtering:
     input:
         chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
         libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_multi_peaks.narrowPeak",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_filt_multi_peaks.narrowPeak",
                                          library = atac_map[wildcards.atac_set]['libs'],
                                          build = atac_map[wildcards.atac_set]['build']),
     log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
     output:
-        all = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
-        clust = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
-        max = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
-        keep = f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        all = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
+        #clust = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
+        #max = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_max.bed",
+        #keep = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
     params:
         corces_min = 5,
         lib_peaks_min = 1000,
+        out_dir = f"{atac_dir}/models/{{atac_set}}",
         script = f"{cardiac_script_dir}/peak_filtering.R",
     shell:
         """
+        mkdir -p {params.out_dir}
         Rscript {params.script} \
-        {input} \
+        {input.chrs} \
+        {input.libs} \
+        \"{input.peaks}\" \
         {output.all} \
-        {output.clust} \
-        {output.max} \
-        {output.keep} \
         {params.corces_min} \
-        {params.lib_peaks_min} > {log} 2>&1
+        {params.lib_peaks_min} >> {log} 2>&1
         """
 
 rule atac_peak_union:
@@ -376,6 +377,8 @@ rule atac_peak_union:
         Rscript {params.script} "{input}" {output} >& {log}
         """
 
+#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+
 rule bamscale:
     input:
         bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
@@ -385,38 +388,23 @@ rule bamscale:
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
         bed= f"{atac_dir}/model/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
-        #bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
         out_dir = f"{atac_dir}/{{atac_set}}/bamscale",
         tmp_dir = f"/tmp/{{atac_set}}",
+        script = f"{atac_script_dir}/bamscale.sh",
     output:
         f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv"
+        f"{atac_dir}/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
     shell:
         """
-        rm -rf {params.tmp_dir}
-        mkdir -p {params.tmp_dir}
-        #cp {input.bams} {input.bais} {params.tmp_dir}
-        echo {input.bams} {input.bais} | tr ' ' '\n' | parallel --max-args 1 cp {{}} {params.tmp_dir}
-
-        # set the directory containing the input BAM files
-        bam_dir={params.tmp_dir}
-
-        # get a list of BAM files in the directory
-        bam_files=($(ls "$bam_dir"/*.bam))
-
-        # build the BAMscale command with the --bam flags
-        bams=""
-        for bam in "${{bam_files[@]}}"
-        do
-        bams+="--bam $bam "
-        done
-
-        BAMscale cov --bed {input.bed} \
-        --prefix {wildcards.atac_set} --outdir {params.out_dir} --threads 16 \
-        $bams
-        rm -rf {params.tmp_dir}
+        {params.script} \
+        {input.bams} \
+        {input.bais} \
+        {input.bed} \
+        {params.tmp_dir} \
+        {wildcards.atac_set} \
+        {out_dir} > {log} 2>&1
         """
 
 rule atac_ruv:
