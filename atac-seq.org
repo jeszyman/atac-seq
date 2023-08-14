@@ -954,7 +954,7 @@ final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
 final <- distinct(final, coordinate, .keep_all = TRUE)
 write_tsv(final, file = out_tsv)
 #+end_src
-**** TODO Open genome
+**** INPROCESS Open genome
 #+begin_src snakemake
 
 rule chr_open_genome:
@@ -1012,6 +1012,64 @@ parallel -j "$threads" process_file {} "$ref_bed" "$qval_cut" ::: $peaks_str > "
 #+end_src
 
 - https://www.biostars.org/p/219099/
+**** TODO Open genome by chromatin state
+- Annotate each peak with a chromatin state from chippeakanno
+- Reduce the chipseeker annotations to simple set
+- parse the peak file by annotation and run the open genome script
+- ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
+
+#+begin_src R
+library(tidyverse)
+library(ChIPpeakAnno)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(rtracklayer)
+library(ChIPseeker)
+
+bed = "~/cards/analysis/atac/peaks/lib113_hg38_peaks.broadPeak"
+
+peaks = rtracklayer::import(bed)
+
+annoDataTxDb = ChIPpeakAnno::toGRanges(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+anno = annotatePeak(peaks, TxDb = TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+anno = as_tibble(anno)
+anno
+
+table(anno$annotation)
+
+anno =
+  anno %>% mutate(simple = case_when(
+                    grepl("Promoter", annotation) ~ "promoter",
+                    grepl("Exon", annotation) ~ "exon",
+                    grepl("Intron", annotation) ~ "intron",
+                    grepl("3' UTR", annotation) ~ "utr3",
+                    grepl("5' UTR", annotation) ~ "utr5",
+                    grepl("Distal Intergenic", annotation) ~ "intergenic",
+                    grepl("Downstream", annotation) ~ "downstream",
+                    TRUE ~ annotation
+                  ))
+
+table(anno$simple)
+
+peakAnno <- annotatePeak(files[[4]], tssRegion=c(-3000, 3000),
+                         TxDb=txdb, annoDb="org.Hs.eg.db")
+
+anno=annoPeaks(peaks, annoDataTxDb)
+
+head(anno)
+
+
+
+
+anno = as_tibble(anno)
+
+
+table(head(anno$insideFeature))
+
+
+names(anno)
+#+end_src
 
 **** Create an experimental design
 #+begin_src snakemake
