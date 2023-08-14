@@ -28,6 +28,8 @@ colnames(mat) = substr(colnames(mat),1,6)
 model_df = as.data.frame(design)
 model_df$'(Intercept)' <- NULL
 
+mat <- mat[, rownames(model_df)]
+
 set = newSeqExpressionSet(mat,
                           phenoData = AnnotatedDataFrame(model_df))
 

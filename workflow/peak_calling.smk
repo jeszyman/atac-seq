@@ -78,20 +78,3 @@ rule differential_accessibility:
 	{output}
         >& {log}
         """
-
-rule peak_annotation:
-    input:
-        config["data_dir"] + "/atac/dca.rds"
-    params:
-        script = config["repo"] + "/workflow/scripts/peak_annotation.R"
-    output:
-        annotated_counts = config["data_dir"] + "/atac/annotated_counts.rds",
-    log:
-        config["data_dir"] + "/logs/peak_annotation.log"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output.annot} \
-        >& {log}
-        """

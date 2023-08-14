@@ -10,7 +10,7 @@ out_dir="${6}"
 rm -rf $tmp_dir
 mkdir -p $tmp_dir
 
-echo $bams $bais | tr ' ' '\n' | parallel --max-args 1 cp {{}} $tmp_dir
+echo $bams $bais | tr ' ' '\n' | parallel --max-args 1 cp {} $tmp_dir
 
 # set the directory containing the input BAM files
 bam_dir=$tmp_dir
@@ -27,4 +27,3 @@ BAMscale cov --bed $bed \
 --prefix $atac_set --outdir $out_dir --threads 16 \
 $bams
 rm -rf $tmp_dir
-"""
