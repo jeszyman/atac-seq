@@ -796,7 +796,7 @@ rule macs2_broad:
     output:
         f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
     params:
-        gsize = lambda wildcards: get_gsize(wildcards.build),
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
         outdir = f"{atac_dir}/peaks",
         script = f"{atac_script_dir}/macs2_broad.sh",
     shell:
@@ -809,6 +809,7 @@ rule macs2_broad:
         {params.outdir} &> {log}
         """
 #+end_src
+
 #+begin_src bash :tangle ./scripts/macs2_broad.sh
 
 inbam=$1
@@ -833,7 +834,8 @@ rule macs2_narrow:
     output:
         f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.narrowPeak",
     params:
-        gsize = lambda wildcards: get_gsize(wildcards.build),
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
         outdir = f"{atac_dir}/peaks",
         script = f"{atac_script_dir}/macs2_narrow.sh",
     shell:
@@ -874,86 +876,67 @@ macs2 callpeak --treatment $inbam \
       --nomodel
 #+end_src
 
+**** TEST Peak annotation
 
-*** Workflow 2: Per-DCA model processing
-**** Peak annotation
 #+begin_src snakemake
 rule peak_annotation:
-    input: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
-    log: f"{log_dir}/{{atac_set}}_peak_annotation.log",
-    output: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_annotation.tsv",
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}_anno.bed",
     params:
-        txdb = lambda wildcards: atac_map[wildcards.atac_set]['txdb'],
-        bmart_dataset = lambda wildcards: atac_map[wildcards.atac_set]['bmart_dataset'],
         script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
     shell:
         """
-        Rscript {params.script} \
-        {input} \
-        {params.bmart_dataset} {params.txdb} \
-        {output} > {log} 2>&1
+        Rscript {params.script} {input} {params.txdb} {output} > {log} 2>&1
         """
 #+end_src
 
 #+begin_src R :tangle ./scripts/peak_annotation.R
 #!/usr/bin/env Rscript
 
-####################################
-###   Bamscale Peak Annotation   ###
-####################################
+#################################
+###   Macs2 Peak Annotation   ###
+#################################
 
 # Command line arguements
 args = commandArgs(trailingOnly = TRUE)
-cov_bed = args[1]
-bmart_dataset = args[2]
-txdb = args[3]
-out_tsv = args[4]
+in_peak_bed = args[1]
+txdb = args[2]
+out_peak_bed = args[3]
 
 # Load required packages, data, and functions
-
-library(ChIPseeker)
-library(txdb,character.only = TRUE)
-library(biomaRt)
-library(GenomicRanges)
 library(tidyverse)
+library(ChIPpeakAnno)
+library(rtracklayer)
+library(ChIPseeker)
+library(txdb, character.only = T)
 
-peaks = read_tsv(cov_bed, col_names = c("chr",
-                                        "start",
-                                        "end",
-                                        "library")) %>%
-  dplyr::select(chr, start, end, library)
-
-# Create a GRanges object from the data frame
-gr <- makeGRangesFromDataFrame(peaks, start.field = "start", end.field = "end",
-                               seqnames.field = "chr")
-
-anno = annotatePeak(gr, TxDb = eval(parse(text=txdb)))
+peaks = rtracklayer::import(in_peak_bed)
+anno = annotatePeak(peaks, TxDb = get(txdb))
 anno = as_tibble(anno)
+anno =
+  anno %>% mutate(simple = case_when(
+                    grepl("Promoter", annotation) ~ "promoter",
+                    grepl("Exon", annotation) ~ "exon",
+                    grepl("Intron", annotation) ~ "intron",
+                    grepl("3' UTR", annotation) ~ "utr3",
+                    grepl("5' UTR", annotation) ~ "utr5",
+                    grepl("Distal Intergenic", annotation) ~ "intergenic",
+                    grepl("Downstream", annotation) ~ "downstream",
+                    TRUE ~ annotation
+                  ))
+write_tsv(anno, out_peak_bed)
 
-anno = anno %>% mutate(entrezgene_id = as.numeric(geneId))
-
-geneIds = anno %>% pull(geneId) %>% unique()
-
-mart <- useMart("ensembl")
-mart <- useDataset(bmart_dataset, mart)
-
-names = getBM(
-  filters = "entrezgene_id",
-  attributes=c("ensembl_gene_id",
-               "entrezgene_id",
-               "description",
-               "external_gene_name",
-               "gene_biotype"),
-  values = geneIds,
-  mart = mart)
-names = as_tibble(names)
-
-final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
-  mutate(coordinate = paste0(seqnames, ":",start,"-",end))
-
-final <- distinct(final, coordinate, .keep_all = TRUE)
-write_tsv(final, file = out_tsv)
 #+end_src
+
+*** Workflow 2: Per-DCA model processing
+- parse the peak file by annotation and run the open genome script
+- ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
+
 **** INPROCESS Open genome
 #+begin_src snakemake
 
@@ -1012,65 +995,6 @@ parallel -j "$threads" process_file {} "$ref_bed" "$qval_cut" ::: $peaks_str > "
 #+end_src
 
 - https://www.biostars.org/p/219099/
-**** TODO Open genome by chromatin state
-- Annotate each peak with a chromatin state from chippeakanno
-- Reduce the chipseeker annotations to simple set
-- parse the peak file by annotation and run the open genome script
-- ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
-
-#+begin_src R
-library(tidyverse)
-library(ChIPpeakAnno)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(rtracklayer)
-library(ChIPseeker)
-
-bed = "~/cards/analysis/atac/peaks/lib113_hg38_peaks.broadPeak"
-
-peaks = rtracklayer::import(bed)
-
-annoDataTxDb = ChIPpeakAnno::toGRanges(TxDb.Hsapiens.UCSC.hg38.knownGene)
-
-anno = annotatePeak(peaks, TxDb = TxDb.Hsapiens.UCSC.hg38.knownGene)
-
-anno = as_tibble(anno)
-anno
-
-table(anno$annotation)
-
-anno =
-  anno %>% mutate(simple = case_when(
-                    grepl("Promoter", annotation) ~ "promoter",
-                    grepl("Exon", annotation) ~ "exon",
-                    grepl("Intron", annotation) ~ "intron",
-                    grepl("3' UTR", annotation) ~ "utr3",
-                    grepl("5' UTR", annotation) ~ "utr5",
-                    grepl("Distal Intergenic", annotation) ~ "intergenic",
-                    grepl("Downstream", annotation) ~ "downstream",
-                    TRUE ~ annotation
-                  ))
-
-table(anno$simple)
-
-peakAnno <- annotatePeak(files[[4]], tssRegion=c(-3000, 3000),
-                         TxDb=txdb, annoDb="org.Hs.eg.db")
-
-anno=annoPeaks(peaks, annoDataTxDb)
-
-head(anno)
-
-
-
-
-anno = as_tibble(anno)
-
-
-table(head(anno$insideFeature))
-
-
-names(anno)
-#+end_src
-
 **** Create an experimental design
 #+begin_src snakemake
 rule make_dca_design:
@@ -1946,6 +1870,84 @@ alignmentSieve --bam $1 \
                --outFile $3
 samtools sort -@ $2 -o $4 $3
 samtools index -@ $2 $4
+#+end_src
+**** Peak annotation
+#+begin_src snakemake
+rule peak_annotation:
+    input: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+    log: f"{log_dir}/{{atac_set}}_peak_annotation.log",
+    output: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_annotation.tsv",
+    params:
+        txdb = lambda wildcards: atac_map[wildcards.atac_set]['txdb'],
+        bmart_dataset = lambda wildcards: atac_map[wildcards.atac_set]['bmart_dataset'],
+        script = f"{atac_script_dir}/peak_annotation.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {params.bmart_dataset} {params.txdb} \
+        {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/peak_annotation.R
+#!/usr/bin/env Rscript
+
+####################################
+###   Bamscale Peak Annotation   ###
+####################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+cov_bed = args[1]
+bmart_dataset = args[2]
+txdb = args[3]
+out_tsv = args[4]
+
+# Load required packages, data, and functions
+
+library(ChIPseeker)
+library(txdb,character.only = TRUE)
+library(biomaRt)
+library(GenomicRanges)
+library(tidyverse)
+
+peaks = read_tsv(cov_bed, col_names = c("chr",
+                                        "start",
+                                        "end",
+                                        "library")) %>%
+  dplyr::select(chr, start, end, library)
+
+# Create a GRanges object from the data frame
+gr <- makeGRangesFromDataFrame(peaks, start.field = "start", end.field = "end",
+                               seqnames.field = "chr")
+
+anno = annotatePeak(gr, TxDb = eval(parse(text=txdb)))
+anno = as_tibble(anno)
+
+anno = anno %>% mutate(entrezgene_id = as.numeric(geneId))
+
+geneIds = anno %>% pull(geneId) %>% unique()
+
+mart <- useMart("ensembl")
+mart <- useDataset(bmart_dataset, mart)
+
+names = getBM(
+  filters = "entrezgene_id",
+  attributes=c("ensembl_gene_id",
+               "entrezgene_id",
+               "description",
+               "external_gene_name",
+               "gene_biotype"),
+  values = geneIds,
+  mart = mart)
+names = as_tibble(names)
+
+final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
+  mutate(coordinate = paste0(seqnames, ":",start,"-",end))
+
+final <- distinct(final, coordinate, .keep_all = TRUE)
+write_tsv(final, file = out_tsv)
 #+end_src
 *** Reference
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]

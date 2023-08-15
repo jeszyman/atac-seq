@@ -283,7 +283,7 @@ rule macs2_broad:
     output:
         f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.broadPeak",
     params:
-        gsize = lambda wildcards: get_gsize(wildcards.build),
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
         outdir = f"{atac_dir}/peaks",
         script = f"{atac_script_dir}/macs2_broad.sh",
     shell:
@@ -304,7 +304,8 @@ rule macs2_narrow:
     output:
         f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.narrowPeak",
     params:
-        gsize = lambda wildcards: get_gsize(wildcards.build),
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
         outdir = f"{atac_dir}/peaks",
         script = f"{atac_script_dir}/macs2_narrow.sh",
     shell:
@@ -318,19 +319,18 @@ rule macs2_narrow:
         """
 
 rule peak_annotation:
-    input: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
-    log: f"{log_dir}/{{atac_set}}_peak_annotation.log",
-    output: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_annotation.tsv",
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}_anno.bed",
     params:
-        txdb = lambda wildcards: atac_map[wildcards.atac_set]['txdb'],
-        bmart_dataset = lambda wildcards: atac_map[wildcards.atac_set]['bmart_dataset'],
         script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
     shell:
         """
-        Rscript {params.script} \
-        {input} \
-        {params.bmart_dataset} {params.txdb} \
-        {output} > {log} 2>&1
+        Rscript {params.script} {input} {params.txdb} {output} > {log} 2>&1
         """
 
 rule chr_open_genome:
