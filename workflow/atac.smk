@@ -330,7 +330,32 @@ rule peak_annotation:
         txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
     shell:
         """
-        Rscript {params.script} {input} {params.txdb} {output} > {log} 2>&1
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        """
+
+rule chr_state_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}_anno.bed",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
+    log:
+        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        script = f"{atac_script_dir}/chr_state_open_genome.sh",
+        threads = 4
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {wildcards.state} \
+        {wildcards.qval} \
+        {params.threads} \
+        {output} > {log} 2>&1
         """
 
 rule chr_open_genome:

@@ -876,7 +876,7 @@ macs2 callpeak --treatment $inbam \
       --nomodel
 #+end_src
 
-**** TEST Peak annotation
+**** Peak annotation
 
 #+begin_src snakemake
 rule peak_annotation:
@@ -891,7 +891,7 @@ rule peak_annotation:
         txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
     shell:
         """
-        Rscript {params.script} {input} {params.txdb} {output} > {log} 2>&1
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
         """
 #+end_src
 
@@ -928,14 +928,82 @@ anno =
                     grepl("Distal Intergenic", annotation) ~ "intergenic",
                     grepl("Downstream", annotation) ~ "downstream",
                     TRUE ~ annotation
-                  ))
-write_tsv(anno, out_peak_bed)
+                  )) %>%
+  dplyr::select(seqnames, start, end, name, score, strand, pValue, qValue, width, simple, everything())
+
+write_tsv(anno, out_peak_bed, col_names = F)
 
 #+end_src
 
 *** Workflow 2: Per-DCA model processing
 - parse the peak file by annotation and run the open genome script
 - ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
+**** TODO Open genome by chromatin state
+#+begin_src snakemake
+rule chr_state_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.{{peaktype}}_anno.bed",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
+    log:
+        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        script = f"{atac_script_dir}/chr_state_open_genome.sh",
+        threads = 4
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {wildcards.state} \
+        {wildcards.qval} \
+        {params.threads} \
+        {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/chr_state_open_genome.sh
+#!/usr/bin/env bash
+peaks_str="${1}"
+ref_bed="${2}"
+state="${3}"
+qval_cut="${4}"
+threads="${5}"
+out_tsv="${6}"
+
+process_file() {
+    file="$1"
+    base=$(basename $file)
+    state="${2}"
+    ref_bed="${3}"
+    qval_cut="${4}"
+
+    # Check if the state is "all"; if not, apply state filtering
+    if [ "$state" = "all" ]; then
+        cat "$file" |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    else
+        cat "$file" |
+            awk -v state="$state" '$10 == state' |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    fi
+}
+
+export -f process_file
+
+parallel -j "$threads" process_file {} "$state" "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
+
+#+end_src
 
 **** INPROCESS Open genome
 #+begin_src snakemake
@@ -1890,7 +1958,7 @@ rule peak_annotation:
         """
 #+end_src
 
-#+begin_src R :tangle ./scripts/peak_annotation.R
+#+begin_src R :tangle no
 #!/usr/bin/env Rscript
 
 ####################################
