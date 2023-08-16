@@ -15,7 +15,7 @@ macs2 callpeak --treatment $inbam \
       --format BAMPE \
       --gsize $gsize \
       --keep-dup all \
-      --name ${name} \
+      --name ${name}_multi \
       --nolambda \
       --outdir $outdir \
       -p 0.01 \
@@ -40,7 +40,7 @@ macs2 callpeak --treatment $inbam \
       --format BAMPE \
       --gsize $gsize \
       --keep-dup all \
-      --name ${name}_multi \
+      --name ${name} \
       --nolambda \
       --outdir $outdir \
       -p 0.01 \
