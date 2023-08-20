@@ -258,6 +258,100 @@ rule chr_state_open_genome:
         {output} > {log} 2>&1
         """
 
+rule make_dca_design:
+    input: libraries_full_rds,
+    log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
+    output: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_design.rds",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
+        script = f"{atac_script_dir}/make_dca_design.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
+        {output} \
+        > {log} 2>&1
+        """
+
+rule peak_filtering:
+    input:
+        chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+                                         library = atac_map[wildcards.atac_set]['libs'],
+                                         build = atac_map[wildcards.atac_set]['build'],
+                                         bam_set = atac_map[wildcards.atac_set]['bam_set']),
+    log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
+    output:
+        all = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
+        clust = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
+        keep = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+    params:
+        corces_min = lambda wildcards: atac_map[wildcards.atac_set]['corces_min'],
+        lib_peaks_min = lambda wildcards: atac_map[wildcards.atac_set]['lib_peaks_min'],
+        out_dir = f"{atac_dir}/models/{{atac_set}}/",
+        script = f"{atac_script_dir}/peak_filtering.R",
+    shell:
+        """
+        mkdir -p {params.out_dir} &&
+        Rscript {params.script} \
+        {input.chrs} \
+        {input.libs} \
+        "{input.peaks}" \
+        {params.corces_min} \
+        {output.all} \
+        {output.clust} \
+        {params.lib_peaks_min} \
+        {output.keep} > {log} 2>&1
+        """
+
+#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+
+rule bamscale:
+    input:
+        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
+                                        build = atac_map[wildcards.atac_set]['build'],
+                                        library = atac_map[wildcards.atac_set]['libs']),
+        bed= f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+    log: f"{log_dir}/{{atac_set}}_bamscale.log",
+    params:
+        out_dir = f"{atac_dir}/models/{{atac_set}}/bamscale",
+        tmp_dir = f"/tmp/{{atac_set}}",
+        script = f"{atac_script_dir}/bamscale.sh",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
+    shell:
+        """
+        {params.script} \
+        "{input.bams}" \
+        "{input.bais}" \
+        {input.bed} \
+        {params.tmp_dir} \
+        {wildcards.atac_set} \
+        {params.out_dir} > {log} 2>&1
+        """
+
+rule atac_ruv:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
+        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+        design = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_design.rds",
+    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
+    output:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
+        fit = f"{atac_dir}/models/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
+    params:
+        ruv_k = lambda wildcards: wildcards.ruv_k,
+        script = f"{atac_script_dir}/atac_ruv.R",
+    shell:
+        """
+        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
+        """
+
 rule atac_edger_dca:
     input:
         design = lambda wildcards: dca_map[wildcards.contrast]['design'],
