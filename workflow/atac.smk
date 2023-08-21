@@ -261,7 +261,7 @@ rule chr_state_open_genome:
 rule make_dca_design:
     input: libraries_full_rds,
     log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
-    output: f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_design.rds",
+    output: f"{atac_dir}/models/{{atac_set}}/design.rds",
     params:
         formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
         libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
@@ -283,9 +283,9 @@ rule peak_filtering:
                                          bam_set = atac_map[wildcards.atac_set]['bam_set']),
     log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
     output:
-        all = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_all.bed",
-        clust = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_clust.bed",
-        keep = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        all = f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed",
+        clust = f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed",
+        keep = f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
     params:
         corces_min = lambda wildcards: atac_map[wildcards.atac_set]['corces_min'],
         lib_peaks_min = lambda wildcards: atac_map[wildcards.atac_set]['lib_peaks_min'],
@@ -315,15 +315,15 @@ rule bamscale:
         bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
                                         build = atac_map[wildcards.atac_set]['build'],
                                         library = atac_map[wildcards.atac_set]['libs']),
-        bed= f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_corces_peaks_keep.bed",
+        bed= f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
     log: f"{log_dir}/{{atac_set}}_bamscale.log",
     params:
         out_dir = f"{atac_dir}/models/{{atac_set}}/bamscale",
         tmp_dir = f"/tmp/{{atac_set}}",
         script = f"{atac_script_dir}/bamscale.sh",
     output:
-        f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
+        f"{atac_dir}/models/{{atac_set}}/bamscale/FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
     shell:
         """
         {params.script} \
@@ -335,15 +335,31 @@ rule bamscale:
         {params.out_dir} > {log} 2>&1
         """
 
+rule atac_edger_fit:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+    log:
+        f"{log_dir}/{{atac_set}}_atac_edger_fit.log",
+    output:
+        fit = f"{atac_dir}/models/{{atac_set}}/fit.rds",
+    params:
+        script = f"{atac_script_dir}/atac_edger_fit.R",
+    shell:
+        """
+        Rscript {params.script} {input} {output} > {log} 2>&1
+        """
+
 rule atac_ruv:
     input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/{{atac_set}}.raw_coverages.tsv",
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
         datmod = f"{datamodel_dir}/lists/libraries_full.rds",
-        design = f"{atac_dir}/models/{{atac_set}}/{{atac_set}}_design.rds",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
     log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
     output:
         counts = f"{atac_dir}/models/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
-        fit = f"{atac_dir}/models/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_fit.rds",
+        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
     params:
         ruv_k = lambda wildcards: wildcards.ruv_k,
         script = f"{atac_script_dir}/atac_ruv.R",
@@ -359,14 +375,14 @@ rule atac_edger_dca:
     log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
     output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
     params:
-        cohorts_str = lambda wildcards: dca_map[wildcards.contrast]['cohorts_str'],
+        contrast_str = lambda wildcards: dca_map[wildcards.contrast]['contrast_str'],
         script = f"{atac_script_dir}/atac_edger_dca.R",
     shell:
         """
         Rscript {params.script} \
         {input.design} \
         {input.fit} \
-        "{params.cohorts_str}" \
+        "{params.contrast_str}" \
         {output} > {log} 2>&1
         """
 

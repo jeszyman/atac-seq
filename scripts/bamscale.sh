@@ -23,7 +23,5 @@ do
 bams+="--bam $bam "
 done
 
-BAMscale cov --bed $bed \
---prefix $atac_set --outdir $out_dir --threads 16 \
-$bams
+BAMscale cov --bed $bed --outdir $out_dir --threads 16 $bams
 rm -rf $tmp_dir

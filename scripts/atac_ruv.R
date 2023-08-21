@@ -41,6 +41,8 @@ y <- estimateGLMTagwiseDisp(y, design)
 fit <- glmFit(y, design)
 dev <- residuals(fit, type="deviance")
 peaks = row.names(dev)
+
+
 adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
 adjust_counts = normCounts(adjust)
 
