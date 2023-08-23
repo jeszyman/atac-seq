@@ -1276,6 +1276,542 @@ write_tsv(anno, out_peak_bed, col_names = F)
 :header-args:snakemake: :tangle no
 :header-args:r: :tangle no
 :END:
+**** PCA
+#+begin_src R :tangle no
+#!/usr/bin/env Rscript
+
+####################
+###   Atac Pca   ###
+####################
+
+# --- Setup --- #
+args = commandArgs(trailingOnly = TRUE)
+counts_tsv = args[1]
+libraries_full_rds = args[2]
+fit_rds  = args[3]
+pca_pdf = args[4]
+
+
+# Load required packages, data, and functions
+library(edgeR)
+library(cowplot)
+library(RUVSeq)
+library(tidyverse)
+library(ggrepel)
+library(patchwork)
+
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+counts_pca <- function(mat, libraries_full) {
+  dge <- DGEList(counts = mat)
+  dge <- calcNormFactors(dge)
+  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
+  pca <- prcomp(t(logcpm))
+  pve_pc1 = round(100*summary(pca)$importance[2,1])
+  pve_pc2 = round(100*summary(pca)$importance[2,2])
+  tab = as.data.frame(pca$x) %>%
+    rownames_to_column(var = "library") %>%
+    left_join(libraries_full, by = "library") %>%
+    as_tibble()
+  plot =
+    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
+    geom_point(size = 4) +
+    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+    geom_text_repel()
+  return(plot)
+}
+
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+mat2 = mat[, colnames(mat) %in% keep$library]
+
+counts_pca(mat2, libraries_full)
+
+(group =
+   data.frame(library = colnames(mat2)) %>%
+   left_join(libraries_full) %>%
+   pull(cohort) %>%
+   droplevels())
+
+set = newSeqExpressionSet(mat2,
+                          phenoData = data.frame(group, row.names = colnames(mat2)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+#y <- calcNormFactors(y)
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+
+adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
+adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
+adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
+adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
+
+# --- Basic Plot --- #
+
+pca = counts_pca(mat, libraries_full)
+pca_trim = counts_pca(mat2, libraries_full)
+pca_k1 = counts_pca(adjust1, libraries_full)
+pca_k2 = counts_pca(adjust2, libraries_full)
+pca_k3 = counts_pca(adjust3, libraries_full)
+pca_k4 = counts_pca(adjust4, libraries_full)
+
+(plot = (pca +
+         pca_trim +
+         pca_k1 +
+         pca_k2 +
+         pca_k3 +
+         pca_k4 +
+         plot_layout(guides = "collect", nrow = 3) +
+         plot_annotation(tag_levels = "A")
+))
+
+# --- Styled Plot --- #
+
+styled = plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
+                      plot.background = element_rect(fill = "white", color = NA),
+                      axis.line = element_blank(),
+                      axis.text = element_text(size = 8),
+                      axis.title = element_text(size = 10),
+                      legend.position = "bottom",
+                      legend.box = "horizontal",
+                      legend.margin = margin(10, 0, 0, 0))
+
+# --- Save --- #
+
+styled2 <- ggdraw(styled) +
+  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 100)
+
+if (!is.null(commandArgs(trailingOnly = TRUE))) {
+  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
+    saved_plot = styled2
+  } else {
+    saved_plot = styled
+  }
+} else {
+  saved_plot = styled
+}
+
+ggsave(file = pdf, plot = saved_plot, width = 8.5, height = 11, units = "in", dpi = 300)
+
+save(pca, pca_trim, pca_k1, pca_k2, pca_k3, pca_k4, plot, styled, file = rda)
+
+#+end_src
+library(cowplot)
+library(ggrepel)
+
+#+begin_src R :tangle no
+#!/usr/bin/env Rscript
+
+####################
+###   Atac Pca   ###
+####################
+
+# --- Setup --- #
+args = commandArgs(trailingOnly = TRUE)
+counts_tsv = args[1]
+libraries_full_rds = args[2]
+keep_tsv = args[3]
+pdf = args[4]
+rda = args[5]
+
+# Load required packages, data, and functions
+library(edgeR)
+library(cowplot)
+library(RUVSeq)
+library(tidyverse)
+library(ggrepel)
+library(patchwork)
+
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+counts_pca <- function(mat, libraries_full) {
+  dge <- DGEList(counts = mat)
+  dge <- calcNormFactors(dge)
+  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
+  pca <- prcomp(t(logcpm))
+  pve_pc1 = round(100*summary(pca)$importance[2,1])
+  pve_pc2 = round(100*summary(pca)$importance[2,2])
+  tab = as.data.frame(pca$x) %>%
+    rownames_to_column(var = "library") %>%
+    left_join(libraries_full, by = "library") %>%
+    as_tibble()
+  plot =
+    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
+    geom_point(size = 4) +
+    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+    geom_text_repel()
+  return(plot)
+}
+
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+mat2 = mat[, colnames(mat) %in% keep$library]
+
+counts_pca(mat2, libraries_full)
+
+(group =
+   data.frame(library = colnames(mat2)) %>%
+   left_join(libraries_full) %>%
+   pull(cohort) %>%
+   droplevels())
+
+set = newSeqExpressionSet(mat2,
+                          phenoData = data.frame(group, row.names = colnames(mat2)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+#y <- calcNormFactors(y)
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+
+adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
+adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
+adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
+adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
+
+# --- Basic Plot --- #
+
+pca = counts_pca(mat, libraries_full)
+pca_trim = counts_pca(mat2, libraries_full)
+pca_k1 = counts_pca(adjust1, libraries_full)
+pca_k2 = counts_pca(adjust2, libraries_full)
+pca_k3 = counts_pca(adjust3, libraries_full)
+pca_k4 = counts_pca(adjust4, libraries_full)
+
+(plot = (pca +
+         pca_trim +
+         pca_k1 +
+         pca_k2 +
+         pca_k3 +
+         pca_k4 +
+         plot_layout(guides = "collect", nrow = 3) +
+         plot_annotation(tag_levels = "A")
+))
+
+# --- Styled Plot --- #
+
+styled = plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
+                      plot.background = element_rect(fill = "white", color = NA),
+                      axis.line = element_blank(),
+                      axis.text = element_text(size = 8),
+                      axis.title = element_text(size = 10),
+                      legend.position = "bottom",
+                      legend.box = "horizontal",
+                      legend.margin = margin(10, 0, 0, 0))
+
+# --- Save --- #
+
+styled2 <- ggdraw(styled) +
+  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 100)
+
+if (!is.null(commandArgs(trailingOnly = TRUE))) {
+  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
+    saved_plot = styled2
+  } else {
+    saved_plot = styled
+  }
+} else {
+  saved_plot = styled
+}
+
+ggsave(file = pdf, plot = saved_plot, width = 8.5, height = 11, units = "in", dpi = 300)
+
+save(pca, pca_trim, pca_k1, pca_k2, pca_k3, pca_k4, plot, styled, file = rda)
+
+#+end_src
+#+begin_src R
+#!/usr/bin/env Rscript
+libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
+counts_tsv =  "~/cards/analysis/atac/human/dca/human_hg38.raw_coverages.tsv"
+keep_tsv = "~/cards/data-model/lists/human_atac_simple.tsv"
+
+# Load required packages, data, and functions
+library(edgeR)
+library(RUVSeq)
+library(tidyverse)
+library(ggrepel)
+library(patchwork)
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+counts_pca <- function(mat, libraries_full) {
+  dge <- DGEList(counts = mat)
+  dge <- calcNormFactors(dge)
+  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
+  pca <- prcomp(t(logcpm))
+  pve_pc1 = round(100*summary(pca)$importance[2,1])
+  pve_pc2 = round(100*summary(pca)$importance[2,2])
+  tab = as.data.frame(pca$x) %>%
+    rownames_to_column(var = "library") %>%
+    left_join(libraries_full, by = "library") %>%
+    as_tibble()
+  plot =
+    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
+    geom_point(size = 4) +
+    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+    geom_text_repel()
+  return(plot)
+}
+
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+mat2 = mat[, colnames(mat) %in% keep$library]
+
+counts_pca(mat2, libraries_full)
+
+(group =
+   data.frame(library = colnames(mat2)) %>%
+   left_join(libraries_full) %>%
+   pull(cohort) %>%
+   droplevels())
+
+set = newSeqExpressionSet(mat2,
+                          phenoData = data.frame(group, row.names = colnames(mat2)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+
+
+adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
+adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
+adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
+adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
+
+pca = counts_pca(mat, libraries_full)
+pca_trim = counts_pca(mat2, libraries_full)
+pca_k1 = counts_pca(adjust1, libraries_full)
+pca_k2 = counts_pca(adjust2, libraries_full)
+pca_k3 = counts_pca(adjust3, libraries_full)
+pca_k4 = counts_pca(adjust4, libraries_full)
+
+# create the combined plot using patchwork
+(combined_plot = (pca +
+                  pca_trim +
+                  pca_k1 +
+                  pca_k2 +
+                  pca_k3 +
+                  pca_k4 +
+                  plot_layout(guides = "collect", nrow = 3) +
+                  plot_annotation(tag_levels = "A")
+))
+
+# set the dimensions of the combined plot
+combined_plot <- combined_plot + theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+                                        plot.background = element_rect(fill = "white", color = NA),
+                                        axis.line = element_blank(),
+                                        axis.text = element_text(size = 8),
+                                        axis.title = element_text(size = 10))
+# set the dimensions of the combined plot
+combined_plot <- combined_plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
+                                        plot.background = element_rect(fill = "white", color = NA),
+                                        axis.line = element_blank(),
+                                        axis.text = element_text(size = 8),
+                                        axis.title = element_text(size = 10),
+                                        legend.position = "bottom",
+                                        legend.box = "horizontal",
+                                        legend.margin = margin(10, 0, 0, 0))
+ggsave(file = "~/cards/analysis/atac/human/dca/human_ruv_pca.pdf", plot = combined_plot, width = 8.5, height = 11, units = "in", dpi = 300)
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+counts_tsv =  "~/cards/analysis/atac/mouse/dca/mouse_mm10.raw_coverages.tsv"
+keep_tsv = "~/cards/data-model/lists/mouse_atac_simple.tsv"
+
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+mat2 = mat[, colnames(mat) %in% keep$library]
+
+counts_pca(mat2, libraries_full)
+
+(group =
+   data.frame(library = colnames(mat2)) %>%
+   left_join(libraries_full) %>%
+   pull(cohort) %>%
+   droplevels())
+
+set = newSeqExpressionSet(mat2,
+                          phenoData = data.frame(group, row.names = colnames(mat2)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+
+adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
+adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
+adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
+adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
+
+pca = counts_pca(mat, libraries_full)
+pca_k1 = counts_pca(adjust1, libraries_full)
+pca_k2 = counts_pca(adjust2, libraries_full)
+pca_k3 = counts_pca(adjust3, libraries_full)
+pca_k4 = counts_pca(adjust4, libraries_full)
+
+# create the combined plot using patchwork
+(combined_plot = (pca +
+                  pca_k1 +
+                  pca_k2 +
+                  pca_k3 +
+                  pca_k4 +
+                  plot_layout(guides = "collect", nrow = 3) +
+                  plot_annotation(tag_levels = "A")
+))
+
+# set the dimensions of the combined plot
+combined_plot <- combined_plot + theme(plot.margin = margin(1, 1, 1, 1, "cm"),
+                                        plot.background = element_rect(fill = "white", color = NA),
+                                        axis.line = element_blank(),
+                                        axis.text = element_text(size = 8),
+                                        axis.title = element_text(size = 10))
+# set the dimensions of the combined plot
+combined_plot <- combined_plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
+                                        plot.background = element_rect(fill = "white", color = NA),
+                                        axis.line = element_blank(),
+                                        axis.text = element_text(size = 8),
+                                        axis.title = element_text(size = 10),
+                                        legend.position = "bottom",
+                                        legend.box = "horizontal",
+                                        legend.margin = margin(10, 0, 0, 0))
+ggsave(file = "~/cards/analysis/atac/mouse/dca/mouse_ruv_pca.pdf", plot = combined_plot, width = 8.5, height = 11, units = "in", dpi = 300)
+
+
+(watermark_size = max(ggplot_build(combined_plot)$data[[1]]$xmax) *max(ggplot_build(plot)$data[[1]]$ymax_final))
+
+
+
+styled2 <- ggdraw(combined_plot) +
+  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 50)
+
+styled2
+# Check if there are any command-line arguments
+if (!is.null(commandArgs(trailingOnly = TRUE))) {
+  # Check if "--prelim" is present in the command-line arguments
+  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
+    saved_plot = styled2
+  } else {
+    saved_plot = styled
+  }
+} else {
+  # Default behavior when there are no command-line arguments
+  saved_plot = styled
+}
+#+end_src
+#+begin_src R
+
+library(tidyverse)
+library(edgeR)
+
+counts = read_tsv(counts_tsv)
+design = readRDS(design_rds)
+
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+dge = DGEList(counts = mat)
+keep = filterByExpr(dge, design)
+dge = dge[keep,]
+dge = calcNormFactors(dge)
+
+
+
+logcpm = edgeR::cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
+head(logcpm)
+
+pca = prcomp(t(as.matrix(logcpm[,-1])))
+
+(pve_pc1=round(100*summary(pca)$importance[2,1]))
+
+(pve_pc2=round(100*summary(pca)$importance[2,2]))
+
+plot = as.data.frame(pca$x) %>%
+  rownames_to_column(var = "library") %>%
+  ggplot(., aes(x = PC1, y = PC2)) +
+  geom_point(size = 4) +
+  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+  coord_fixed(ratio = 1)
+plot
+
+
+library(cowplot)
+library(ggrepel)
+library(tidyverse)
+
+libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
+libraries_full = readRDS(libraries_full_rds)
+
+plot = as.data.frame(pca$x) %>%
+  rownames_to_column(var = "library") %>%
+  left_join(libraries_full, by = "library") %>%
+  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
+  geom_point(size = 4) +
+  geom_text_repel() +
+  scale_color_discrete(name = factor_vec[[1]]) +
+  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+  coord_fixed(ratio = 1)
+
+if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
+  plot = plot +
+    aes(shape = get(factor_vec[[2]])) +
+    scale_shape_discrete(name = factor_vec[[2]])
+}
+plot
+
+plot = as.data.frame(pca$x) %>%
+  rownames_to_column(var = "library") %>%
+  left_join(libraries_full, by = "library") %>%
+  ggplot(., aes(x = PC1, y = PC2, color = cohort, shape = strain, label = library)) +
+  geom_point(size = 4) +
+  geom_text_repel() +
+  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+  coord_fixed(ratio = 1)
+plot
+#+end_src
 **** Peak counting
 ***** MACS2 broad peak calling
 #+begin_src snakemake
@@ -1794,531 +2330,6 @@ final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
 final <- distinct(final, coordinate, .keep_all = TRUE)
 write_tsv(final, file = out_tsv)
 #+end_src
-**** PCA
-#+begin_src R :tangle no
-#!/usr/bin/env Rscript
-
-####################
-###   Atac Pca   ###
-####################
-
-# --- Setup --- #
-args = commandArgs(trailingOnly = TRUE)
-counts_tsv = args[1]
-libraries_full_rds = args[2]
-fit_rds  = args[3]
-pca_pdf = args[4]
-
-
-# Load required packages, data, and functions
-library(edgeR)
-library(cowplot)
-library(RUVSeq)
-library(tidyverse)
-library(ggrepel)
-library(patchwork)
-
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-counts_pca <- function(mat, libraries_full) {
-  dge <- DGEList(counts = mat)
-  dge <- calcNormFactors(dge)
-  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
-  pca <- prcomp(t(logcpm))
-  pve_pc1 = round(100*summary(pca)$importance[2,1])
-  pve_pc2 = round(100*summary(pca)$importance[2,2])
-  tab = as.data.frame(pca$x) %>%
-    rownames_to_column(var = "library") %>%
-    left_join(libraries_full, by = "library") %>%
-    as_tibble()
-  plot =
-    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
-    geom_point(size = 4) +
-    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-    geom_text_repel()
-  return(plot)
-}
-
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-mat2 = mat[, colnames(mat) %in% keep$library]
-
-counts_pca(mat2, libraries_full)
-
-(group =
-   data.frame(library = colnames(mat2)) %>%
-   left_join(libraries_full) %>%
-   pull(cohort) %>%
-   droplevels())
-
-set = newSeqExpressionSet(mat2,
-                          phenoData = data.frame(group, row.names = colnames(mat2)))
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-#y <- calcNormFactors(y)
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
-adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
-adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
-adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
-
-# --- Basic Plot --- #
-
-pca = counts_pca(mat, libraries_full)
-pca_trim = counts_pca(mat2, libraries_full)
-pca_k1 = counts_pca(adjust1, libraries_full)
-pca_k2 = counts_pca(adjust2, libraries_full)
-pca_k3 = counts_pca(adjust3, libraries_full)
-pca_k4 = counts_pca(adjust4, libraries_full)
-
-(plot = (pca +
-         pca_trim +
-         pca_k1 +
-         pca_k2 +
-         pca_k3 +
-         pca_k4 +
-         plot_layout(guides = "collect", nrow = 3) +
-         plot_annotation(tag_levels = "A")
-))
-
-# --- Styled Plot --- #
-
-styled = plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
-                      plot.background = element_rect(fill = "white", color = NA),
-                      axis.line = element_blank(),
-                      axis.text = element_text(size = 8),
-                      axis.title = element_text(size = 10),
-                      legend.position = "bottom",
-                      legend.box = "horizontal",
-                      legend.margin = margin(10, 0, 0, 0))
-
-# --- Save --- #
-
-styled2 <- ggdraw(styled) +
-  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 100)
-
-if (!is.null(commandArgs(trailingOnly = TRUE))) {
-  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
-    saved_plot = styled2
-  } else {
-    saved_plot = styled
-  }
-} else {
-  saved_plot = styled
-}
-
-ggsave(file = pdf, plot = saved_plot, width = 8.5, height = 11, units = "in", dpi = 300)
-
-save(pca, pca_trim, pca_k1, pca_k2, pca_k3, pca_k4, plot, styled, file = rda)
-
-#+end_src
-library(cowplot)
-library(ggrepel)
-
-#+begin_src R :tangle no
-#!/usr/bin/env Rscript
-
-####################
-###   Atac Pca   ###
-####################
-
-# --- Setup --- #
-args = commandArgs(trailingOnly = TRUE)
-counts_tsv = args[1]
-libraries_full_rds = args[2]
-keep_tsv = args[3]
-pdf = args[4]
-rda = args[5]
-
-# Load required packages, data, and functions
-library(edgeR)
-library(cowplot)
-library(RUVSeq)
-library(tidyverse)
-library(ggrepel)
-library(patchwork)
-
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-counts_pca <- function(mat, libraries_full) {
-  dge <- DGEList(counts = mat)
-  dge <- calcNormFactors(dge)
-  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
-  pca <- prcomp(t(logcpm))
-  pve_pc1 = round(100*summary(pca)$importance[2,1])
-  pve_pc2 = round(100*summary(pca)$importance[2,2])
-  tab = as.data.frame(pca$x) %>%
-    rownames_to_column(var = "library") %>%
-    left_join(libraries_full, by = "library") %>%
-    as_tibble()
-  plot =
-    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
-    geom_point(size = 4) +
-    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-    geom_text_repel()
-  return(plot)
-}
-
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-mat2 = mat[, colnames(mat) %in% keep$library]
-
-counts_pca(mat2, libraries_full)
-
-(group =
-   data.frame(library = colnames(mat2)) %>%
-   left_join(libraries_full) %>%
-   pull(cohort) %>%
-   droplevels())
-
-set = newSeqExpressionSet(mat2,
-                          phenoData = data.frame(group, row.names = colnames(mat2)))
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-#y <- calcNormFactors(y)
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
-adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
-adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
-adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
-
-# --- Basic Plot --- #
-
-pca = counts_pca(mat, libraries_full)
-pca_trim = counts_pca(mat2, libraries_full)
-pca_k1 = counts_pca(adjust1, libraries_full)
-pca_k2 = counts_pca(adjust2, libraries_full)
-pca_k3 = counts_pca(adjust3, libraries_full)
-pca_k4 = counts_pca(adjust4, libraries_full)
-
-(plot = (pca +
-         pca_trim +
-         pca_k1 +
-         pca_k2 +
-         pca_k3 +
-         pca_k4 +
-         plot_layout(guides = "collect", nrow = 3) +
-         plot_annotation(tag_levels = "A")
-))
-
-# --- Styled Plot --- #
-
-styled = plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
-                      plot.background = element_rect(fill = "white", color = NA),
-                      axis.line = element_blank(),
-                      axis.text = element_text(size = 8),
-                      axis.title = element_text(size = 10),
-                      legend.position = "bottom",
-                      legend.box = "horizontal",
-                      legend.margin = margin(10, 0, 0, 0))
-
-# --- Save --- #
-
-styled2 <- ggdraw(styled) +
-  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 100)
-
-if (!is.null(commandArgs(trailingOnly = TRUE))) {
-  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
-    saved_plot = styled2
-  } else {
-    saved_plot = styled
-  }
-} else {
-  saved_plot = styled
-}
-
-ggsave(file = pdf, plot = saved_plot, width = 8.5, height = 11, units = "in", dpi = 300)
-
-save(pca, pca_trim, pca_k1, pca_k2, pca_k3, pca_k4, plot, styled, file = rda)
-
-#+end_src
-#+begin_src R
-#!/usr/bin/env Rscript
-libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
-counts_tsv =  "~/cards/analysis/atac/human/dca/human_hg38.raw_coverages.tsv"
-keep_tsv = "~/cards/data-model/lists/human_atac_simple.tsv"
-
-# Load required packages, data, and functions
-library(edgeR)
-library(RUVSeq)
-library(tidyverse)
-library(ggrepel)
-library(patchwork)
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-counts_pca <- function(mat, libraries_full) {
-  dge <- DGEList(counts = mat)
-  dge <- calcNormFactors(dge)
-  logcpm <- cpm(dge, log = TRUE, prior.count = 3)
-  pca <- prcomp(t(logcpm))
-  pve_pc1 = round(100*summary(pca)$importance[2,1])
-  pve_pc2 = round(100*summary(pca)$importance[2,2])
-  tab = as.data.frame(pca$x) %>%
-    rownames_to_column(var = "library") %>%
-    left_join(libraries_full, by = "library") %>%
-    as_tibble()
-  plot =
-    ggplot(tab, aes(x = PC1, y = PC2, shape = gy, color = post_ir_d, label = library)) +
-    geom_point(size = 4) +
-    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-    geom_text_repel()
-  return(plot)
-}
-
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-mat2 = mat[, colnames(mat) %in% keep$library]
-
-counts_pca(mat2, libraries_full)
-
-(group =
-   data.frame(library = colnames(mat2)) %>%
-   left_join(libraries_full) %>%
-   pull(cohort) %>%
-   droplevels())
-
-set = newSeqExpressionSet(mat2,
-                          phenoData = data.frame(group, row.names = colnames(mat2)))
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-
-adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
-adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
-adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
-adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
-
-pca = counts_pca(mat, libraries_full)
-pca_trim = counts_pca(mat2, libraries_full)
-pca_k1 = counts_pca(adjust1, libraries_full)
-pca_k2 = counts_pca(adjust2, libraries_full)
-pca_k3 = counts_pca(adjust3, libraries_full)
-pca_k4 = counts_pca(adjust4, libraries_full)
-
-# create the combined plot using patchwork
-(combined_plot = (pca +
-                  pca_trim +
-                  pca_k1 +
-                  pca_k2 +
-                  pca_k3 +
-                  pca_k4 +
-                  plot_layout(guides = "collect", nrow = 3) +
-                  plot_annotation(tag_levels = "A")
-))
-
-# set the dimensions of the combined plot
-combined_plot <- combined_plot + theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-                                        plot.background = element_rect(fill = "white", color = NA),
-                                        axis.line = element_blank(),
-                                        axis.text = element_text(size = 8),
-                                        axis.title = element_text(size = 10))
-# set the dimensions of the combined plot
-combined_plot <- combined_plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
-                                        plot.background = element_rect(fill = "white", color = NA),
-                                        axis.line = element_blank(),
-                                        axis.text = element_text(size = 8),
-                                        axis.title = element_text(size = 10),
-                                        legend.position = "bottom",
-                                        legend.box = "horizontal",
-                                        legend.margin = margin(10, 0, 0, 0))
-ggsave(file = "~/cards/analysis/atac/human/dca/human_ruv_pca.pdf", plot = combined_plot, width = 8.5, height = 11, units = "in", dpi = 300)
-
-#########1#########2#########3#########4#########5#########6#########7#########8
-counts_tsv =  "~/cards/analysis/atac/mouse/dca/mouse_mm10.raw_coverages.tsv"
-keep_tsv = "~/cards/data-model/lists/mouse_atac_simple.tsv"
-
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-mat2 = mat[, colnames(mat) %in% keep$library]
-
-counts_pca(mat2, libraries_full)
-
-(group =
-   data.frame(library = colnames(mat2)) %>%
-   left_join(libraries_full) %>%
-   pull(cohort) %>%
-   droplevels())
-
-set = newSeqExpressionSet(mat2,
-                          phenoData = data.frame(group, row.names = colnames(mat2)))
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-adjust1 <- normCounts(RUVr(set, peaks, k = 1, dev))
-adjust2 <- normCounts(RUVr(set, peaks, k = 2, dev))
-adjust3 <- normCounts(RUVr(set, peaks, k = 3, dev))
-adjust4 <- normCounts(RUVr(set, peaks, k = 4, dev))
-
-pca = counts_pca(mat, libraries_full)
-pca_k1 = counts_pca(adjust1, libraries_full)
-pca_k2 = counts_pca(adjust2, libraries_full)
-pca_k3 = counts_pca(adjust3, libraries_full)
-pca_k4 = counts_pca(adjust4, libraries_full)
-
-# create the combined plot using patchwork
-(combined_plot = (pca +
-                  pca_k1 +
-                  pca_k2 +
-                  pca_k3 +
-                  pca_k4 +
-                  plot_layout(guides = "collect", nrow = 3) +
-                  plot_annotation(tag_levels = "A")
-))
-
-# set the dimensions of the combined plot
-combined_plot <- combined_plot + theme(plot.margin = margin(1, 1, 1, 1, "cm"),
-                                        plot.background = element_rect(fill = "white", color = NA),
-                                        axis.line = element_blank(),
-                                        axis.text = element_text(size = 8),
-                                        axis.title = element_text(size = 10))
-# set the dimensions of the combined plot
-combined_plot <- combined_plot & theme(plot.margin = margin(.25, .25, .25, .25, "cm"),
-                                        plot.background = element_rect(fill = "white", color = NA),
-                                        axis.line = element_blank(),
-                                        axis.text = element_text(size = 8),
-                                        axis.title = element_text(size = 10),
-                                        legend.position = "bottom",
-                                        legend.box = "horizontal",
-                                        legend.margin = margin(10, 0, 0, 0))
-ggsave(file = "~/cards/analysis/atac/mouse/dca/mouse_ruv_pca.pdf", plot = combined_plot, width = 8.5, height = 11, units = "in", dpi = 300)
-
-
-(watermark_size = max(ggplot_build(combined_plot)$data[[1]]$xmax) *max(ggplot_build(plot)$data[[1]]$ymax_final))
-
-
-
-styled2 <- ggdraw(combined_plot) +
-  draw_label("PRELIMINARY", color = "gray", angle = 45, alpha = 0.5, size = 50)
-
-styled2
-# Check if there are any command-line arguments
-if (!is.null(commandArgs(trailingOnly = TRUE))) {
-  # Check if "--prelim" is present in the command-line arguments
-  if ("--prelim" %in% commandArgs(trailingOnly = TRUE)) {
-    saved_plot = styled2
-  } else {
-    saved_plot = styled
-  }
-} else {
-  # Default behavior when there are no command-line arguments
-  saved_plot = styled
-}
-#+end_src
-
-logcpm = edgeR::cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
-head(logcpm)
-
-pca = prcomp(t(as.matrix(logcpm[,-1])))
-
-(pve_pc1=round(100*summary(pca)$importance[2,1]))
-
-(pve_pc2=round(100*summary(pca)$importance[2,2]))
-
-plot = as.data.frame(pca$x) %>%
-  rownames_to_column(var = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2)) +
-  geom_point(size = 4) +
-  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-  coord_fixed(ratio = 1)
-plot
-
-formula = "~0 + cohort + run + strain"
-(factor_str = gsub("(~0 \\+)|\\s*\\*\\s*|\\s*\\+\\s*", " ", formula))
-(factor_str = trimws(factor_str))
-
-factor_vec = strsplit(factor_str, " ")[[1]]
-factor_vec <- factor_vec[!grepl("~|:|\\+", factor_vec)]
-
-library(cowplot)
-library(ggrepel)
-library(tidyverse)
-
-libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
-libraries_full = readRDS(libraries_full_rds)
-
-plot = as.data.frame(pca$x) %>%
-  rownames_to_column(var = "library") %>%
-  left_join(libraries_full, by = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
-  geom_point(size = 4) +
-  geom_text_repel() +
-  scale_color_discrete(name = factor_vec[[1]]) +
-  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-  coord_fixed(ratio = 1)
-
-if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
-  plot = plot +
-    aes(shape = get(factor_vec[[2]])) +
-    scale_shape_discrete(name = factor_vec[[2]])
-}
-plot
-
-plot = as.data.frame(pca$x) %>%
-  rownames_to_column(var = "library") %>%
-  left_join(libraries_full, by = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), shape = strain, label = library)) +
-  geom_point(size = 4) +
-  geom_text_repel() +
-  scale_color_discrete(name = factor_vec[[1]]) +
-  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-  coord_fixed(ratio = 1)
-plot
-
 *** Reference
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
