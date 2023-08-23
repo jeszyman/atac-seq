@@ -1018,7 +1018,7 @@ rule atac_ruv:
         design = f"{atac_dir}/models/{{atac_set}}/design.rds",
     log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
     output:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/{{atac_set}}_ruv{{ruv_k}}_counts.rds",
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
         fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
     params:
         ruv_k = lambda wildcards: wildcards.ruv_k,
