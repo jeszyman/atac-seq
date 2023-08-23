@@ -73,9 +73,9 @@ cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-
 
 #+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library  | path  | group  |
-  |---+---+---|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz  | ctrl  |
+  | library | path                                                                                         | group |
+  |---------+----------------------------------------------------------------------------------------------+-------|
+  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
 - Human reference fasta
   #+begin_src bash
 source config/bash_src
@@ -962,6 +962,7 @@ rule atac_edger_fit:
     log:
         f"{log_dir}/{{atac_set}}_atac_edger_fit.log",
     output:
+        dge = f"{atac_dir}/models/{{atac_set}}/dge.rds",
         fit = f"{atac_dir}/models/{{atac_set}}/fit.rds",
     params:
         script = f"{atac_script_dir}/atac_edger_fit.R",
@@ -972,10 +973,6 @@ rule atac_edger_fit:
 #+end_src
 
 #+begin_src R :tangle ./scripts/atac_edger_fit.R
-counts_tsv = "~/cards/analysis/atac/models/all_human/bamscale/raw_coverages.tsv"
-design_rds = "~/cards/analysis/atac/models/all_human/design.rds"
-libs_rds = "~/cards/analysis/atac/models/all_human/all_human_design.rds"
-
 #!/usr/bin/env Rscript
 
 # Command line arguements
@@ -983,7 +980,8 @@ args = commandArgs(trailingOnly = TRUE)
 counts_tsv = args[1]
 design_rds = args[2]
 libs_rds = args[3]
-fit_rds = args[4]
+dge_rds = args[4]
+fit_rds = args[5]
 
 library(tidyverse)
 library(edgeR)
@@ -1004,6 +1002,7 @@ dge = estimateGLMTrendedDisp(dge, design)
 dge = estimateGLMTagwiseDisp(dge, design)
 fit = glmFit(dge, design)
 
+saveRDS(dge, dge_rds)
 saveRDS(fit, fit_rds)
 #+end_src
 
@@ -1091,191 +1090,6 @@ fit = glmFit(dge, design)
 
 saveRDS(fit, fit_rds)
 #+end_src
-*** Workflow 3: Differential chromatin accessibility
-**** Make edgeR DCA contrast
-
-From RUVseq-adjusted BAMscale peak counts, differential chromatin accessibility is quantified with edgeR
-
-#+begin_src snakemake
-rule atac_edger_dca:
-    input:
-        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
-        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
-    log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
-    output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
-    params:
-        contrast_str = lambda wildcards: dca_map[wildcards.contrast]['contrast_str'],
-        script = f"{atac_script_dir}/atac_edger_dca.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input.design} \
-        {input.fit} \
-        "{params.contrast_str}" \
-        {output} > {log} 2>&1
-        """
-#+end_src
-
-#+begin_src R :tangle ./scripts/atac_edger_dca.R
-#!/usr/bin/env Rscript
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-design_rds = args[1]
-fit_rds = args[2]
-contrast_string = args[3]
-res_tsv = args[4]
-
-# Load required packages, data, and functions
-library(edgeR)
-library(tidyverse)
-
-design = readRDS(design_rds)
-fit = readRDS(fit_rds)
-
-contrast <- makeContrasts(eval(parse(text = contrast_string)), levels=design)
-lrt = glmLRT(fit, contrast = contrast)
-
-res =
-  as.data.frame(topTags(lrt, n = Inf)) %>%
-  rownames_to_column(var = "coordinate") %>%
-  as_tibble()
-
-write_tsv(res, file = res_tsv)
-#+end_src
-
-*** Shared
-**** Peak calling
-:PROPERTIES:
-:ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
-:END:
-Broad peak calling per [[cite:&reske2020]]
-Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
-
-#+begin_src snakemake
-rule macs2:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
-    output:
-        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
-        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
-    params:
-        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
-        outdir = f"{atac_dir}/peaks",
-        script = f"{atac_script_dir}/macs2.sh",
-    shell:
-        """
-        name=$(basename -s .bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/macs2.sh
-
-inbam=$1
-name=$2
-gsize=$3
-outdir=$4
-
-macs2 callpeak --treatment $inbam \
-      --format BAMPE \
-      --name $name \
-      --gsize $gsize \
-      --broad \
-      --broad-cutoff 0.05 \
-      --keep-dup all \
-      --outdir $outdir
-
-macs2 callpeak --treatment $inbam \
-      --bdg \
-      --call-summits \
-      --extsize 150 \
-      --format BAMPE \
-      --gsize $gsize \
-      --keep-dup all \
-      --name ${name} \
-      --nolambda \
-      --outdir $outdir \
-      -p 0.01 \
-      --shift -75 \
-      --SPMR \
-      --nomodel
-
-#+end_src
-
-**** TEST Peak annotation
-:PROPERTIES:
-:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-:END:
-
-#+begin_src snakemake
-rule peak_annotation:
-    input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
-    output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-    params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
-    shell:
-        """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
-        """
-#+end_src
-
-#+begin_src R :tangle ./scripts/peak_annotation.R
-#!/usr/bin/env Rscript
-
-#################################
-###   Macs2 Peak Annotation   ###
-#################################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-in_peak_bed = args[1]
-txdb = args[2]
-out_peak_bed = args[3]
-
-# Load required packages, data, and functions
-library(tidyverse)
-library(ChIPpeakAnno)
-library(rtracklayer)
-library(ChIPseeker)
-library(txdb, character.only = T)
-
-peaks = rtracklayer::import(in_peak_bed)
-anno = annotatePeak(peaks, TxDb = get(txdb))
-anno = as_tibble(anno)
-anno =
-  anno %>% mutate(simple = case_when(
-                    grepl("Promoter", annotation) ~ "promoter",
-                    grepl("Exon", annotation) ~ "exon",
-                    grepl("Intron", annotation) ~ "intron",
-                    grepl("3' UTR", annotation) ~ "utr3",
-                    grepl("5' UTR", annotation) ~ "utr5",
-                    grepl("Distal Intergenic", annotation) ~ "intergenic",
-                    grepl("Downstream", annotation) ~ "downstream",
-                    TRUE ~ annotation
-                  )) %>%
-  dplyr::select(seqnames, start, end, name, score, strand, pValue, qValue, width, simple, everything())
-
-write_tsv(anno, out_peak_bed, col_names = F)
-
-#+end_src
-
-*** Development
-:PROPERTIES:
-:header-args:snakemake: :tangle no
-:header-args:r: :tangle no
-:END:
 **** PCA
 #+begin_src R :tangle no
 #!/usr/bin/env Rscript
@@ -1812,6 +1626,191 @@ plot = as.data.frame(pca$x) %>%
   coord_fixed(ratio = 1)
 plot
 #+end_src
+*** Workflow 3: Differential chromatin accessibility
+**** Make edgeR DCA contrast
+
+From RUVseq-adjusted BAMscale peak counts, differential chromatin accessibility is quantified with edgeR
+
+#+begin_src snakemake
+rule atac_edger_dca:
+    input:
+        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
+        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
+    log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
+    output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
+    params:
+        contrast_str = lambda wildcards: dca_map[wildcards.contrast]['contrast_str'],
+        script = f"{atac_script_dir}/atac_edger_dca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input.design} \
+        {input.fit} \
+        "{params.contrast_str}" \
+        {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/atac_edger_dca.R
+#!/usr/bin/env Rscript
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+design_rds = args[1]
+fit_rds = args[2]
+contrast_string = args[3]
+res_tsv = args[4]
+
+# Load required packages, data, and functions
+library(edgeR)
+library(tidyverse)
+
+design = readRDS(design_rds)
+fit = readRDS(fit_rds)
+
+contrast <- makeContrasts(eval(parse(text = contrast_string)), levels=design)
+lrt = glmLRT(fit, contrast = contrast)
+
+res =
+  as.data.frame(topTags(lrt, n = Inf)) %>%
+  rownames_to_column(var = "coordinate") %>%
+  as_tibble()
+
+write_tsv(res, file = res_tsv)
+#+end_src
+
+*** Shared
+**** Peak calling
+:PROPERTIES:
+:ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
+:END:
+Broad peak calling per [[cite:&reske2020]]
+Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
+
+#+begin_src snakemake
+rule macs2:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
+    output:
+        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
+        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+    params:
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/macs2.sh
+
+inbam=$1
+name=$2
+gsize=$3
+outdir=$4
+
+macs2 callpeak --treatment $inbam \
+      --format BAMPE \
+      --name $name \
+      --gsize $gsize \
+      --broad \
+      --broad-cutoff 0.05 \
+      --keep-dup all \
+      --outdir $outdir
+
+macs2 callpeak --treatment $inbam \
+      --bdg \
+      --call-summits \
+      --extsize 150 \
+      --format BAMPE \
+      --gsize $gsize \
+      --keep-dup all \
+      --name ${name} \
+      --nolambda \
+      --outdir $outdir \
+      -p 0.01 \
+      --shift -75 \
+      --SPMR \
+      --nomodel
+
+#+end_src
+
+**** TEST Peak annotation
+:PROPERTIES:
+:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+:END:
+
+#+begin_src snakemake
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/peak_annotation.R
+#!/usr/bin/env Rscript
+
+#################################
+###   Macs2 Peak Annotation   ###
+#################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+in_peak_bed = args[1]
+txdb = args[2]
+out_peak_bed = args[3]
+
+# Load required packages, data, and functions
+library(tidyverse)
+library(ChIPpeakAnno)
+library(rtracklayer)
+library(ChIPseeker)
+library(txdb, character.only = T)
+
+peaks = rtracklayer::import(in_peak_bed)
+anno = annotatePeak(peaks, TxDb = get(txdb))
+anno = as_tibble(anno)
+anno =
+  anno %>% mutate(simple = case_when(
+                    grepl("Promoter", annotation) ~ "promoter",
+                    grepl("Exon", annotation) ~ "exon",
+                    grepl("Intron", annotation) ~ "intron",
+                    grepl("3' UTR", annotation) ~ "utr3",
+                    grepl("5' UTR", annotation) ~ "utr5",
+                    grepl("Distal Intergenic", annotation) ~ "intergenic",
+                    grepl("Downstream", annotation) ~ "downstream",
+                    TRUE ~ annotation
+                  )) %>%
+  dplyr::select(seqnames, start, end, name, score, strand, pValue, qValue, width, simple, everything())
+
+write_tsv(anno, out_peak_bed, col_names = F)
+
+#+end_src
+
+*** Development
+:PROPERTIES:
+:header-args:snakemake: :tangle no
+:header-args:r: :tangle no
+:END:
 **** Peak counting
 ***** MACS2 broad peak calling
 #+begin_src snakemake
@@ -15727,25 +15726,25 @@ zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
 #+end_src
 - Make reference chromosome bed file
     https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-    | chr1  |  1 |  195471971 |
-    | chr2  |  1 |  182113224 |
-    | chr3  |  1 |  160039680 |
-    | chr4  |  1 |  156508116 |
-    | chr5  |  1 |  151834684 |
-    | chr6  |  1 |  149736546 |
-    | chr7  |  1 |  145441459 |
-    | chr10  |  1 |  130694993 |
-    | chr8  |  1 |  129401213 |
-    | chr14  |  1 |  124902244 |
-    | chr9  |  1 |  124595110 |
-    | chr11  |  1 |  122082543 |
-    | chr13  |  1 |  120421639 |
-    | chr12  |  1 |  120129022 |
-    | chr15  |  1 |  104043685 |
-    | chr16  |  1 |  98207768 |
-    | chr17  |  1 |  94987271 |
-    | chr18  |  1 |  90702639 |
-    | chr19  |  1 |  61431566 |
+    | chr1  | 1 | 195471971 |
+    | chr2  | 1 | 182113224 |
+    | chr3  | 1 | 160039680 |
+    | chr4  | 1 | 156508116 |
+    | chr5  | 1 | 151834684 |
+    | chr6  | 1 | 149736546 |
+    | chr7  | 1 | 145441459 |
+    | chr10 | 1 | 130694993 |
+    | chr8  | 1 | 129401213 |
+    | chr14 | 1 | 124902244 |
+    | chr9  | 1 | 124595110 |
+    | chr11 | 1 | 122082543 |
+    | chr13 | 1 | 120421639 |
+    | chr12 | 1 | 120129022 |
+    | chr15 | 1 | 104043685 |
+    | chr16 | 1 |  98207768 |
+    | chr17 | 1 |  94987271 |
+    | chr18 | 1 |  90702639 |
+    | chr19 | 1 |  61431566 |
   - Get sample fastqs
     #+begin_src bash
   zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq

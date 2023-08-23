@@ -343,6 +343,7 @@ rule atac_edger_fit:
     log:
         f"{log_dir}/{{atac_set}}_atac_edger_fit.log",
     output:
+        dge = f"{atac_dir}/models/{{atac_set}}/dge.rds",
         fit = f"{atac_dir}/models/{{atac_set}}/fit.rds",
     params:
         script = f"{atac_script_dir}/atac_edger_fit.R",
