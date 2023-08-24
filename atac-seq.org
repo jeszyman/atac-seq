@@ -1349,7 +1349,7 @@ rule atac_ruv_pca:
         {output} > {log} 2>&1
         """
 #+end_src
-#+begin_src R :tangle ./scripts/atac_pca.R
+#+begin_src R :tangle ./scripts/atac_ruv_pca.R
 #!/usr/bin/env Rscript
 
 ####################

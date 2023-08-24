@@ -6,7 +6,7 @@
 
 # --- Setup --- #
 args = commandArgs(trailingOnly = TRUE)
-counts_tsv = args[1]
+counts_rds = args[1]
 libraries_full_rds = args[2]
 formula = args[3]
 out_png = args[4]
@@ -20,7 +20,7 @@ library(tidyverse)
 library(ggrepel)
 
 libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
+counts = readRDS(counts_rds)
 
 libs = substr(colnames(counts[-1]), 1, 6)
 mat = as.matrix(counts[,-1])
