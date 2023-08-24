@@ -214,6 +214,43 @@ rule atac_multiqc:
         {input} {params.out_dir} &> {log}
         """
 
+rule macs2:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
+    output:
+        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
+        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+    params:
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        """
+
 rule downsample_bam:
     input:
         f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
@@ -277,14 +314,14 @@ rule peak_filtering:
     input:
         chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
         libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_anno.bed",
                                          library = atac_map[wildcards.atac_set]['libs'],
                                          build = atac_map[wildcards.atac_set]['build'],
                                          bam_set = atac_map[wildcards.atac_set]['bam_set']),
     log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
     output:
-        all = f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed",
-        clust = f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed",
+        all = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed"),
+        clust = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed"),
         keep = f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
     params:
         corces_min = lambda wildcards: atac_map[wildcards.atac_set]['corces_min'],
@@ -405,41 +442,4 @@ rule atac_edger_dca:
         {input.fit} \
         "{params.contrast_str}" \
         {output} > {log} 2>&1
-        """
-
-rule macs2:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
-    output:
-        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
-        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
-    params:
-        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
-        outdir = f"{atac_dir}/peaks",
-        script = f"{atac_script_dir}/macs2.sh",
-    shell:
-        """
-        name=$(basename -s .bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-
-rule peak_annotation:
-    input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
-    output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-    params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
-    shell:
-        """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
         """

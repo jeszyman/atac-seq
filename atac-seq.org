@@ -589,6 +589,141 @@ multiqc $input \
 
 #+end_src
 **** [[id:96efb30b-67c7-4df9-8c85-e2bd2fc6707f][Peak calling]]
+**** Peak calling
+:PROPERTIES:
+:ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
+:END:
+Broad peak calling per [[cite:&reske2020]]
+Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
+
+#+begin_src snakemake
+rule macs2:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
+    output:
+        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
+        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+    params:
+        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
+        outdir = f"{atac_dir}/peaks",
+        script = f"{atac_script_dir}/macs2.sh",
+    shell:
+        """
+        name=$(basename -s .bam {input})
+        {params.script} \
+        {input} \
+        $name \
+        {params.gsize} \
+        {params.outdir} &> {log}
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/macs2.sh
+
+inbam=$1
+name=$2
+gsize=$3
+outdir=$4
+
+macs2 callpeak --treatment $inbam \
+      --format BAMPE \
+      --name $name \
+      --gsize $gsize \
+      --broad \
+      --broad-cutoff 0.05 \
+      --keep-dup all \
+      --outdir $outdir
+
+macs2 callpeak --treatment $inbam \
+      --bdg \
+      --call-summits \
+      --extsize 150 \
+      --format BAMPE \
+      --gsize $gsize \
+      --keep-dup all \
+      --name ${name} \
+      --nolambda \
+      --outdir $outdir \
+      -p 0.01 \
+      --shift -75 \
+      --SPMR \
+      --nomodel
+
+#+end_src
+
+**** Peak annotation
+:PROPERTIES:
+:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+:END:
+
+#+begin_src snakemake
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/peak_annotation.R
+#!/usr/bin/env Rscript
+
+#################################
+###   Macs2 Peak Annotation   ###
+#################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+in_peak_bed = args[1]
+txdb = args[2]
+out_peak_bed = args[3]
+
+# Load required packages, data, and functions
+library(tidyverse)
+library(ChIPpeakAnno)
+library(rtracklayer)
+library(ChIPseeker)
+library(txdb, character.only = T)
+
+peaks = rtracklayer::import(in_peak_bed)
+anno = annotatePeak(peaks, TxDb = get(txdb))
+
+anno = as_tibble(anno)
+
+if (!"peak" %in% names(anno)) {
+  anno <- anno %>%
+    mutate(peak = end - start)
+}
+
+anno =
+  anno %>% mutate(simple = case_when(
+                    grepl("Promoter", annotation) ~ "promoter",
+                    grepl("Exon", annotation) ~ "exon",
+                    grepl("Intron", annotation) ~ "intron",
+                    grepl("3' UTR", annotation) ~ "utr3",
+                    grepl("5' UTR", annotation) ~ "utr5",
+                    grepl("Distal Intergenic", annotation) ~ "intergenic",
+                    grepl("Downstream", annotation) ~ "downstream",
+                    TRUE ~ annotation
+                  ))
+
+anno =
+  anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, everything())
+
+write_tsv(anno, out_peak_bed, col_names = F)
+
+#+end_src
+
 *** Workflow 2: Per-DCA model processing
 - parse the peak file by annotation and run the open genome script
 - ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
@@ -773,14 +908,14 @@ rule peak_filtering:
     input:
         chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
         libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_anno.bed",
                                          library = atac_map[wildcards.atac_set]['libs'],
                                          build = atac_map[wildcards.atac_set]['build'],
                                          bam_set = atac_map[wildcards.atac_set]['bam_set']),
     log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
     output:
-        all = f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed",
-        clust = f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed",
+        all = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed"),
+        clust = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed"),
         keep = f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
     params:
         corces_min = lambda wildcards: atac_map[wildcards.atac_set]['corces_min'],
@@ -830,13 +965,28 @@ corces_min = as.numeric(corces_min)
 
 # Create single peak file by library
 
-ingest_macs2 = function(peak){
-  macs2peak = read_tsv(peak,
-                        col_names = c("chr","start","end","peak","score","strand","signal","neg_l10_pval","neg_l10_qval", "dsummit"))
-}
-
 ingest_macs2 <- function(peak) {
-  col_names <- c("chr", "start", "end", "peak", "score", "strand", "signal", "neg_l10_pval", "neg_l10_qval", "dsummit")
+  col_names <- c("chr",
+                 "start",
+                 "end",
+                 "width",
+                 "strand",
+                 "name",
+                 "score",
+                 "signalValue",
+                 "pValue",
+                 "qValue",
+                 "peak",
+                 "annotation",
+                 "geneChr",
+                 "geneStart",
+                 "geneEnd",
+                 "geneLength",
+                 "geneStrand",
+                 "geneId",
+                 "transcriptId",
+                 "distanceToTSS",
+                 "simple")
   macs2peak <- read_tsv(peak, col_names = col_names)
   return(macs2peak)
 }
@@ -849,22 +999,20 @@ peaks = peaks %>% left_join(libraries_full, by = "library")
 
 corces_peaks =
   peaks %>%
-  mutate(summit = start + dsummit) %>%
+  mutate(summit = start + peak) %>%
   mutate(start = summit - 250) %>%
   mutate(end = summit + 250) %>%
   # Remove sex chromosome and mitochondrial peaks here
   filter(chr %in% chrs) %>%
   group_by(library) %>%
-  mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
-  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak)
-
+  mutate(corces = pValue/sum(pValue/1000000)) %>% ungroup() %>%
+  filter(corces > corces_min) %>% select(chr, start, end, library, corces, name, simple, annotation, geneId)
 
 write_tsv(corces_peaks, file = all_peaks_bed, col_names = F)
 
 system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", cluster_bed))
 
-clust = read_tsv(cluster_bed, col_names = c("chr","start","end","library","corces","peak","clust"))
-
+clust = read_tsv(cluster_bed, col_names = c("chr", "start", "end", "library", "corces", "name", "simple", "annotation", "geneId", "clust"))
 
 max =
   clust %>%
@@ -1234,132 +1382,6 @@ write_tsv(res, file = res_tsv)
 #+end_src
 
 *** Shared
-**** Peak calling
-:PROPERTIES:
-:ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
-:END:
-Broad peak calling per [[cite:&reske2020]]
-Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
-
-#+begin_src snakemake
-rule macs2:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_macs2.log",
-    output:
-        broad = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.broadPeak",
-        narrow = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
-    params:
-        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
-        outdir = f"{atac_dir}/peaks",
-        script = f"{atac_script_dir}/macs2.sh",
-    shell:
-        """
-        name=$(basename -s .bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/macs2.sh
-
-inbam=$1
-name=$2
-gsize=$3
-outdir=$4
-
-macs2 callpeak --treatment $inbam \
-      --format BAMPE \
-      --name $name \
-      --gsize $gsize \
-      --broad \
-      --broad-cutoff 0.05 \
-      --keep-dup all \
-      --outdir $outdir
-
-macs2 callpeak --treatment $inbam \
-      --bdg \
-      --call-summits \
-      --extsize 150 \
-      --format BAMPE \
-      --gsize $gsize \
-      --keep-dup all \
-      --name ${name} \
-      --nolambda \
-      --outdir $outdir \
-      -p 0.01 \
-      --shift -75 \
-      --SPMR \
-      --nomodel
-
-#+end_src
-
-**** TEST Peak annotation
-:PROPERTIES:
-:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-:END:
-
-#+begin_src snakemake
-rule peak_annotation:
-    input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
-    output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-    params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
-    shell:
-        """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
-        """
-#+end_src
-
-#+begin_src R :tangle ./scripts/peak_annotation.R
-#!/usr/bin/env Rscript
-
-#################################
-###   Macs2 Peak Annotation   ###
-#################################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-in_peak_bed = args[1]
-txdb = args[2]
-out_peak_bed = args[3]
-
-# Load required packages, data, and functions
-library(tidyverse)
-library(ChIPpeakAnno)
-library(rtracklayer)
-library(ChIPseeker)
-library(txdb, character.only = T)
-
-peaks = rtracklayer::import(in_peak_bed)
-anno = annotatePeak(peaks, TxDb = get(txdb))
-anno = as_tibble(anno)
-anno =
-  anno %>% mutate(simple = case_when(
-                    grepl("Promoter", annotation) ~ "promoter",
-                    grepl("Exon", annotation) ~ "exon",
-                    grepl("Intron", annotation) ~ "intron",
-                    grepl("3' UTR", annotation) ~ "utr3",
-                    grepl("5' UTR", annotation) ~ "utr5",
-                    grepl("Distal Intergenic", annotation) ~ "intergenic",
-                    grepl("Downstream", annotation) ~ "downstream",
-                    TRUE ~ annotation
-                  )) %>%
-  dplyr::select(seqnames, start, end, name, score, strand, pValue, qValue, width, simple, everything())
-
-write_tsv(anno, out_peak_bed, col_names = F)
-
-#+end_src
-
 *** Development
 :PROPERTIES:
 :header-args:snakemake: :tangle no

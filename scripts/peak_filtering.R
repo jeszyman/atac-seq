@@ -25,13 +25,28 @@ corces_min = as.numeric(corces_min)
 
 # Create single peak file by library
 
-ingest_macs2 = function(peak){
-  macs2peak = read_tsv(peak,
-                        col_names = c("chr","start","end","peak","score","strand","signal","neg_l10_pval","neg_l10_qval", "dsummit"))
-}
-
 ingest_macs2 <- function(peak) {
-  col_names <- c("chr", "start", "end", "peak", "score", "strand", "signal", "neg_l10_pval", "neg_l10_qval", "dsummit")
+  col_names <- c("chr",
+                 "start",
+                 "end",
+                 "width",
+                 "strand",
+                 "name",
+                 "score",
+                 "signalValue",
+                 "pValue",
+                 "qValue",
+                 "peak",
+                 "annotation",
+                 "geneChr",
+                 "geneStart",
+                 "geneEnd",
+                 "geneLength",
+                 "geneStrand",
+                 "geneId",
+                 "transcriptId",
+                 "distanceToTSS",
+                 "simple")
   macs2peak <- read_tsv(peak, col_names = col_names)
   return(macs2peak)
 }
@@ -44,22 +59,20 @@ peaks = peaks %>% left_join(libraries_full, by = "library")
 
 corces_peaks =
   peaks %>%
-  mutate(summit = start + dsummit) %>%
+  mutate(summit = start + peak) %>%
   mutate(start = summit - 250) %>%
   mutate(end = summit + 250) %>%
   # Remove sex chromosome and mitochondrial peaks here
   filter(chr %in% chrs) %>%
   group_by(library) %>%
-  mutate(corces = neg_l10_pval/sum(neg_l10_pval/1000000)) %>% ungroup() %>%
-  filter(corces > corces_min) %>% select(chr, start, end, library, corces, peak)
-
+  mutate(corces = pValue/sum(pValue/1000000)) %>% ungroup() %>%
+  filter(corces > corces_min) %>% select(chr, start, end, library, corces, name, simple, annotation, geneId)
 
 write_tsv(corces_peaks, file = all_peaks_bed, col_names = F)
 
 system(paste0("bedtools sort -i ", all_peaks_bed, " | bedtools cluster -i - > ", cluster_bed))
 
-clust = read_tsv(cluster_bed, col_names = c("chr","start","end","library","corces","peak","clust"))
-
+clust = read_tsv(cluster_bed, col_names = c("chr", "start", "end", "library", "corces", "name", "simple", "annotation", "geneId", "clust"))
 
 max =
   clust %>%

@@ -19,7 +19,14 @@ library(txdb, character.only = T)
 
 peaks = rtracklayer::import(in_peak_bed)
 anno = annotatePeak(peaks, TxDb = get(txdb))
+
 anno = as_tibble(anno)
+
+if (!"peak" %in% names(anno)) {
+  anno <- anno %>%
+    mutate(peak = end - start)
+}
+
 anno =
   anno %>% mutate(simple = case_when(
                     grepl("Promoter", annotation) ~ "promoter",
@@ -30,7 +37,9 @@ anno =
                     grepl("Distal Intergenic", annotation) ~ "intergenic",
                     grepl("Downstream", annotation) ~ "downstream",
                     TRUE ~ annotation
-                  )) %>%
-  dplyr::select(seqnames, start, end, name, score, strand, pValue, qValue, width, simple, everything())
+                  ))
+
+anno =
+  anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, everything())
 
 write_tsv(anno, out_peak_bed, col_names = F)
