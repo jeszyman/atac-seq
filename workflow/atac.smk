@@ -389,23 +389,6 @@ rule atac_edger_fit:
         Rscript {params.script} {input} {output} > {log} 2>&1
         """
 
-rule atac_ruv:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
-    output:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
-    params:
-        ruv_k = lambda wildcards: wildcards.ruv_k,
-        script = f"{atac_script_dir}/atac_ruv.R",
-    shell:
-        """
-        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
-        """
-
 rule atac_pca:
     input:
         counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
@@ -424,6 +407,23 @@ rule atac_pca:
         {input} \
         "{params.formula}" \
         {output} > {log} 2>&1
+        """
+
+rule atac_ruv:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
+        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
+    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
+    output:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
+        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
+    params:
+        ruv_k = lambda wildcards: wildcards.ruv_k,
+        script = f"{atac_script_dir}/atac_ruv.R",
+    shell:
+        """
+        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
         """
 
 rule atac_ruv_pca:

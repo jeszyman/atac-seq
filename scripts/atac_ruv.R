@@ -46,6 +46,8 @@ peaks = row.names(dev)
 adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
 adjust_counts = normCounts(adjust)
 
+colnames(adjust_counts) = row.names(model_df)
+
 saveRDS(adjust_counts, ruv_counts_rds)
 
 adjust_counts = adjust_counts + 1

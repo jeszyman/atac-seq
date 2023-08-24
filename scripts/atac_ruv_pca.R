@@ -22,8 +22,8 @@ library(ggrepel)
 libraries_full = readRDS(libraries_full_rds)
 counts = readRDS(counts_rds)
 
-libs = substr(colnames(counts[-1]), 1, 6)
-mat = as.matrix(counts[,-1])
+libs = substr(colnames(counts), 1, 6)
+mat = as.matrix(counts)
 colnames(mat) = libs
 
 # Generate PCA geom keys from formula names
@@ -43,10 +43,12 @@ pca <- prcomp(t(logcpm))
 (pve_pc1 = round(100*summary(pca)$importance[2,1]))
 (pve_pc2 = round(100*summary(pca)$importance[2,2]))
 
-plot = as.data.frame(pca$x) %>%
+tbl = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library") %>%
-  left_join(libraries_full, by = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
+  left_join(libraries_full, by = "library")
+
+plot =
+  ggplot(tbl, aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
   geom_point(size = 4) +
   geom_text_repel() +
   scale_color_discrete(name = factor_vec[[1]]) +

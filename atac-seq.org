@@ -1154,90 +1154,6 @@ saveRDS(dge, dge_rds)
 saveRDS(fit, fit_rds)
 #+end_src
 
-**** Make RUV-adjusted ATAC-seq counts
-
-BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
-
-#+begin_src snakemake
-rule atac_ruv:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
-    output:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
-    params:
-        ruv_k = lambda wildcards: wildcards.ruv_k,
-        script = f"{atac_script_dir}/atac_ruv.R",
-    shell:
-        """
-        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
-        """
-#+end_src
-
-#+begin_src R :tangle ./scripts/atac_ruv.R
-#!/usr/bin/env Rscript
-
-##############################
-###   Human Dca With Rvu   ###
-##############################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-counts_tsv = args[1]
-libraries_full_rds = args[2]
-design_rds = args[3]
-ruv_k = args[4]
-ruv_counts_rds = args[5]
-fit_rds = args[6]
-
-# Load required packages, data, and functions
-library(RUVSeq)
-library(tidyverse)
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-design = readRDS(design_rds)
-
-# Setup data objects
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-model_df = as.data.frame(design)
-model_df$'(Intercept)' <- NULL
-
-mat <- mat[, rownames(model_df)]
-
-set = newSeqExpressionSet(mat,
-                          phenoData = AnnotatedDataFrame(model_df))
-
-dge <- DGEList(counts = counts(set))
-y <- DGEList(counts = counts(set))
-y <- calcNormFactors(y, method = "upperquartile")
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-
-adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
-adjust_counts = normCounts(adjust)
-
-saveRDS(adjust_counts, ruv_counts_rds)
-
-adjust_counts = adjust_counts + 1
-dge = DGEList(counts = adjust_counts)
-dge = calcNormFactors(dge)
-dge = estimateGLMCommonDisp(dge, design)
-dge = estimateGLMTrendedDisp(dge, design)
-dge = estimateGLMTagwiseDisp(dge, design)
-fit = glmFit(dge, design)
-
-saveRDS(fit, fit_rds)
-#+end_src
 **** PCA from logCPM
 #+begin_src snakemake
 rule atac_pca:
@@ -1327,6 +1243,92 @@ if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
 ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
 ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
 #+end_src
+**** Make RUV-adjusted ATAC-seq counts
+
+BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
+
+#+begin_src snakemake
+rule atac_ruv:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
+        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
+    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
+    output:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
+        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
+    params:
+        ruv_k = lambda wildcards: wildcards.ruv_k,
+        script = f"{atac_script_dir}/atac_ruv.R",
+    shell:
+        """
+        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/atac_ruv.R
+#!/usr/bin/env Rscript
+
+##############################
+###   Human Dca With Rvu   ###
+##############################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+counts_tsv = args[1]
+libraries_full_rds = args[2]
+design_rds = args[3]
+ruv_k = args[4]
+ruv_counts_rds = args[5]
+fit_rds = args[6]
+
+# Load required packages, data, and functions
+library(RUVSeq)
+library(tidyverse)
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+design = readRDS(design_rds)
+
+# Setup data objects
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+
+model_df = as.data.frame(design)
+model_df$'(Intercept)' <- NULL
+
+mat <- mat[, rownames(model_df)]
+
+set = newSeqExpressionSet(mat,
+                          phenoData = AnnotatedDataFrame(model_df))
+
+dge <- DGEList(counts = counts(set))
+y <- DGEList(counts = counts(set))
+y <- calcNormFactors(y, method = "upperquartile")
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+
+
+adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
+adjust_counts = normCounts(adjust)
+
+colnames(adjust_counts) = row.names(model_df)
+
+saveRDS(adjust_counts, ruv_counts_rds)
+
+adjust_counts = adjust_counts + 1
+dge = DGEList(counts = adjust_counts)
+dge = calcNormFactors(dge)
+dge = estimateGLMCommonDisp(dge, design)
+dge = estimateGLMTrendedDisp(dge, design)
+dge = estimateGLMTagwiseDisp(dge, design)
+fit = glmFit(dge, design)
+
+saveRDS(fit, fit_rds)
+#+end_src
 **** PCA from RUV
 #+begin_src snakemake
 rule atac_ruv_pca:
@@ -1374,8 +1376,8 @@ library(ggrepel)
 libraries_full = readRDS(libraries_full_rds)
 counts = readRDS(counts_rds)
 
-libs = substr(colnames(counts[-1]), 1, 6)
-mat = as.matrix(counts[,-1])
+libs = substr(colnames(counts), 1, 6)
+mat = as.matrix(counts)
 colnames(mat) = libs
 
 # Generate PCA geom keys from formula names
@@ -1395,10 +1397,12 @@ pca <- prcomp(t(logcpm))
 (pve_pc1 = round(100*summary(pca)$importance[2,1]))
 (pve_pc2 = round(100*summary(pca)$importance[2,2]))
 
-plot = as.data.frame(pca$x) %>%
+tbl = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library") %>%
-  left_join(libraries_full, by = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
+  left_join(libraries_full, by = "library")
+
+plot =
+  ggplot(tbl, aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
   geom_point(size = 4) +
   geom_text_repel() +
   scale_color_discrete(name = factor_vec[[1]]) +
