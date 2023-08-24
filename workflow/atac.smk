@@ -426,6 +426,26 @@ rule atac_pca:
         {output} > {log} 2>&1
         """
 
+rule atac_ruv_pca:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+    log:
+        f"{log_dir}/{{atac_set}}_atac_ruv_{{ruv_k}}_pca.log",
+    output:
+        png = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.png",
+        svg = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.svg",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        script = f"{atac_script_dir}/atac_ruv_pca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        "{params.formula}" \
+        {output} > {log} 2>&1
+        """
+
 rule atac_edger_dca:
     input:
         design = lambda wildcards: dca_map[wildcards.contrast]['design'],
