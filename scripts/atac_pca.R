@@ -1,9 +1,3 @@
-libraries_full_rds = "~/cards/data-model/lists/libraries_full.rds"
-counts_rds = "~/cards/analysis/atac/models/all_human/ruv/all_human_ruv4_counts.rds"
-formula = "~ 0 + cohort"
-out_png
-out_svg
-
 #!/usr/bin/env Rscript
 
 ####################
@@ -26,8 +20,13 @@ library(tidyverse)
 library(ggrepel)
 
 libraries_full = readRDS(libraries_full_rds)
-counts = readRDS(counts_rds)
+counts = read_tsv(counts_tsv)
 
+libs = substr(colnames(counts[-1]), 1, 6)
+mat = as.matrix(counts[,-1])
+colnames(mat) = libs
+
+# Generate PCA geom keys from formula names
 factor_str = gsub("(~ 0 \\+)|\\s*\\*\\s*|\\s*\\+\\s*", " ", formula)
 factor_str = trimws(factor_str)
 
@@ -35,7 +34,7 @@ factor_vec = strsplit(factor_str, " ")[[1]]
 factor_vec <- factor_vec[!grepl("~|:|\\+", factor_vec)]
 
 # Make logCPM
-dge <- DGEList(counts = counts)
+dge <- DGEList(counts = mat)
 dge <- calcNormFactors(dge)
 logcpm <- cpm(dge, log = TRUE, prior.count = 2)
 

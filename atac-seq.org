@@ -959,7 +959,7 @@ library(tidyverse)
 
 chrs = read_tsv(chrs_tsv, col_names = c("chr")) %>% pull(chr)
 libraries_full = readRDS(libraries_full_rds)
-libraries_full = libraries_full %>% select(!end)
+libraries_full = libraries_full %>% dplyr::select(!end)
 peak_files = unlist(strsplit(peak_file_str, " "))
 corces_min = as.numeric(corces_min)
 
@@ -1262,12 +1262,6 @@ rule atac_pca:
 #+end_src
 
 #+begin_src R :tangle ./scripts/atac_pca.R
-libraries_full_rds = "~/cards/data-model/lists/libraries_full.rds"
-counts_rds = "~/cards/analysis/atac/models/all_human/ruv/all_human_ruv4_counts.rds"
-formula = "~ 0 + cohort"
-out_png
-out_svg
-
 #!/usr/bin/env Rscript
 
 ####################
@@ -1290,8 +1284,13 @@ library(tidyverse)
 library(ggrepel)
 
 libraries_full = readRDS(libraries_full_rds)
-counts = readRDS(counts_rds)
+counts = read_tsv(counts_tsv)
 
+libs = substr(colnames(counts[-1]), 1, 6)
+mat = as.matrix(counts[,-1])
+colnames(mat) = libs
+
+# Generate PCA geom keys from formula names
 factor_str = gsub("(~ 0 \\+)|\\s*\\*\\s*|\\s*\\+\\s*", " ", formula)
 factor_str = trimws(factor_str)
 
@@ -1299,7 +1298,7 @@ factor_vec = strsplit(factor_str, " ")[[1]]
 factor_vec <- factor_vec[!grepl("~|:|\\+", factor_vec)]
 
 # Make logCPM
-dge <- DGEList(counts = counts)
+dge <- DGEList(counts = mat)
 dge <- calcNormFactors(dge)
 logcpm <- cpm(dge, log = TRUE, prior.count = 2)
 

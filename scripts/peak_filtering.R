@@ -19,7 +19,7 @@ library(tidyverse)
 
 chrs = read_tsv(chrs_tsv, col_names = c("chr")) %>% pull(chr)
 libraries_full = readRDS(libraries_full_rds)
-libraries_full = libraries_full %>% select(!end)
+libraries_full = libraries_full %>% dplyr::select(!end)
 peak_files = unlist(strsplit(peak_file_str, " "))
 corces_min = as.numeric(corces_min)
 
