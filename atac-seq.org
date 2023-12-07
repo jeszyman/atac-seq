@@ -4,6 +4,13 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
+for atac smk
+read density vs frag length qc
+tss qc
+w/i group fpkm w/ pearson
+[[
+- https://academic.oup.com/nar/article/43/W1/W39/2467905?login=true
+- https://academic.oup.com/nar/article/50/D1/D165/6446529?login=true
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
@@ -73,9 +80,9 @@ cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-
 
 #+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library  | path  | group  |
-  |---+---+---|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz  | ctrl  |
+  | library | path                                                                                    | group |
+  |---------+-----------------------------------------------------------------------------------------+-------|
+  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
 - Human reference fasta
   #+begin_src bash
 source config/bash_src
@@ -15394,25 +15401,25 @@ zcat test/inputs/mm10.ensGene.gtf.gz | grep chr19 > test/inputs/chr19.gtf
 #+end_src
 - Make reference chromosome bed file
     https://hgdownload.soe.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes
-    | chr1  |  1 |  195471971 |
-    | chr2  |  1 |  182113224 |
-    | chr3  |  1 |  160039680 |
-    | chr4  |  1 |  156508116 |
-    | chr5  |  1 |  151834684 |
-    | chr6  |  1 |  149736546 |
-    | chr7  |  1 |  145441459 |
-    | chr10  |  1 |  130694993 |
-    | chr8  |  1 |  129401213 |
-    | chr14  |  1 |  124902244 |
-    | chr9  |  1 |  124595110 |
-    | chr11  |  1 |  122082543 |
-    | chr13  |  1 |  120421639 |
-    | chr12  |  1 |  120129022 |
-    | chr15  |  1 |  104043685 |
-    | chr16  |  1 |  98207768 |
-    | chr17  |  1 |  94987271 |
-    | chr18  |  1 |  90702639 |
-    | chr19  |  1 |  61431566 |
+    | chr1  | 1 | 195471971 |
+    | chr2  | 1 | 182113224 |
+    | chr3  | 1 | 160039680 |
+    | chr4  | 1 | 156508116 |
+    | chr5  | 1 | 151834684 |
+    | chr6  | 1 | 149736546 |
+    | chr7  | 1 | 145441459 |
+    | chr10 | 1 | 130694993 |
+    | chr8  | 1 | 129401213 |
+    | chr14 | 1 | 124902244 |
+    | chr9  | 1 | 124595110 |
+    | chr11 | 1 | 122082543 |
+    | chr13 | 1 | 120421639 |
+    | chr12 | 1 | 120129022 |
+    | chr15 | 1 | 104043685 |
+    | chr16 | 1 |  98207768 |
+    | chr17 | 1 |  94987271 |
+    | chr18 | 1 |  90702639 |
+    | chr19 | 1 |  61431566 |
   - Get sample fastqs
     #+begin_src bash
   zcat /mnt/ris/jschwarz/cardiac-radiobiology/atac/fastq/lib008_R1.fastq.gz | head -n 1500000 > /home/jeszyman/repos/atac-seq/test/inputs/atac1_R1.fastq
