@@ -395,9 +395,9 @@ rule atac_fastqc:
     conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
     log: f"{log_dir}/{{library}}_{{processing}}_{{read}}_fastqc.log",
-    output: f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
+    output: f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
     params:
-        outdir = qc_dir,
+        outdir = atac_qc_dir,
         script = f"{atac_script_dir}/fastqc_wrapper.sh",
 	threads = threads,
     shell:
@@ -408,7 +408,7 @@ rule atac_fastqc:
         {params.threads} &> {log}
         """
 #+end_src
-- [[file:workflow/scripts/fastqc_wrapper.sh][Shell script]]
+- S[[file:workflow/scripts/fastqc_wrapper.sh][hell script]]
   #+begin_src bash :tangle ./scripts/fastqc_wrapper.sh
 #!/usr/bin/env bash
 
@@ -428,7 +428,7 @@ fastqc  --outdir $outdir \
   #+begin_src snakemake
 rule atac_idx:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam"
-    output: f"{qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
+    output: f"{atac_qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
     shell: "samtools idxstats {input} > {output}"
 #+end_src
 ***** Samtools stats
@@ -479,7 +479,7 @@ rule atacseq_qc:
                                  build = atac_map[wildcards.atac_set]['build']),
         txdb = f"{{build}}_ensembl_txdb",
     log: f"{log_dir}/{{build}}_atacseq_qc.log",
-    output: f"{qc_dir}/{{build}}_atac_qc.rdata",
+    output: f"{atac_qc_dir}/{{build}}_atac_qc.rdata",
     params:
         script = f"{atac_script_dir}/atacseq_qc.R",
     shell:
@@ -559,14 +559,14 @@ save(atac_qc_out, file = atac_qc_file)
   #+begin_src snakemake
 rule atac_multiqc:
     input:
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "proc"],
                                  read = ["R1","R2"]),
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_samstats.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_samstats.txt",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "dedup", "filt"]),
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_flagstat.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_flagstat.txt",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "dedup", "filt"]),
     log: f"{log_dir}/atac_multiqc.log",
@@ -2833,8 +2833,8 @@ checkpoint insert_size:
     input: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam", library = raw_atac_libs),
     log: f"{log_dir}/{{species}}_{{build}}_insert_size.log",
     output:
-        tsv = f"{qc_dir}/{{species}}_{{build}}_insert_sizes.tsv",
-        plot = f"{qc_dir}/{{species}}_{{build}}_insert_sizes.pdf",
+        tsv = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.tsv",
+        plot = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.pdf",
     params:
         peak_cut = atac_peak_cut,
         script = f"{atac_script_dir}/insert_size.R",
@@ -10292,7 +10292,7 @@ rule library_complexity:
     params:
         script = config["atac_script_dir_dir"] + "/library_complexity.R",
     output:
-        config["qc_dir"] + "/{library_id}_libcomplex.rds",
+        config["atac_qc_dir"] + "/{library_id}_libcomplex.rds",
     log:
         config["log_dir"] + "/{library_id}_library_complexity.log",
     shell:
@@ -14137,8 +14137,8 @@ rule bampefragsize:
     input:     expand(atac_bam_dir + "/{library}_filt.bam", library = ATAC_LIBS),
     log:       log_dir + "/bampefragsize.log",
     output:
-        hist = qc_dir + "/deeptools_frag_lengths.png",
-        raw = qc_dir + "/deeptools_frag_lengths.txt",
+        hist = atac_qc_dir + "/deeptools_frag_lengths.png",
+        raw = atac_qc_dir + "/deeptools_frag_lengths.txt",
     params:
         blacklist_bed = blacklist_bed,
         script  = atac_script_dir + "/bamPEFragmentSize_wrapper.sh",
@@ -15122,8 +15122,8 @@ checkpoint insert_size:
     input: expand(atac_bam_dir + "/{library}_filt.bam", library = ATAC_LIBS),
     log: log_dir + "/insert_size.log",
     output:
-        tsv = qc_dir + "/insert_sizes.tsv",
-        plot = qc_dir + "/insert_sizes.pdf",
+        tsv = atac_qc_dir + "/insert_sizes.tsv",
+        plot = atac_qc_dir + "/insert_sizes.pdf",
     params:
         peak_cut = atac_peak_cut,
         script = atac_script_dir + "/insert_size.R",

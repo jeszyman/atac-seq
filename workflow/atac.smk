@@ -131,9 +131,9 @@ rule atac_fastqc:
     conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
     log: f"{log_dir}/{{library}}_{{processing}}_{{read}}_fastqc.log",
-    output: f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
+    output: f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
     params:
-        outdir = qc_dir,
+        outdir = atac_qc_dir,
         script = f"{atac_script_dir}/fastqc_wrapper.sh",
 	threads = threads,
     shell:
@@ -146,7 +146,7 @@ rule atac_fastqc:
 
 rule atac_idx:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam"
-    output: f"{qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
+    output: f"{atac_qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
     shell: "samtools idxstats {input} > {output}"
 
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
@@ -179,7 +179,7 @@ rule atacseq_qc:
                                  build = atac_map[wildcards.atac_set]['build']),
         txdb = f"{{build}}_ensembl_txdb",
     log: f"{log_dir}/{{build}}_atacseq_qc.log",
-    output: f"{qc_dir}/{{build}}_atac_qc.rdata",
+    output: f"{atac_qc_dir}/{{build}}_atac_qc.rdata",
     params:
         script = f"{atac_script_dir}/atacseq_qc.R",
     shell:
@@ -193,14 +193,14 @@ rule atacseq_qc:
 
 rule atac_multiqc:
     input:
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "proc"],
                                  read = ["R1","R2"]),
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_samstats.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_samstats.txt",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "dedup", "filt"]),
-        lambda wildcards: expand(f"{qc_dir}/{{library}}_{{processing}}_flagstat.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_flagstat.txt",
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "dedup", "filt"]),
     log: f"{log_dir}/atac_multiqc.log",
