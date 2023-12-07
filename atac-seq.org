@@ -80,8 +80,8 @@ cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-
 
 #+end_src
 - [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library | path                                                                                    | group |
-  |---------+-----------------------------------------------------------------------------------------+-------|
+  | library | path                                                                                         | group |
+  |---------+----------------------------------------------------------------------------------------------+-------|
   | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
 - Human reference fasta
   #+begin_src bash
