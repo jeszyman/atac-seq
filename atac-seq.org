@@ -4,13 +4,6 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
-for atac smk
-read density vs frag length qc
-tss qc
-w/i group fpkm w/ pearson
-[[
-- https://academic.oup.com/nar/article/43/W1/W39/2467905?login=true
-- https://academic.oup.com/nar/article/50/D1/D165/6446529?login=true
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
@@ -388,6 +381,9 @@ samtools index $outbam
 
 #+end_src
 **** Quality control
+read density vs frag length qc
+tss qc
+w/i group fpkm w/ pearson
 ***** FastQC
 - Snakemake
   #+begin_src snakemake
@@ -733,7 +729,6 @@ write_tsv(anno, out_peak_bed, col_names = F)
 
 *** Workflow 2: Per-DCA model processing
 - parse the peak file by annotation and run the open genome script
-- ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
 **** Downsample
 #+begin_src snakemake
 rule downsample_bam:
@@ -1427,7 +1422,11 @@ ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
 ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
 #+end_src
 
+**** Ideas :ideas:
+- ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
 *** Workflow 3: Differential chromatin accessibility
+- https://academic.oup.com/nar/article/50/D1/D165/6446529?login=true
+- https://academic.oup.com/nar/article/43/W1/W39/2467905?login=true
 **** Make edgeR DCA contrast
 
 From RUVseq-adjusted BAMscale peak counts, differential chromatin accessibility is quantified with edgeR
