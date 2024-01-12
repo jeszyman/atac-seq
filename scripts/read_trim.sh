@@ -1,3 +1,6 @@
+
+# - Script [[file:workflow/scripts/read_trim.sh]]
+
 #########1#########2#########3#########4#########5#########6#########7#########8
 #
 # Function for flexbar processing

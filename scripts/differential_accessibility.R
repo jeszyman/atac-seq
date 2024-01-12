@@ -1,3 +1,6 @@
+
+## - [[file:./scripts/differential_accessibility.R][Base script]]
+
 #!/usr/env R
 
 #########1#########2#########3#########4#########5#########6#########7#########8
@@ -79,6 +82,9 @@ final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadat
 saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
+
+## - [[file:./scripts/differential_accessibility.R][Base script]]
+
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
 ###   Script to generate differential accessibility model with EdgeR   ###
@@ -151,6 +157,9 @@ final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadat
 saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
 
+
+## - [[file:./scripts/differential_accessibility.R][Base script]]
+
 # needs to be part of counts step
 colnames(counts) = c("lib001","lib002","lib003","lib004")
 
@@ -210,6 +219,9 @@ final.merged.peaks <- final.merged.peaks[order(final.merged.peaks@elementMetadat
 
 saveRDS(object = final.merged.peaks,
         file = dca_grange_file)
+
+
+## - [[file:./scripts/differential_accessibility.R][Base script]]
 
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###

@@ -1,3 +1,6 @@
+
+## - [[file:./scripts/normalize.R][Base script]]
+
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -86,32 +89,8 @@ saveRDS(object = tmm,
 saveRDS(object = loess,
         file = loess_file)
 
-#!/usr/bin/env Rscript
-#########1#########2#########3#########4#########5#########6#########7#########8
 
-######################################
-###   Normalize csaw peak counts   ###
-######################################
-
-args = commandArgs(trailingOnly = TRUE)
-rse_file = args[1]
-bk_filt = args[2]
-tmm_file = args[3]
-loess_file = args[4]
-
-rse = readRDS(rse_file)
-bk = readRDS(bk_filt)
-
-library(csaw)
-library(edgeR)
-
-tmm = normFactors(bk, se.out = rse)
-loess = normOffsets(rse, se.out = TRUE)
-
-saveRDS(object = tmm,
-        file = tmm_file)
-saveRDS(object = loess,
-        file = loess_file)
+## - Base script
 
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
@@ -139,6 +118,39 @@ saveRDS(object = tmm,
         file = tmm_file)
 saveRDS(object = loess,
         file = loess_file)
+
+
+## - Base script
+
+#!/usr/bin/env Rscript
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+######################################
+###   Normalize csaw peak counts   ###
+######################################
+
+args = commandArgs(trailingOnly = TRUE)
+rse_file = args[1]
+bk_filt = args[2]
+tmm_file = args[3]
+loess_file = args[4]
+
+rse = readRDS(rse_file)
+bk = readRDS(bk_filt)
+
+library(csaw)
+library(edgeR)
+
+tmm = normFactors(bk, se.out = rse)
+loess = normOffsets(rse, se.out = TRUE)
+
+saveRDS(object = tmm,
+        file = tmm_file)
+saveRDS(object = loess,
+        file = loess_file)
+
+
+## - [[file:./scripts/normalize.R][Base script]]
 
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8

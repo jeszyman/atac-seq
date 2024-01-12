@@ -1,3 +1,6 @@
+
+# - S[[file:workflow/scripts/fastqc_wrapper.sh][hell script]]
+
 #!/usr/bin/env bash
 
 # Script variables

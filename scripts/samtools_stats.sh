@@ -1,3 +1,6 @@
+
+# - [[file:scripts/samstools_sats.sh][Base script]]
+
 #!/usr/bin/env bash
 
 in_bam="${1}"

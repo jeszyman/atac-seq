@@ -1,3 +1,6 @@
+
+## - [[file:workflow/scripts/atac-seq_qc.R][Rscript]]
+
 # RUNS BUT DOES NOT SAVE frag.len <- fragSizeDist(proc_bam, "label")
 #!/usr/bin/env Rscript
 

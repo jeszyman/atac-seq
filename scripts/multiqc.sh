@@ -1,3 +1,6 @@
+
+# - [[file:scripts/multiqc.sh][Shell script]]
+
 #!/usr/bin/env bash
 
 # Command line arguements
@@ -9,6 +12,9 @@ multiqc $input \
         --force \
         --outdir $out_dir \
         --filename $out_name
+
+
+# - [[file:./scripts/multiqc.sh][Base script]]
 
 multiqc_wrap()
     # Check for parameters, return usage if empty

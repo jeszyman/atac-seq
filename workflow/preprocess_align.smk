@@ -10,6 +10,9 @@ rule all:
         expand(config["data_dir"] + "/atac/bam/{library_id}_regfilt_tn5.bam", library_id=RUNSAMPLES),
         expand(config["data_dir"] + "/atac/bam/{library_id}_open_tn5.bam", library_id=RUNSAMPLES),
 
+
+# - Snakemake
+
 rule read_trim:
     input:
         r1 = config["data_dir"] + "/atac/fastq/{library_id}_R1.fastq.gz",
@@ -27,6 +30,9 @@ rule read_trim:
         workflow/scripts/read_trim.sh {input.r1} {input.r2} {params.outdir} {params.threads}
         """
 
+
+# - Snakemake
+
 rule make_bowtie_index:
     input:
         fa = config["data_dir"] + "/ref/mm10.fa",
@@ -39,6 +45,12 @@ rule make_bowtie_index:
         """
         workflow/scripts/make_bowtie_index.sh {input.fa} {params.prefix} {params.threads}
         """
+
+
+# :LOGBOOK:
+# - State "WAITING"    from "TODO"       [2021-12-23 Thu 12:41]
+# :END:
+# - Snakemake
 
 rule align_bt2:
     input:

@@ -1,3 +1,6 @@
+
+# - [[file:./scripts/get_open_chrom.sh][Base script]]
+
 #########1#########2#########3#########4#########5#########6#########7#########8
 alignmentSieve --bam $1 \
                --maxFragmentLength 150 \

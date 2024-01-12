@@ -1,0 +1,7 @@
+
+# :PROPERTIES:
+# :header-args:bash: :tangle ./config/jeszyman-work.yaml
+# :END:
+
+data_dir: "/mnt/ris/szymanski/Active/atac_int_test"
+threads: 4

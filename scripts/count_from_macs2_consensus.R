@@ -1,3 +1,6 @@
+
+## - [[file:./scripts/count_from_macs2_consensus.R][Base script]]
+
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 
@@ -43,6 +46,9 @@ saveRDS(object = counts,
         file = rse)
 saveRDS(object = edger_input,
         file = dge)
+
+
+## - [[file:./scripts/count_from_macs2_consensus.R][Base script]]
 
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8

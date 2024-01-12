@@ -1,3 +1,6 @@
+
+## - [[file:./scripts/make_backgroud_bins.R][Base script]]
+
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -38,6 +41,9 @@ names(bam_list) = gsub(bam_pattern, "", list.files(path = bam_dir,
 bam_list = bam_list[names(bam_list) %in% filt_libs]
 
 binned = windowCounts(bam_list, bin=TRUE, width=10000, param=param)
+
+
+## - [[file:./scripts/make_backgroud_bins.R][Base script]]
 
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8

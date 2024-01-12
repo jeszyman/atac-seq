@@ -1,3 +1,10 @@
+
+## :LOGBOOK:
+## - State "WAITING"    from "TODO"       [2022-03-31 Thu 14:24]
+## :END:
+
+## - [X] Functions and test
+
 args = commandArgs(trailingOnly = TRUE)
 counts_rds = args[1]
 background_rds = args[2]

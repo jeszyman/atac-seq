@@ -5,6 +5,12 @@ rule all:
         config["data_dir"] + "/atac/bk_rse.rds",
         config["data_dir"] + "/atac/counts_rse.rds",
 
+
+# :LOGBOOK:
+# - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
+# :END:
+# - Snakemake
+
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
@@ -33,6 +39,12 @@ rule make_peak_counts:
         >& {log}
         """
 
+
+# :LOGBOOK:
+# - State "DONE"       from "INPROCESS"  [2022-03-11 Fri 12:20]
+# :END:
+# - Snakemake
+
 rule make_peak_counts:
     params:
         bam_dir = config["data_dir"] + "/atac/bam",
@@ -57,6 +69,9 @@ rule make_peak_counts:
         {output.counts_rse} \
         >& {log}
         """
+
+
+# - Snakemake
 
 rule differential_accessibility:
     input:

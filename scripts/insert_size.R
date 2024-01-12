@@ -1,3 +1,6 @@
+
+## - Rscript
+
 args = commandArgs(trailingOnly = TRUE)
 bam_list_str = args[1]
 peak_ratio_tsv = args[2]
@@ -73,6 +76,9 @@ plot = frag_len_tib %>%
   theme(legend.position = "bottom")
 
 ggsave(plot, file = peak_ratio_plot)
+
+
+## - Rscript
 
 args = commandArgs(trailingOnly = TRUE)
 bam_list_str = args[1]

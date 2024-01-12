@@ -4,7 +4,15 @@
 ###                                                                          ###
 #########1#########2#########3#########4#########5#########6#########7#########8
 
-rule fastp:
+# ---   Rules For Workflow 1: All Library Processing   --- #
+# -------------------------------------------------------- #
+
+
+# - Fastp
+#   - Removes tail 1 nucleotide
+#   - Auto-detects and removes nextera adapter
+
+rule atac_fastp:
     conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_raw_R1.fastq.gz",
@@ -52,8 +60,12 @@ rule atac_index:
         {params.threads} &> {log}
         """
 
+
+# Align trimmed reads using bowtie2
+# Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive. Alignment threads and align_load limit memory usage and avoid errors.
+
+
 rule align_bt2:
-    conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
@@ -93,6 +105,11 @@ rule atac_dedup:
         {params.threads} &> {log}
         """
 
+
+
+# Currently this filter just excludes unlocalized contigs. Sex chromosomes and mitochondrial reads are retained at this step.
+
+
 rule make_atac_keep_bed:
     conda: "atac",
     input: f"{ref_dir}/{{build}}_chrome_sizes.txt",
@@ -127,6 +144,9 @@ rule filter_atac_bams:
         {output} {params.threads} &> {log}
         """
 
+
+# - Snakemake
+
 rule atac_fastqc:
     conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
@@ -144,10 +164,16 @@ rule atac_fastqc:
         {params.threads} &> {log}
         """
 
+
+# - Snakemake
+
 rule atac_idx:
     input: f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam"
     output: f"{atac_qc_dir}/{{library}}_{{build}}_{{species}}_idxstat.txt"
     shell: "samtools idxstats {input} > {output}"
+
+
+# - Snakemake
 
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
 rule samtools_stats:
@@ -168,6 +194,9 @@ rule samtools_stats:
         {output.flagstat} \
         {params.threads} 2>&1 >> {log}
         """
+
+
+# - Snakemake
 
 rule atacseq_qc:
     input:
@@ -190,6 +219,9 @@ rule atacseq_qc:
         {input.txdb} \
         {output} > {log} 2>&1
         """
+
+
+# - Snakemake
 
 rule atac_multiqc:
     input:
@@ -214,6 +246,14 @@ rule atac_multiqc:
         {input} {params.out_dir} &> {log}
         """
 
+
+# :PROPERTIES:
+# :ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
+# :END:
+# Broad peak calling per [[cite:&reske2020]]
+# Reference Narrow peak as in cite:corces2018 and cite:hendrickson2017
+
+
 rule macs2:
     input:
         f"{atac_dir}/bams/{{library}}_{{build}}_{{bam_set}}.bam",
@@ -236,6 +276,12 @@ rule macs2:
         {params.outdir} &> {log}
         """
 
+
+# :PROPERTIES:
+# :ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+# :END:
+
+
 rule peak_annotation:
     input:
         f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
@@ -250,6 +296,11 @@ rule peak_annotation:
         """
         Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
         """
+
+
+
+# Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/
+
 
 rule downsample_bam:
     input:
@@ -421,6 +472,11 @@ rule atac_combat_rna_batch_correction:
         Rscript {params.script} {input} {output} > {log} 2>&1
         """
 
+
+
+# BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
+
+
 rule atac_ruv:
     input:
         counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
@@ -457,6 +513,11 @@ rule atac_ruv_pca:
         "{params.formula}" \
         {output} > {log} 2>&1
         """
+
+
+
+# From RUVseq-adjusted BAMscale peak counts, differential chromatin accessibility is quantified with edgeR
+
 
 rule atac_edger_dca:
     input:

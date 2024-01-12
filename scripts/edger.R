@@ -1,3 +1,6 @@
+
+## - [[file:./scripts/edger.R][Base script]]
+
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###
@@ -229,6 +232,9 @@ pca_plot
 #lowdate = as.character(data.frame(library_id = colnames(y)) %>% left_join(libraries_full, by = "library_id") %>% pull(flow_date))
 
 #########1#########2#########3#########4#########5#########6#########7#########8
+
+
+## - [[file:./scripts/edger.R][Base script]]
 
 #!/usr/bin/env Rscript
 #########1#########2#########3#########4#########5#########6#########7#########8

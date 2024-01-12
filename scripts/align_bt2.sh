@@ -18,6 +18,9 @@ bt2_align(){
 # Run
 bt2_align $input_r1 $input_r2 $params_prefix $params_threads $output_bam
 
+
+# - [[file:./scripts/align_bt2.sh][Base script]]
+
 #########1#########2#########3#########4#########5#########6#########7#########8
 
 # Function

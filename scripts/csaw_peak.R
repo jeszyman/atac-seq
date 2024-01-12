@@ -1,3 +1,15 @@
+
+## Error in env[[as.character(i)]] <- value :
+##   wrong args for environment subassignment
+## Calls: regionCounts ... bploop -> bploop.iterate -> <Anonymous> -> add_inorder
+## Execution halted
+
+
+## install.packages("tidyverse")
+## library(tidyverse)
+
+## - base rscript
+
 #############################################################################
 ###              Script for csaw ATAC-seq local peak calling
 #############################################################################

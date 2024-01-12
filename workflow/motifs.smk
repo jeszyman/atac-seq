@@ -3,6 +3,12 @@
 rule all:
     input:
 
+
+
+# extract ensembl ID lists from csaw-EdgeR DCA workflow
+
+# - Snakemake
+
 rule extract_gene_list:
     input:
     params:

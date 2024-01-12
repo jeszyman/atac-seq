@@ -1,13 +1,13 @@
 * ATAC-seq Snakemake Pipelines :biopipe:
 :PROPERTIES:
-:header-args: :tangle no :tangle-mode (identity #o555) :mkdirp yes :noweb yes
+:header-args: :tangle no :tangle-mode (identity #o555) :mkdirp yes :noweb yes :comments org
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
+** GitHub
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
-see also [[id:26f3a21b-714a-44ac-8cff-63b3cacf833e][Cardiac]]
 #+begin_src bash :tangle ./config/atac_env.yaml
 name: atac
 channels:
@@ -57,32 +57,54 @@ dependencies:
   - snakemake
 
 #+end_src
-
-
 *** Emacs
 **** T o d o states
 #+TODO: TODO TEST(t) INPROCESS(p) DEBUG(d) REFACTOR(r) DOCUMENT(d) BLOCKED(b&) WAITING(w&) | DONE DELEGATED
-*** Setup of inputs for integration testing
-- Some human fastqs
-  #+begin_src bash
-cp /mnt/ris/stacey.rentschler/Active/
+*** Integration testing
+**** Configuration YAMLs
+***** jeszyman-work
+:PROPERTIES:
+:header-args:bash: :tangle ./config/jeszyman-work.yaml
+:END:
+#+begin_src bash
+data_dir: "/mnt/ris/szymanski/Active/atac_int_test"
+threads: 4
+#+end_src
+**** Setup snakemake blocks
+:PROPERTIES:
+:ID:       ea684662-326c-4c49-9ad0-3c94eacf589e
+:END:
+#+name: smk_int_setup
+#+begin_src snakemake
+data_dir = config["data_dir"]
+atac_repo = "~/repos/atac"
+atac_script_dir = "scripts"
+atac_dir = f"{data_dir}/atac"
+atac_fastq_dir = f"{atac_dir}/fastqs"
+atac_bam_dir = f"{atac_dir}/bams"
+threads = 4
+raw_atac_libs = ['lib240']
 
-cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+log_dir = f"{data_dir}/logs"
+ref_dir = f"{data_dir}/ref"
+atac_qc_dir = f"{data_dir}/qc/atac"
+libraries_full_rds = "~/cards/data-model/lists/libraries_full.rds"
+datamodel_dir = "~/cards/data-model"
+#+end_src
 
-cp /mnt/ris/jschwarz/Active/cardiac-radiobiology/old/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R2.fastq.gz /mnt/ris/szymanski/Active/test/inputs/
+**** Include statements
+:PROPERTIES:
+:ID:       a50ad7e1-cf26-4487-abe1-a283d45826b9
+:END:
+#+name: include_statements
+#+begin_src snakemake
+# ---   Include Statements   --- #
+# ------------------------------ #
+
+include: "atac.smk"
 
 #+end_src
-- [[file:test/inputs/libraries.tsv][Sample sheet]]
-  | library | path                                                                                         | group |
-  |---------+----------------------------------------------------------------------------------------------+-------|
-  | lib001  | /mnt/ris/szymanski/Active/test/inputs/IR-1D.HKHJ7DSX3_TAAGGCGAAT-ACTAGATCGC_L002_R1.fastq.gz | ctrl  |
-- Human reference fasta
-  #+begin_src bash
-source config/bash_src
-wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz
-#+end_src
 
-*** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
 ** README
 :PROPERTIES:
 :export_file_name: ./readme.md
@@ -95,10 +117,6 @@ wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/
 :END:
 *** Writeup
 *** Preamble
-:PROPERTIES:
-:ID:       4b86db21-4de4-49f1-83f2-0b5e0a094506
-:CUSTOM_ID: 4b86db21-4de4-49f1-83f2-0b5e0a094506
-:END:
 #+begin_src snakemake
 #########1#########2#########3#########4#########5#########6#########7#########8
 ###                                                                          ###
@@ -107,13 +125,17 @@ wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/
 #########1#########2#########3#########4#########5#########6#########7#########8
 #+end_src
 *** Workflow 1: All library processing
-**** Fastq processing with fastp                                   :smk_rule:
-
-- Removes tail 1 nucleotide
-- Auto-detects and removes nextera adapter
-
+**** Preamble
 #+begin_src snakemake
-rule fastp:
+# ---   Rules For Workflow 1: All Library Processing   --- #
+# -------------------------------------------------------- #
+#+end_src
+**** Fastq processing with fastp                                   :smk_rule:
+- Fastp
+  - Removes tail 1 nucleotide
+  - Auto-detects and removes nextera adapter
+#+begin_src snakemake
+rule atac_fastp:
     conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_raw_R1.fastq.gz",
@@ -216,12 +238,11 @@ bowtie2-build \
 
 #+end_src
 ***** Align trimmed reads using bowtie2                            :smk_rule:
-
+Align trimmed reads using bowtie2
 Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive. Alignment threads and align_load limit memory usage and avoid errors.
 
 #+begin_src snakemake
 rule align_bt2:
-    conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
@@ -2032,7 +2053,43 @@ write_tsv(final, file = out_tsv)
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
 - cite:knaupp2017
-
+** Integration testing
+*** [[file:workflow/int_test1.smk][Workflow 1]]                                                          :smk:
+:PROPERTIES:
+:header-args:snakemake: :tangle ./workflow/int_test1.smk
+:END:
+**** Rulegraph
+#+ATTR_ORG: :width 400pxv
+**** Preamble
+#+begin_src snakemake
+#########1#########2#########3#########4#########5#########6#########7#########8
+###                                                                          ###
+###                       Integration Testing for ATAC-seq                   ###
+###                 Workflow 1: All read processing and alignment            ###
+###                                                                          ###
+#########1#########2#########3#########4#########5#########6#########7#########8
+#+end_src
+**** [[id:ea684662-326c-4c49-9ad0-3c94eacf589e][Setup]]
+#+begin_src snakemake
+<#smk_int_setup#>
+#+end_src
+**** All rule
+#+begin_src snakemake
+rule all:
+    input:
+        # Run fastp on raw fastqs
+        "/mnt/ris/szymanski/Active/atac_int_test/atac/fastqs/lib240_proc_R1.fastq.gz",
+        #expand(f"{atac_fastq_dir}/{{library}}_raw_{{read}}.fastq.gz",
+        #       library = raw_atac_libs,
+        #       read = ['R1','R2']),
+        expand(f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
+               library = raw_atac_libs,
+               build = 'hg38'),
+#+end_src
+**** [[id:a50ad7e1-cf26-4487-abe1-a283d45826b9][Include statements]]
+#+begin_src snakemake
+<#include_statements#>
+#+end_src
 
 ** Development
 *** RUV outputs
@@ -15415,7 +15472,8 @@ make_naive(sample_sheet_tsv, in_peaks_bed, atac_macs2_dir, out_peaks_bed)
 - [2022-09-06 Tue] Re-written for my biotools repo best practices [2022-09-06 Tue]. Downgraded to alignment and qc only. Need to add back macs2.
 - [2022-08-29 Mon] Initial pre-processing, peak calling, and normalization validated.
 ** Reference
-ENCODE blacklist_bed cite:amemiya2019
+- [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
+- ENCODE blacklist_bed cite:amemiya2019
 - old code
 - Make reference gtf
   #+begin_src bash
