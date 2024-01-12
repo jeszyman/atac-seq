@@ -1,5 +1,5 @@
 
-# - S[[file:workflow/scripts/fastqc_wrapper.sh][hell script]]
+# - [[file:workflow/scripts/fastqc_wrapper.sh][Shell script]]
 
 #!/usr/bin/env bash
 

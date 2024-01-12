@@ -65,7 +65,7 @@ rule atac_index:
 # Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive. Alignment threads and align_load limit memory usage and avoid errors.
 
 
-rule align_bt2:
+rule atac_align_bt2:
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
@@ -111,7 +111,6 @@ rule atac_dedup:
 
 
 rule make_atac_keep_bed:
-    conda: "atac",
     input: f"{ref_dir}/{{build}}_chrome_sizes.txt",
     log: f"{log_dir}/{{build}}_make_atac_keep_bed.log",
     output: f"{ref_dir}/{{build}}_atac_keep.bed",
@@ -125,7 +124,6 @@ rule make_atac_keep_bed:
         """
 
 rule filter_atac_bams:
-    conda: "atac",
     input:
         bam = f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
         keep = f"{ref_dir}/{{build}}_atac_keep.bed",
@@ -148,7 +146,6 @@ rule filter_atac_bams:
 # - Snakemake
 
 rule atac_fastqc:
-    conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
     log: f"{log_dir}/{{library}}_{{processing}}_{{read}}_fastqc.log",
     output: f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
@@ -176,7 +173,7 @@ rule atac_idx:
 # - Snakemake
 
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
-rule samtools_stats:
+rule atac_samtools_stats:
     input:
         f"{atac_bam_dir}/{{library}}_{{build}}_{{processing}}.bam",
     log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_samtool_stats.log",
@@ -198,52 +195,27 @@ rule samtools_stats:
 
 # - Snakemake
 
-rule atacseq_qc:
-    input:
-        dup_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_raw.bam",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 build = atac_map[wildcards.atac_set]['build']),
-        proc_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_dedup.bam",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 build = atac_map[wildcards.atac_set]['build']),
-        txdb = f"{{build}}_ensembl_txdb",
-    log: f"{log_dir}/{{build}}_atacseq_qc.log",
-    output: f"{atac_qc_dir}/{{build}}_atac_qc.rdata",
-    params:
-        script = f"{atac_script_dir}/atacseq_qc.R",
-    shell:
-        """
-        Rscript {params.script} \
-        "{input.dup_bams}" \
-        "{input.proc_bams}" \
-        {input.txdb} \
-        {output} > {log} 2>&1
-        """
-
-
-# - Snakemake
-
 rule atac_multiqc:
     input:
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "proc"],
-                                 read = ["R1","R2"]),
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_samstats.txt",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "dedup", "filt"]),
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_flagstat.txt",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "dedup", "filt"]),
-    log: f"{log_dir}/atac_multiqc.log",
-    output: f"{atac_dir}/mouse/qc/mouse_atac_multiqc.html",
+        stat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+                            library=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").library,
+                            build=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").build,
+                            processing=["raw", "dedup", "filt"]),
+        flagstat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
+                                library=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").library,
+                                build=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").build,
+                                processing=["raw", "dedup", "filt"]),
+    output:
+        multiqc_report = f"{atac_qc_dir}/multiqc/atac_multiqc.html",
+    log:
+        f"{log_dir}/atac_multiqc.log",
     params:
         out_dir = f"{atac_dir}/mouse/qc",
         script = f"{atac_script_dir}/multiqc.sh",
     shell:
         """
         {params.script} \
-        {input} {params.out_dir} &> {log}
+        {input.stat_files} {input.flagstat_files} {params.out_dir} &> {log}
         """
 
 

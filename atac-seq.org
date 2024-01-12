@@ -4,7 +4,8 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
-** GitHub
+** TODO build out a sample map for the atac raw libs
+** [[https://github.com/jeszyman/atac-seq/tree/dev][Github]]
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
@@ -105,11 +106,24 @@ include: "atac.smk"
 
 #+end_src
 
-** README
+** [[file:readme.md][README]]
 :PROPERTIES:
 :export_file_name: ./readme.md
 :export_file_options: toc:nil
 :END:
+
+Necessary initial directory structure within your declared "data_dir":
+
+#+BEGIN_EXAMPLE
+<DATA_DIR>/
+|-- ref
+|   |-- <GENOME BUILD ID>.fna.gz
+|   |-- <GENOME BUILD ID>_chrome_sizes.txt
+|-- fastqs
+|   |-- <LIBRARY ID>_raw_R1.fastq.gz
+|   |-- <LIBRARY ID>_raw_R2.fastq.gz
+|   `-- ...
+#+END_EXAMPLE
 
 ** [[file:workflow/atac.smk][ATAC-seq]] :smk:
 :PROPERTIES:
@@ -242,7 +256,7 @@ Align trimmed reads using bowtie2
 Alignment is per cite:corces2018, fragment lengths <= 2000, very sensitive. Alignment threads and align_load limit memory usage and avoid errors.
 
 #+begin_src snakemake
-rule align_bt2:
+rule atac_align_bt2:
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
@@ -334,7 +348,6 @@ Currently this filter just excludes unlocalized contigs. Sex chromosomes and mit
 
 #+begin_src snakemake
 rule make_atac_keep_bed:
-    conda: "atac",
     input: f"{ref_dir}/{{build}}_chrome_sizes.txt",
     log: f"{log_dir}/{{build}}_make_atac_keep_bed.log",
     output: f"{ref_dir}/{{build}}_atac_keep.bed",
@@ -363,7 +376,6 @@ cat $hg38_chrome_sizes |
 ***** Filter de-duplicated bams for ATAC-seq peak calling
 #+begin_src snakemake
 rule filter_atac_bams:
-    conda: "atac",
     input:
         bam = f"{atac_dir}/bams/{{library}}_{{build}}_dedup.bam",
         keep = f"{ref_dir}/{{build}}_atac_keep.bed",
@@ -409,14 +421,10 @@ samtools index $outbam
 
 #+end_src
 **** Quality control
-read density vs frag length qc
-tss qc
-w/i group fpkm w/ pearson
 ***** FastQC
 - Snakemake
   #+begin_src snakemake
 rule atac_fastqc:
-    conda: "atac"
     input: f"{atac_fastq_dir}/{{library}}_{{processing}}_{{read}}.fastq.gz",
     log: f"{log_dir}/{{library}}_{{processing}}_{{read}}_fastqc.log",
     output: f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
@@ -432,7 +440,7 @@ rule atac_fastqc:
         {params.threads} &> {log}
         """
 #+end_src
-- S[[file:workflow/scripts/fastqc_wrapper.sh][hell script]]
+- [[file:workflow/scripts/fastqc_wrapper.sh][Shell script]]
   #+begin_src bash :tangle ./scripts/fastqc_wrapper.sh
 #!/usr/bin/env bash
 
@@ -459,7 +467,7 @@ rule atac_idx:
 - Snakemake
   #+begin_src snakemake
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
-rule samtools_stats:
+rule atac_samtools_stats:
     input:
         f"{atac_bam_dir}/{{library}}_{{build}}_{{processing}}.bam",
     log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_samtool_stats.log",
@@ -490,97 +498,37 @@ threads="${4}"
 samtools stats -@ $threads $in_bam > $out_stat
 samtools flagstat -@ $threads $in_bam > $out_flag
 #+end_src
-***** ATAC-seq QC
-- Snakemake
-  #+begin_src snakemake
-rule atacseq_qc:
-    input:
-        dup_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_raw.bam",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 build = atac_map[wildcards.atac_set]['build']),
-        proc_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_dedup.bam",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 build = atac_map[wildcards.atac_set]['build']),
-        txdb = f"{{build}}_ensembl_txdb",
-    log: f"{log_dir}/{{build}}_atacseq_qc.log",
-    output: f"{atac_qc_dir}/{{build}}_atac_qc.rdata",
-    params:
-        script = f"{atac_script_dir}/atacseq_qc.R",
-    shell:
-        """
-        Rscript {params.script} \
-        "{input.dup_bams}" \
-        "{input.proc_bams}" \
-        {input.txdb} \
-        {output} > {log} 2>&1
-        """
-#+end_src
-- [[file:workflow/scripts/atac-seq_qc.R][Rscript]]
-  #+begin_src R :tangle ./scripts/atacseqqc.R
-# RUNS BUT DOES NOT SAVE frag.len <- fragSizeDist(proc_bam, "label")
-#!/usr/bin/env Rscript
-
-#############################
-###   Atacseqqc Wrapper   ###
-#############################
-
-
-# Load required packages
-args = commandArgs(trailingOnly = TRUE)
-in_bam_dup = args[1]
-in_bam_dedup = args[2]
-out_rda = args[3]
-
-# Load necessary packages
-library(ATACseqQC)
-library(tidyverse)
-library(AnnotationDbi)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-
-# Load data
-txdb = TxDb.Hsapiens.UCSC.hg38.knownGene
-
-# estimateLibComplexity uses preseqR to generate "a data frame of
-# 3 columns: relative sequence depth, number of distinct
-# fragments, number of putative sequenced reads"
-freq = readsDupFreq(in_bam_dup)
-libcomp = estimateLibComplexity(freq)
-
-# tsse_df returns the plot values of TSSEscore with the score itself being
-# https://www.encodeproject.org/data-standards/terms/#enrichment
-txs = transcripts(txdb)
-gal = readBamFile(proc_bam, bigFile=TRUE)
-tsse_list = TSSEscore(gal, txs)
-tsse_df = data.frame(
-  tsse = tsse_list[1],
-  distance = 100*(-9:10-.5)
-)
-tsse = tsse_list[2]
-
-atacqc = function(dup_bam, proc_bam, txdb){
-  freq = readsDupFreq(dup_bam)
-  libcomp = estimateLibComplexity(freq)
-  txs = transcripts(txdb)
-  gal = readBamFile(proc_bam)
-  tsse_list = TSSEscore(gal, txs)
-  tsse_df = data.frame(
-    tsse = tsse_list[1],
-    distance = 100*(-9:10-.5)
-  )
-  tsse = tsse_list[2]
-  atac = list(libcomp, tsse, tsse_df)
-  names(atac) = c("libcomp_df", "tsse", "tsse_df")
-  return(atac)
-}
-
-atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb = txdb))
-
-save(atac_qc_out, file = atac_qc_file)
-#+end_src
-
 ***** MultiQC
 - Snakemake
-  #+begin_src snakemake
+#+begin_src snakemake
+rule atac_multiqc:
+    input:
+        stat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+                            library=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").library,
+                            build=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").build,
+                            processing=["raw", "dedup", "filt"]),
+        flagstat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
+                                library=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").library,
+                                build=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").build,
+                                processing=["raw", "dedup", "filt"]),
+    output:
+        multiqc_report = f"{atac_qc_dir}/multiqc/atac_multiqc.html",
+    log:
+        f"{log_dir}/atac_multiqc.log",
+    params:
+        out_dir = f"{atac_dir}/mouse/qc",
+        script = f"{atac_script_dir}/multiqc.sh",
+    shell:
+        """
+        {params.script} \
+        {input.stat_files} {input.flagstat_files} {params.out_dir} &> {log}
+        """
+
+#+end_src
+
+
+
+  #+begin_src snakemake :tangle no
 rule atac_multiqc:
     input:
         lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
@@ -594,7 +542,7 @@ rule atac_multiqc:
                                  library = atac_map[wildcards.atac_set]['libs'],
                                  processing = ["raw", "dedup", "filt"]),
     log: f"{log_dir}/atac_multiqc.log",
-    output: f"{atac_dir}/mouse/qc/mouse_atac_multiqc.html",
+    output: f"{atac_qc_dir}/multiqc/atac_multiqc.html",
     params:
         out_dir = f"{atac_dir}/mouse/qc",
         script = f"{atac_script_dir}/multiqc.sh",
@@ -2049,6 +1997,94 @@ final = anno %>% left_join(names, by = c("entrezgene_id")) %>%
 final <- distinct(final, coordinate, .keep_all = TRUE)
 write_tsv(final, file = out_tsv)
 #+end_src
+**** ATAC-seq QC
+- Snakemake
+  #+begin_src snakemake
+rule atacseq_qc:
+    input:
+        dup_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_raw.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
+        proc_bams = lambda wildcards: expand(f"{atac_bam_dir}/{{library}}_{{build}}_dedup.bam",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 build = atac_map[wildcards.atac_set]['build']),
+        txdb = f"{{build}}_ensembl_txdb",
+    log: f"{log_dir}/{{build}}_atacseq_qc.log",
+    output: f"{atac_qc_dir}/{{build}}_atac_qc.rdata",
+    params:
+        script = f"{atac_script_dir}/atacseq_qc.R",
+    shell:
+        """
+        Rscript {params.script} \
+        "{input.dup_bams}" \
+        "{input.proc_bams}" \
+        {input.txdb} \
+        {output} > {log} 2>&1
+        """
+#+end_src
+- [[file:workflow/scripts/atac-seq_qc.R][Rscript]]
+  #+begin_src R :tangle ./scripts/atacseqqc.R
+# RUNS BUT DOES NOT SAVE frag.len <- fragSizeDist(proc_bam, "label")
+#!/usr/bin/env Rscript
+
+#############################
+###   Atacseqqc Wrapper   ###
+#############################
+
+
+# Load required packages
+args = commandArgs(trailingOnly = TRUE)
+in_bam_dup = args[1]
+in_bam_dedup = args[2]
+out_rda = args[3]
+
+# Load necessary packages
+library(ATACseqQC)
+library(tidyverse)
+library(AnnotationDbi)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+# Load data
+txdb = TxDb.Hsapiens.UCSC.hg38.knownGene
+
+# estimateLibComplexity uses preseqR to generate "a data frame of
+# 3 columns: relative sequence depth, number of distinct
+# fragments, number of putative sequenced reads"
+freq = readsDupFreq(in_bam_dup)
+libcomp = estimateLibComplexity(freq)
+
+# tsse_df returns the plot values of TSSEscore with the score itself being
+# https://www.encodeproject.org/data-standards/terms/#enrichment
+txs = transcripts(txdb)
+gal = readBamFile(proc_bam, bigFile=TRUE)
+tsse_list = TSSEscore(gal, txs)
+tsse_df = data.frame(
+  tsse = tsse_list[1],
+  distance = 100*(-9:10-.5)
+)
+tsse = tsse_list[2]
+
+atacqc = function(dup_bam, proc_bam, txdb){
+  freq = readsDupFreq(dup_bam)
+  libcomp = estimateLibComplexity(freq)
+  txs = transcripts(txdb)
+  gal = readBamFile(proc_bam)
+  tsse_list = TSSEscore(gal, txs)
+  tsse_df = data.frame(
+    tsse = tsse_list[1],
+    distance = 100*(-9:10-.5)
+  )
+  tsse = tsse_list[2]
+  atac = list(libcomp, tsse, tsse_df)
+  names(atac) = c("libcomp_df", "tsse", "tsse_df")
+  return(atac)
+}
+
+atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb = txdb))
+
+save(atac_qc_out, file = atac_qc_file)
+#+end_src
+
 *** Reference
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
@@ -2075,16 +2111,47 @@ write_tsv(final, file = out_tsv)
 #+end_src
 **** All rule
 #+begin_src snakemake
+
 rule all:
     input:
-        # Run fastp on raw fastqs
-        "/mnt/ris/szymanski/Active/atac_int_test/atac/fastqs/lib240_proc_R1.fastq.gz",
-        #expand(f"{atac_fastq_dir}/{{library}}_raw_{{read}}.fastq.gz",
-        #       library = raw_atac_libs,
-        #       read = ['R1','R2']),
-        expand(f"{atac_dir}/bams/{{library}}_{{build}}_raw.bam",
+        # Run fastp on raw fastqs                              (rule atac_fastp)
+        expand(f"{atac_fastq_dir}/{{library}}_raw_{{read}}.fastq.gz",
                library = raw_atac_libs,
+               read = ['R1','R2']),
+
+        # FastQC                                              (rule atac_fastqc)
+        expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
+               library = raw_atac_libs,
+               processing = ['raw', 'proc'],
+               read = ['R1','R2']),
+
+        # Alignment
+        ##
+        ## Make index                                          (rule atac_index)
+        expand(f"{ref_dir}/{{build}}_bowtie2/{{build}}.1.bt2",
                build = 'hg38'),
+
+        ## Align, deduplicate, and filter                 (rules atac_align_bt2,
+        ##                                                           atac_dedup,
+        ##                                                     filter_atac_bams)
+        expand(f"{atac_dir}/bams/{{library}}_{{build}}_{{processing}}.bam",
+               library = raw_atac_libs,
+               build = 'hg38',
+               processing = ['raw', 'dedup', 'filt']),
+
+        # Alignment QC
+        ##
+        ## Samtools                                   (rule atac_samtools_stats)
+        expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_{{stat}}.txt",
+               library = raw_atac_libs,
+               build = 'hg38',
+               processing = ['raw', 'dedup', 'filt'],
+               stat = ['samstats','flagstat']),
+        ##
+        ## MultiQC                                           (rule atac_multiqc)
+        f"{atac_qc_dir}/multiqc/atac_multiqc.html"
+
+
 #+end_src
 **** [[id:a50ad7e1-cf26-4487-abe1-a283d45826b9][Include statements]]
 #+begin_src snakemake
@@ -3076,6 +3143,10 @@ seq = getAllPeakSequence(overlaps,
                          upstream = 20,
                          downstream = 20,
                          genome=Hsapiens)
+*** Additional QC
+read density vs frag length qc
+tss qc
+w/i group fpkm w/ pearson
 
 *** Template                                                       :smk_rule:
 #+begin_src snakemake
