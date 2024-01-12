@@ -152,11 +152,11 @@ rule atac_idx:
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
 rule samtools_stats:
     input:
-        f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_{{processing}}.bam",
-    log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_{{species}}_samtool_stats.log",
+        f"{atac_bam_dir}/{{library}}_{{build}}_{{processing}}.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_samtool_stats.log",
     output:
-        stat = f"{atac_dir}/{{species}}/qc/{{library}}_{{build}}_{{processing}}_samstats.txt",
-        flagstat = f"{atac_dir}/{{species}}/qc/{{library}}_{{build}}_{{processing}}_flagstat.txt",
+        stat = f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+        flagstat = f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
     params:
         script = f"{atac_script_dir}/samtools_stats.sh",
         threads = threads,
@@ -407,6 +407,18 @@ rule atac_pca:
         {input} \
         "{params.formula}" \
         {output} > {log} 2>&1
+        """
+
+rule atac_combat_rna_batch_correction:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
+    log: f"{log_dir}/{{atac_set}}_atac_combat_rna_batch_correction.log",
+    output:  f"{atac_dir}/models/combat/{{atac_set}}/edger_dge.rds",
+    params: script = f"{atac_script_dir}/atac_combat_rna_batch_correction.R",
+    shell:
+        """
+        Rscript {params.script} {input} {output} > {log} 2>&1
         """
 
 rule atac_ruv:

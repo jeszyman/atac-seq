@@ -83,10 +83,17 @@ wget --directory-prefix="${data_dir}/inputs" ftp://ftp.ncbi.nlm.nih.gov/genomes/
 #+end_src
 
 *** [[id:57458bd3-005f-4342-ada7-58c55a74d7d0][ATAC-seq docker]]
+** README
+:PROPERTIES:
+:export_file_name: ./readme.md
+:export_file_options: toc:nil
+:END:
+
 ** [[file:workflow/atac.smk][ATAC-seq]] :smk:
 :PROPERTIES:
 :header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
+*** Writeup
 *** Preamble
 :PROPERTIES:
 :ID:       4b86db21-4de4-49f1-83f2-0b5e0a094506
@@ -433,11 +440,11 @@ rule atac_idx:
 #input: f"{atac_dir}/{{species}}/bams/{{library}}_{{processing}}.bam",
 rule samtools_stats:
     input:
-        f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_{{processing}}.bam",
-    log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_{{species}}_samtool_stats.log",
+        f"{atac_bam_dir}/{{library}}_{{build}}_{{processing}}.bam",
+    log: f"{log_dir}/{{library}}_{{build}}_{{processing}}_samtool_stats.log",
     output:
-        stat = f"{atac_dir}/{{species}}/qc/{{library}}_{{build}}_{{processing}}_samstats.txt",
-        flagstat = f"{atac_dir}/{{species}}/qc/{{library}}_{{build}}_{{processing}}_flagstat.txt",
+        stat = f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+        flagstat = f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
     params:
         script = f"{atac_script_dir}/samtools_stats.sh",
         threads = threads,
@@ -591,7 +598,6 @@ multiqc $input \
         --filename $out_name
 
 #+end_src
-**** [[id:96efb30b-67c7-4df9-8c85-e2bd2fc6707f][Peak calling]]
 **** Peak calling
 :PROPERTIES:
 :ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
@@ -730,6 +736,9 @@ write_tsv(anno, out_peak_bed, col_names = F)
 *** Workflow 2: Per-DCA model processing
 - parse the peak file by annotation and run the open genome script
 **** Downsample
+
+Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/
+
 #+begin_src snakemake
 rule downsample_bam:
     input:
@@ -769,6 +778,7 @@ samtools view -s $FACTOR -b -@ $threads $in_bam > $out_bam
 samtools index -@ threads $out_bam
 
 #+end_src
+
 **** Open genome by chromosome and chromatin state
 #+begin_src snakemake
 rule chr_state_open_genome:
@@ -1245,6 +1255,21 @@ if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
 ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
 ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
 #+end_src
+**** Batch correction with ComBat-seq
+#+begin_src snakemake
+rule atac_combat_rna_batch_correction:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
+    log: f"{log_dir}/{{atac_set}}_atac_combat_rna_batch_correction.log",
+    output:  f"{atac_dir}/models/combat/{{atac_set}}/edger_dge.rds",
+    params: script = f"{atac_script_dir}/atac_combat_rna_batch_correction.R",
+    shell:
+        """
+        Rscript {params.script} {input} {output} > {log} 2>&1
+        """
+#+end_src
+
 **** Make RUV-adjusted ATAC-seq counts
 
 BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
