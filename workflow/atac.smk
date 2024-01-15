@@ -193,32 +193,6 @@ rule atac_samtools_stats:
         """
 
 
-# - Snakemake
-
-rule atac_multiqc:
-    input:
-        stat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
-                            library=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").library,
-                            build=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").build,
-                            processing=["raw", "dedup", "filt"]),
-        flagstat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
-                                library=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").library,
-                                build=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").build,
-                                processing=["raw", "dedup", "filt"]),
-    output:
-        multiqc_report = f"{atac_qc_dir}/multiqc/atac_multiqc.html",
-    log:
-        f"{log_dir}/atac_multiqc.log",
-    params:
-        out_dir = f"{atac_dir}/mouse/qc",
-        script = f"{atac_script_dir}/multiqc.sh",
-    shell:
-        """
-        {params.script} \
-        {input.stat_files} {input.flagstat_files} {params.out_dir} &> {log}
-        """
-
-
 # :PROPERTIES:
 # :ID:       96efb30b-67c7-4df9-8c85-e2bd2fc6707f
 # :END:

@@ -4,7 +4,6 @@
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
 :END:
-** TODO build out a sample map for the atac raw libs
 ** [[https://github.com/jeszyman/atac-seq/tree/dev][Github]]
 ** Repository administration
 *** Conda environmental YAMLS
@@ -497,75 +496,6 @@ threads="${4}"
 
 samtools stats -@ $threads $in_bam > $out_stat
 samtools flagstat -@ $threads $in_bam > $out_flag
-#+end_src
-***** MultiQC
-- Snakemake
-#+begin_src snakemake
-rule atac_multiqc:
-    input:
-        stat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
-                            library=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").library,
-                            build=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").build,
-                            processing=["raw", "dedup", "filt"]),
-        flagstat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
-                                library=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").library,
-                                build=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").build,
-                                processing=["raw", "dedup", "filt"]),
-    output:
-        multiqc_report = f"{atac_qc_dir}/multiqc/atac_multiqc.html",
-    log:
-        f"{log_dir}/atac_multiqc.log",
-    params:
-        out_dir = f"{atac_dir}/mouse/qc",
-        script = f"{atac_script_dir}/multiqc.sh",
-    shell:
-        """
-        {params.script} \
-        {input.stat_files} {input.flagstat_files} {params.out_dir} &> {log}
-        """
-
-#+end_src
-
-
-
-  #+begin_src snakemake :tangle no
-rule atac_multiqc:
-    input:
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "proc"],
-                                 read = ["R1","R2"]),
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_samstats.txt",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "dedup", "filt"]),
-        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_flagstat.txt",
-                                 library = atac_map[wildcards.atac_set]['libs'],
-                                 processing = ["raw", "dedup", "filt"]),
-    log: f"{log_dir}/atac_multiqc.log",
-    output: f"{atac_qc_dir}/multiqc/atac_multiqc.html",
-    params:
-        out_dir = f"{atac_dir}/mouse/qc",
-        script = f"{atac_script_dir}/multiqc.sh",
-    shell:
-        """
-        {params.script} \
-        {input} {params.out_dir} &> {log}
-        """
-#+end_src
-- [[file:scripts/multiqc.sh][Shell script]]
-  #+begin_src bash :tangle ./scripts/multiqc.sh
-#!/usr/bin/env bash
-
-# Command line arguements
-input="${1}"
-out_name="${2}"
-out_dir="${3}"
-
-multiqc $input \
-        --force \
-        --outdir $out_dir \
-        --filename $out_name
-
 #+end_src
 **** Peak calling
 :PROPERTIES:
@@ -2085,6 +2015,75 @@ atac_qc_out = mapply(atacqc, dup_bam_vect, proc_bam_vect, MoreArgs = list(txdb =
 save(atac_qc_out, file = atac_qc_file)
 #+end_src
 
+**** MultiQC
+- Snakemake
+#+begin_src snakemake
+rule atac_multiqc:
+    input:
+        stat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+                            library=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").library,
+                            build=glob_wildcards(f"{atac_qc_dir}/*_*_*.samstats.txt").build,
+                            processing=["raw", "dedup", "filt"]),
+        flagstat_files = expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_flagstat.txt",
+                                library=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").library,
+                                build=glob_wildcards(f"{atac_qc_dir}/*_*_*.flagstat.txt").build,
+                                processing=["raw", "dedup", "filt"]),
+    output:
+        multiqc_report = f"{atac_qc_dir}/multiqc/atac_multiqc.html",
+    log:
+        f"{log_dir}/atac_multiqc.log",
+    params:
+        out_dir = f"{atac_dir}/mouse/qc",
+        script = f"{atac_script_dir}/multiqc.sh",
+    shell:
+        """
+        {params.script} \
+        {input.stat_files} {input.flagstat_files} {params.out_dir} &> {log}
+        """
+
+#+end_src
+
+
+
+  #+begin_src snakemake :tangle no
+rule atac_multiqc:
+    input:
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.html",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "proc"],
+                                 read = ["R1","R2"]),
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_samstats.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_flagstat.txt",
+                                 library = atac_map[wildcards.atac_set]['libs'],
+                                 processing = ["raw", "dedup", "filt"]),
+    log: f"{log_dir}/atac_multiqc.log",
+    output: f"{atac_qc_dir}/multiqc/atac_multiqc.html",
+    params:
+        out_dir = f"{atac_dir}/mouse/qc",
+        script = f"{atac_script_dir}/multiqc.sh",
+    shell:
+        """
+        {params.script} \
+        {input} {params.out_dir} &> {log}
+        """
+#+end_src
+- [[file:scripts/multiqc.sh][Shell script]]
+  #+begin_src bash :tangle ./scripts/multiqc.sh
+#!/usr/bin/env bash
+
+# Command line arguements
+input="${1}"
+out_name="${2}"
+out_dir="${3}"
+
+multiqc $input \
+        --force \
+        --outdir $out_dir \
+        --filename $out_name
+
+#+end_src
 *** Reference
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
@@ -3135,6 +3134,7 @@ parallel -j "$threads" process_file {} "$ref_bed" "$qval_cut" ::: $peaks_str > "
 #+end_src
 
 - https://www.biostars.org/p/219099/
+*** TODO build out a sample map for the atac raw libs
 ** Ideas
 - chromatin information enrichment - narrowpeak is used as for https://www.nature.com/articles/s41467-021-21534-4
 # naive consensus peaks by markov chain
