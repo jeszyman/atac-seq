@@ -1,7 +1,7 @@
 
 # - [[file:workflow/scripts/open_chrom.sh][Base script]]
 
-input=$1
+  input=$1
     tmp=$2
    open=$3
 threads=$4

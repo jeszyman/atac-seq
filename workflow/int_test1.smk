@@ -20,6 +20,9 @@ atac_qc_dir = f"{data_dir}/qc/atac"
 libraries_full_rds = "~/cards/data-model/lists/libraries_full.rds"
 datamodel_dir = "~/cards/data-model"
 
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+
 rule all:
     input:
         # Run fastp on raw fastqs                              (rule atac_fastp)
@@ -57,7 +60,7 @@ rule all:
                stat = ['samstats','flagstat']),
         ##
         ## MultiQC                                           (rule atac_multiqc)
-        f"{atac_qc_dir}/multiqc/atac_multiqc.html"
+        #f"{atac_qc_dir}/multiqc/atac_multiqc.html"
 
 # ---   Include Statements   --- #
 # ------------------------------ #

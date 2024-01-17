@@ -243,6 +243,22 @@ rule peak_annotation:
         Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
         """
 
+rule atac_multiqc:
+    input:
+        f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+    output:
+        f"{atac_qc_dir}/atac_multiqc/atac_multiqc.html",
+    params:
+        outdir = f"{atac_qc_dir}/atac_multiqc",
+        out_name = "atac_multiqc",
+    shell:
+	"""
+	multiqc $input \
+	--force \
+	-- outdir {params.outdir} \
+	--filename {params.out_name}
+	"""
+
 
 
 # Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/

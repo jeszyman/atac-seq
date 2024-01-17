@@ -1,1 +1,4 @@
-data_dir="/mnt/ris/szymanski/Active/test"
+source ../biotools/lib/bioinformatics_function.sh
+source ../basecamp/lib/conda_functions.sh
+source ../basecamp-private/resources/more_bashrc
+echo "ATAC-seq src complete for $HOSTNAME"

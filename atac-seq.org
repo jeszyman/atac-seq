@@ -57,7 +57,49 @@ dependencies:
   - snakemake
 
 #+end_src
+*** Bash
+**** Initialize a local test environment
+#+begin_src bash :tangle ./scripts/initialize_local_test_env.sh
+#!/bin/bash
+cd ~/repos/atac-seq
+source /opt/miniconda3/bin/activate base
+mamba env update config/atac_env.yaml
+source /opt/miniconda3/bin/activate atac
+source ./config/bash_src
+#+end_src
+
+**** Src
+#+begin_src bash :tangle ./config/bash_src
+source ../biotools/lib/bioinformatics_function.sh
+source ../basecamp/lib/conda_functions.sh
+source ../basecamp-private/resources/more_bashrc
+echo "ATAC-seq src complete for $HOSTNAME"
+
+#+end_src
+
 *** Emacs
+**** Initialize a local test environment
+
+
+#+begin_src emacs-lisp
+(let* ((script-path "./scripts/initialize_local_test_env.sh")                    ; Script path as a variable
+       (timestamp (format-time-string "%Y%m%d%H%M%S"))          ; Generate timestamp
+       (buffer-name (format "ATAC-TEST-%s" timestamp)))         ; Create buffer name using format
+  (call-interactively 'vterm '(4))                              ; Execute M-x vterm with C-u equivalent prefix
+  (rename-buffer buffer-name t)                                 ; Rename the buffer, force rename if necessary
+  (if (file-exists-p script-path)                               ; Check if the script exists
+      (progn
+        ;; Run the shell script in vterm if it exists
+        (vterm-send-string (format "source %s\n" script-path)))
+    ;; Send a warning message to vterm if the script does not exist
+    (vterm-send-string (format "echo 'Warning: Script %s does not exist'\n" script-path)))
+  ;; Delay switching to the new buffer in the same window
+  (run-with-timer 0.1 nil
+                  `(lambda ()
+                     (pop-to-buffer-same-window ,buffer-name))))
+
+#+end_src
+
 **** T o d o states
 #+TODO: TODO TEST(t) INPROCESS(p) DEBUG(d) REFACTOR(r) DOCUMENT(d) BLOCKED(b&) WAITING(w&) | DONE DELEGATED
 *** Integration testing
@@ -631,6 +673,27 @@ anno =
 write_tsv(anno, out_peak_bed, col_names = F)
 
 #+end_src
+
+**** TODO MultiQC
+#+begin_src snakemake
+rule atac_multiqc:
+    input:
+        f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+    output:
+        f"{atac_qc_dir}/atac_multiqc/atac_multiqc.html",
+    params:
+        outdir = f"{atac_qc_dir}/atac_multiqc",
+        out_name = "atac_multiqc",
+    shell:
+	"""
+	multiqc $input \
+	--force \
+	-- outdir {params.outdir} \
+	--filename {params.out_name}
+	"""
+#+end_src
+
+
 
 *** Workflow 2: Per-DCA model processing
 - parse the peak file by annotation and run the open genome script
@@ -2111,6 +2174,9 @@ multiqc $input \
 **** All rule
 #+begin_src snakemake
 
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+
 rule all:
     input:
         # Run fastp on raw fastqs                              (rule atac_fastp)
@@ -2148,7 +2214,7 @@ rule all:
                stat = ['samstats','flagstat']),
         ##
         ## MultiQC                                           (rule atac_multiqc)
-        f"{atac_qc_dir}/multiqc/atac_multiqc.html"
+        #f"{atac_qc_dir}/multiqc/atac_multiqc.html"
 
 
 #+end_src
@@ -2158,6 +2224,7 @@ rule all:
 #+end_src
 
 ** Development
+- https://genome.cshlp.org/content/22/9/1813.full
 *** RUV outputs
 ***** Make RUV-adjusted counts
 
@@ -2827,9 +2894,6 @@ sed -i '1i\library\tpeaks\tfrip' $output
   - [[https://docs.google.com/document/d/1f0Cm4vRyDQDu0bMehHD7P7KOMxTOP-HiNoIvL1VcBt8/edit][ENCODE]]
   - [[id:a55b6586-9f45-4f0c-9280-15b996a689f4][ATAC-seq FRiP results]]
 *** MACS2 narrow peak calling
-
-
-
 #+begin_src snakemake
 rule macs2_narrow:
     input:
@@ -2968,12 +3032,8 @@ corces = read_tsv(corces_tsv)
 libs %>% filter(species == species_var) %>% left_join(frip, by = "library") %>% left_join(corces, by = "library")
 
 #+end_src
-**** Development
-:PROPERTIES:
-:header-args:snakemake: :tangle no
-:END:
-- https://genome.cshlp.org/content/22/9/1813.full
-***** Insert-size distribution
+**** [[id:f0124001-2d9f-47a3-a55a-7004bc5db0ee][Peak annotation]]
+**** Insert-size distribution
 - Snakemake
   #+begin_src snakemake
 checkpoint insert_size:
@@ -3074,7 +3134,6 @@ ggsave(plot, file = peak_ratio_plot)
 
 
 #+end_src
-**** [[id:f0124001-2d9f-47a3-a55a-7004bc5db0ee][Peak annotation]]
 *** Open genome by chromosome
 #+begin_src snakemake
 
