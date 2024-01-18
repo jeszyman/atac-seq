@@ -1,46 +1,46 @@
+
+# - see
+#   - [[id:76a6e083-f569-42a9-b551-4b9ccc770834][Basecamp conda environment]]
+#   - [[id:cf13d347-1d0e-4858-a016-0a8a8af22609][Biotools conda yaml]]
+
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+# Notes:
+#
+# This file contains ONLY ATAC-seq-specific packages. For full functionality.
+# For full functionality, you must also update this environment with basecamp
+# and biotools environmental YAMLs which can be found at
+# https://github.com/jeszyman/basecamp/blob/master/basecamp_env.yaml and
+# https://github.com/jeszyman/biotools/blob/master/biotools_env.yaml.
+#
+# These can be incorporated from local files as:
+#
+# mamba env update --name atac \
+#    --file /path/to/basecamp_env.yaml
+
 name: atac
 channels:
   - conda-forge
   - bioconda
 
 dependencies:
-  - bamscale
-  - bedops
-  - bedtools
-  - bioconductor-GenomicRanges
-  - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene
-  - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene
-  - bioconductor-atacseqqc
-  - bioconductor-chippeakanno
-  - bioconductor-chipseeker
-  - bioconductor-clusterprofiler
-  - bioconductor-complexheatmap
-  - bioconductor-csaw
-  - bioconductor-fgsea
-  - bioconductor-ggbio
-  - bioconductor-gviz
-  - bioconductor-orthology.eg.db
-  - bioconductor-rgreat
-  - bioconductor-rsamtools
-  - bioconductor-ruvseq
-  - bioconductor-soggi
-  - bowtie2
-  - fastp
-  - fastqc
-  - homer
-  - macs2
-  - multiqc
-  - openpyxl
-  - pandas
-  - parallel
-  - r-ggextra
-  - r-ggpattern
-  - r-ggrepel
-  - r-ggsci
-  - r-magick
-  - r-msigdbr
-  - r-tidyverse
-  - r-tidyverse
-  - r-yaml
-  - samtools
-  - snakemake
+  - bamscale                   # Quantifies and normalizes coverage from peaks #
+  - bioconductor-atacseqqc                      # ATAC-seq-specific QC program #
+  - bioconductor-GenomicRanges     # Data structure for genomic intervals in R #
+  - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene      # Annotations for hg38 #
+  - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene     # Annotations for mm10 #
+  # - bioconductor-chippeakanno # Peak file annotation #
+  # - bioconductor-chipseeker # Additional peak file annotation #
+  # - bioconductor-clusterprofiler # Enrichment tool #
+  # - bioconductor-csaw # Differential accessibility or binding #
+  # - bioconductor-fgsea # Gene set enrichment analysis #
+  # - bioconductor-ggbio # Sequence track visualizations w/ ggplot #
+  # - bioconductor-gviz # More sequence track visualization #
+  # - bioconductor-orthology.eg.db # Mapping genes across species from NCBI gene IDs #
+  # - bioconductor-rgreat # Peak set enrichment #
+  # - bioconductor-ruvseq
+  # - bioconductor-soggi
+  # - bowtie2
+  # - homer
+  # - macs2
+  # - r-msigdbr

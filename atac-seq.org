@@ -8,64 +8,65 @@
 ** Repository administration
 *** Conda environmental YAMLS
 **** ATAC-seq
+- see
+  - [[id:76a6e083-f569-42a9-b551-4b9ccc770834][Basecamp conda environment]]
+  - [[id:cf13d347-1d0e-4858-a016-0a8a8af22609][Biotools conda yaml]]
+
 #+begin_src bash :tangle ./config/atac_env.yaml
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+# Notes:
+#
+# This file contains ONLY ATAC-seq-specific packages. For full functionality.
+# For full functionality, you must also update this environment with basecamp
+# and biotools environmental YAMLs which can be found at
+# https://github.com/jeszyman/basecamp/blob/master/basecamp_env.yaml and
+# https://github.com/jeszyman/biotools/blob/master/biotools_env.yaml.
+#
+# These can be incorporated from local files as:
+#
+# mamba env update --name atac \
+#    --file /path/to/basecamp_env.yaml
+
 name: atac
 channels:
   - conda-forge
   - bioconda
 
 dependencies:
-  - bamscale
-  - bedops
-  - bedtools
-  - bioconductor-GenomicRanges
-  - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene
-  - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene
-  - bioconductor-atacseqqc
-  - bioconductor-chippeakanno
-  - bioconductor-chipseeker
-  - bioconductor-clusterprofiler
-  - bioconductor-complexheatmap
-  - bioconductor-csaw
-  - bioconductor-fgsea
-  - bioconductor-ggbio
-  - bioconductor-gviz
-  - bioconductor-orthology.eg.db
-  - bioconductor-rgreat
-  - bioconductor-rsamtools
-  - bioconductor-ruvseq
-  - bioconductor-soggi
-  - bowtie2
-  - fastp
-  - fastqc
-  - homer
-  - macs2
-  - multiqc
-  - openpyxl
-  - pandas
-  - parallel
-  - r-ggextra
-  - r-ggpattern
-  - r-ggrepel
-  - r-ggsci
-  - r-magick
-  - r-msigdbr
-  - r-tidyverse
-  - r-tidyverse
-  - r-yaml
-  - samtools
-  - snakemake
+  - bamscale                   # Quantifies and normalizes coverage from peaks #
+  - bioconductor-atacseqqc                      # ATAC-seq-specific QC program #
+  - bioconductor-GenomicRanges     # Data structure for genomic intervals in R #
+  - bioconductor-TxDb.Hsapiens.UCSC.hg38.knownGene      # Annotations for hg38 #
+  - bioconductor-TxDb.Mmusculus.UCSC.mm10.knownGene     # Annotations for mm10 #
+  # - bioconductor-chippeakanno # Peak file annotation #
+  # - bioconductor-chipseeker # Additional peak file annotation #
+  # - bioconductor-clusterprofiler # Enrichment tool #
+  # - bioconductor-csaw # Differential accessibility or binding #
+  # - bioconductor-fgsea # Gene set enrichment analysis #
+  # - bioconductor-ggbio # Sequence track visualizations w/ ggplot #
+  # - bioconductor-gviz # More sequence track visualization #
+  # - bioconductor-orthology.eg.db # Mapping genes across species from NCBI gene IDs #
+  # - bioconductor-rgreat # Peak set enrichment #
+  # - bioconductor-ruvseq
+  # - bioconductor-soggi
+  # - bowtie2
+  # - homer
+  # - macs2
+  # - r-msigdbr
+
 
 #+end_src
 *** Bash
 **** Initialize a local test environment
 #+begin_src bash :tangle ./scripts/initialize_local_test_env.sh
 #!/bin/bash
-cd ~/repos/atac-seq
+set -e
+
 source /opt/miniconda3/bin/activate base
-mamba env update config/atac_env.yaml
+mamba env update -f "${HOME}/repos/atac-seq/config/atac_env.yaml"
 source /opt/miniconda3/bin/activate atac
-source ./config/bash_src
+source "${HOME}/repos/atac-seq/config/bash_src"
 #+end_src
 
 **** Src
@@ -79,7 +80,6 @@ echo "ATAC-seq src complete for $HOSTNAME"
 
 *** Emacs
 **** Initialize a local test environment
-
 
 #+begin_src emacs-lisp
 (let* ((script-path "./scripts/initialize_local_test_env.sh")                    ; Script path as a variable
@@ -152,6 +152,18 @@ include: "atac.smk"
 :export_file_name: ./readme.md
 :export_file_options: toc:nil
 :END:
+
+Prerequisites for full functionality:
+- Incorporate as submodule or symlink to basecamp and biotools repositories
+
+Necessary initial directory structure within your declared "atac_repo":
+
+#+BEGIN_EXAMPLE
+<REPO_DIR>/
+|-- basecamp (from https://github.com/jeszyman/basecamp)
+|-- biotools (from https://github.com/jeszyman/biotools)
+#+END_EXAMPLE
+
 
 Necessary initial directory structure within your declared "data_dir":
 
