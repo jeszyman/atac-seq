@@ -13,17 +13,16 @@
 #   - Auto-detects and removes nextera adapter
 
 rule atac_fastp:
-    conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_raw_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_raw_R2.fastq.gz",
     log:
         cmd  = f"{log_dir}/{{library}}_atac_fastp.log",
-        json = f"{log_dir}/{{library}}_atac_fastp.json",
         html = f"{log_dir}/{{library}}_atac_fastp.html",
     output:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
+        json = f"{atac_qc_dir}/{{library}}_atac_fastp.json",
     params:
         script  = f"{atac_script_dir}/trim.sh",
         threads = threads,
@@ -32,7 +31,7 @@ rule atac_fastp:
         {params.script} \
         {input.r1} \
         {input.r2} \
-        {log.json} \
+        {output.json} \
         {log.html} \
         {output.r1} \
         {output.r2} \
@@ -222,64 +221,159 @@ rule macs2:
         {params.outdir} &> {log}
         """
 
-
-# :PROPERTIES:
-# :ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-# :END:
-
-
-rule peak_annotation:
+rule atac_std_peaks:
     input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+        narrowPeak = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+        atac_genome_bed = f"{ref_dir}/{{build}}_atac_keep.bed",
+    log: f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_atac_std_peaks.log",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
     params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+        blacklist = lambda wildcards: build_map[wildcards.build]['blklist'],
+        script = f"{atac_script_dir}/corces_peak_filter.py",
     shell:
         """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        python {params.script} \
+        --blacklist_bed {params.blacklist} \
+        --chrom_size_bed {input.atac_genome_bed} \
+        --narrowPeak_file {input.narrowPeak} \
+        --out_narrowPeak {output} > {log} 2>&1
         """
 
 rule atac_multiqc:
     input:
-        f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 processing = atac_libs_map[wildcards.atac_group]['fastq_processing'],
+                                 read = ['R1','R2']),
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_{{stats}}.txt",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 build = atac_libs_map[wildcards.atac_group]['build'],
+                                 processing = atac_libs_map[wildcards.atac_group]['bam_processing'],
+                                 stats = ['samstats','flagstat']),
     output:
-        f"{atac_qc_dir}/atac_multiqc/atac_multiqc.html",
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_atac_multiqc.html",
     params:
-        outdir = f"{atac_qc_dir}/atac_multiqc",
-        out_name = "atac_multiqc",
-    shell:
-	"""
-	multiqc $input \
-	--force \
-	-- outdir {params.outdir} \
-	--filename {params.out_name}
-	"""
-
-
-
-# Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/
-
-
-rule downsample_bam:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_ds{{milreads}}_bam.log",
-    output:
-        ds = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam",
-        index = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam.bai",
-    params:
-        script = f"{atac_script_dir}/downsample_bam.sh",
-        threads = threads,
-        milreads = 9,
+        outdir = f"{atac_qc_dir}/{{atac_group}}",
+        out_name = f"{{atac_group}}_atac_multiqc",
     shell:
         """
-        {params.script} \
-        {input} {params.milreads} {params.threads} {output.ds} &> {log}
+        multiqc {input} \
+        --force \
+        --outdir {params.outdir} \
+        --filename {params.out_name}.html
+        """
+
+rule atac_agg_samstat:
+    input:
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 build = atac_libs_map[wildcards.atac_group]['build'],
+                                 processing = atac_libs_map[wildcards.atac_group]['bam_processing']),
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/agg_samstats.tsv",
+    run:
+        import os
+        import re
+
+        data = []
+
+        # Loop over the input files
+        for filename in input:
+            # Extract the library ID from the filename
+            library_id = os.path.basename(filename).split("_")[0]
+
+            # Open the log file
+            with open(filename, "r") as f:
+                lines = f.readlines()
+
+                # Find the required lines using regular expressions
+                reads = duplicated = total = mapped = error = None
+                for line in lines:
+                    if re.match(r"SN\traw total sequences:", line):
+                        reads = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\treads duplicated:", line):
+                        duplicated = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\ttotal length:", line):
+                        total = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\tbases mapped \(cigar\):", line):
+                        mapped = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\terror rate:", line):
+                        error = float(re.search(r"\d+\.\d+[eE][+-]\d+", line).group())
+
+                # Append the data to the list
+                data.append({
+                    "reads": reads,
+                    "duplicated": duplicated,
+                    "total": total,
+                    "mapped": mapped,
+                    "error": error,
+                    "library": library_id
+                })
+
+        # Write the data to a file
+        header = "total_reads\tduplicated_reads\ttotal_bases\tmapped_bases\terror_rate\tlibrary\n"
+        with open(output[0], "w") as f:
+            f.write(header)
+            for d in data:
+                f.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(d["reads"], d["duplicated"], d["total"], d["mapped"], d["error"], d["library"]))
+
+rule atac_agg_fastp:
+    input:
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_atac_fastp.json",
+                                 library = atac_libs_map[wildcards.atac_group]['libs']),
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_agg_fastp.tsv",
+    run:
+        import json
+        import csv
+
+        # Define the output TSV file
+        tsv_file = output[0]
+
+        # Initialize a list to store the q30_rates and libraries
+        q30_rates = []
+        libraries = []
+
+        # Loop over each input file
+        for input_file in input:
+            # Load the JSON file
+            with open(input_file) as f:
+                data = json.load(f)
+
+                # Extract the q30_rate from the after_filtering section of the summary
+                q30_rate = data["summary"]["after_filtering"]["q30_rate"]
+
+                # Extract the library name from the input file name
+                library = input_file.split("/")[-1].split("_")[0]
+
+                # Append the q30_rate and library to the lists
+                q30_rates.append(q30_rate)
+                libraries.append(library)
+
+        # Write the q30_rates and libraries lists to the output TSV file
+        with open(tsv_file, "w", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")
+            writer.writerow(["library", "q30_rate"])
+            for library, q30_rate in zip(libraries, q30_rates):
+                writer.writerow([library, q30_rate])
+
+rule atac_keep_libs:
+    input:
+        libs = libraries_full_rds,
+        samstats = lambda wildcards: f"{atac_qc_dir}/{wildcards.atac_group}/{wildcards.atac_group}_agg_samstats.tsv",
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_keep_libs.tsv",
+    params:
+        mil_reads = lambda wildcards: atac_libs_map[wildcards.atac_group][ds_milreads],
+        script = f"{atac_script_dir}/atac_keep_libs.R",
+    shell:
+        """
+        Rscript {params.script} \
+        --agg_samstats_tsv {input.samstats} \
+        --libraries_full_rds {input.libs} \
+        --mil_reads {params.mil_reads} \
+        --out_tsv {output}
         """
 
 rule chr_state_open_genome:
@@ -353,6 +447,27 @@ rule peak_filtering:
         {output.clust} \
         {params.lib_peaks_min} \
         {output.keep} > {log} 2>&1
+        """
+
+
+# :PROPERTIES:
+# :ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+# :END:
+
+
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
         """
 
 #bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",

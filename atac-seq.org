@@ -3,6 +3,7 @@
 :header-args: :tangle no :tangle-mode (identity #o555) :mkdirp yes :noweb yes :comments org
 :logging: nil
 :ID:       55813fe4-d3bb-476e-a021-141bf02efadc
+:RESET_CHECK_BOXES: t
 :END:
 ** [[https://github.com/jeszyman/atac-seq/tree/dev][Github]]
 ** Repository administration
@@ -57,6 +58,9 @@ dependencies:
 
 
 #+end_src
+
+conda env update --name your_env_name --file updated_env.yaml
+
 *** Bash
 **** Initialize a local test environment
 #+begin_src bash :tangle ./scripts/initialize_local_test_env.sh
@@ -197,23 +201,30 @@ Necessary initial directory structure within your declared "data_dir":
 # ---   Rules For Workflow 1: All Library Processing   --- #
 # -------------------------------------------------------- #
 #+end_src
+**** Writeup
+ATAC-seq sequencing libraries were processed using the pipelines in  https://github.com/jeszyman/atac-seq.
+
+ATAC-seq reads were adapter and quality-trimmed using fastp. Reads were aligned with bowtie2 with parameters as in cite:corces2018 (maxins 2000 very-sensitive). PCR duplicates were removed from aligned reads using samtools. Peak calling on deduplicated reads was performed with MACS2.
+
+Libraries containing more than 9 million reads were retained for further analysis.
+
+Peaks
 **** Fastq processing with fastp                                   :smk_rule:
 - Fastp
   - Removes tail 1 nucleotide
   - Auto-detects and removes nextera adapter
 #+begin_src snakemake
 rule atac_fastp:
-    conda: "atac",
     input:
         r1 = f"{atac_fastq_dir}/{{library}}_raw_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_raw_R2.fastq.gz",
     log:
         cmd  = f"{log_dir}/{{library}}_atac_fastp.log",
-        json = f"{log_dir}/{{library}}_atac_fastp.json",
         html = f"{log_dir}/{{library}}_atac_fastp.html",
     output:
         r1 = f"{atac_fastq_dir}/{{library}}_proc_R1.fastq.gz",
         r2 = f"{atac_fastq_dir}/{{library}}_proc_R2.fastq.gz",
+        json = f"{atac_qc_dir}/{{library}}_atac_fastp.json",
     params:
         script  = f"{atac_script_dir}/trim.sh",
         threads = threads,
@@ -222,7 +233,7 @@ rule atac_fastp:
         {params.script} \
         {input.r1} \
         {input.r2} \
-        {log.json} \
+        {output.json} \
         {log.html} \
         {output.r1} \
         {output.r2} \
@@ -614,145 +625,596 @@ macs2 callpeak --treatment $inbam \
       --nomodel
 
 #+end_src
-
-**** Peak annotation
-:PROPERTIES:
-:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-:END:
+**** TODO Standardize peak calls
 
 #+begin_src snakemake
-rule peak_annotation:
+rule atac_std_peaks:
     input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+        narrowPeak = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
+        atac_genome_bed = f"{ref_dir}/{{build}}_atac_keep.bed",
+    log: f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_atac_std_peaks.log",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
     params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+        blacklist = lambda wildcards: build_map[wildcards.build]['blklist'],
+        script = f"{atac_script_dir}/corces_peak_filter.py",
     shell:
         """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        python {params.script} \
+        --blacklist_bed {params.blacklist} \
+        --chrom_size_bed {input.atac_genome_bed} \
+        --narrowPeak_file {input.narrowPeak} \
+        --out_narrowPeak {output} > {log} 2>&1
         """
 #+end_src
 
-#+begin_src R :tangle ./scripts/peak_annotation.R
-#!/usr/bin/env Rscript
+#+begin_src python :tangle ./scripts/corces_peak_filter.py
+#!/usr/bin/env python3
 
-#################################
-###   Macs2 Peak Annotation   ###
-#################################
+"""
+Script to impliment Corces et al., 2018 per-peak filtering (https://doi.org/10.1126/science.aav1898)
+"""
 
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-in_peak_bed = args[1]
-txdb = args[2]
-out_peak_bed = args[3]
+# ---   Setup   --- #
+# ----------------- #
 
-# Load required packages, data, and functions
-library(tidyverse)
-library(ChIPpeakAnno)
-library(rtracklayer)
-library(ChIPseeker)
-library(txdb, character.only = T)
+## ---   Load Packages   --- ##
+## ------------------------- ##
 
-peaks = rtracklayer::import(in_peak_bed)
-anno = annotatePeak(peaks, TxDb = get(txdb))
+import argparse
+import pandas as pd
+import pybedtools
+from intervaltree import Interval, IntervalTree
 
-anno = as_tibble(anno)
+## ---   Load Inputs   --- ##
+## ----------------------- ##
 
-if (!"peak" %in% names(anno)) {
-  anno <- anno %>%
-    mutate(peak = end - start)
-}
+def load_inputs():
+    # Setup argparse to handle command line arguments
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--blacklist_bed", type=str, default="/mnt/ris/jschwarz/Active/cardiac-radiobiology/ref/mm10-blacklist.v2.bed")
+    parser.add_argument("--narrowPeak_file", type=str, default="/mnt/ris/jschwarz/Active/cardiac-radiobiology/analysis/atac/peaks/lib051_mm10_filt_peaks.narrowPeak")
+    parser.add_argument("--chrom_size_bed", type=str, default="/mnt/ris/jschwarz/Active/cardiac-radiobiology/ref/mm10_chrom.bed")
+    parser.add_argument("--out_narrowPeak", type=str, default="/tmp/test.narroPeak")
+    args = parser.parse_args()
 
-anno =
-  anno %>% mutate(simple = case_when(
-                    grepl("Promoter", annotation) ~ "promoter",
-                    grepl("Exon", annotation) ~ "exon",
-                    grepl("Intron", annotation) ~ "intron",
-                    grepl("3' UTR", annotation) ~ "utr3",
-                    grepl("5' UTR", annotation) ~ "utr5",
-                    grepl("Distal Intergenic", annotation) ~ "intergenic",
-                    grepl("Downstream", annotation) ~ "downstream",
-                    TRUE ~ annotation
-                  ))
+    # Load the narrowPeak file as a DataFrame
+    narrowPeak_df = pd.read_csv(args.narrowPeak_file, sep='\t', header=None)
+    narrowPeak_df.columns = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']
 
-anno =
-  anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, everything())
+    return args, narrowPeak_df
 
-write_tsv(anno, out_peak_bed, col_names = F)
+# ---   Main   --- #
+# ---------------- #
 
+def main():
+    # Load inputs
+    args, narrowPeak_df = load_inputs()
+
+    # Standardize and filter peaks
+    valid_bed = peak_std_and_filt(narrowPeak_df, args.blacklist_bed, args.chrom_size_bed)
+
+    # Process to ensure unique peaks
+    final_peaks_df = it_unique_peaks(valid_bed)
+
+    final_peaks_df.to_csv(args.out_narrowPeak, index=False, sep='\t', header=False)
+
+
+# ---   Functions   --- #
+# --------------------- #
+
+def peak_std_and_filt(narrowPeak_df, blacklist_bed, chrom_size_bed):
+    """
+    """
+    summit_std_df = narrowPeak_df
+    summit_std_df['std_start'] = narrowPeak_df['start'] + narrowPeak_df['peak'] - 250
+    summit_std_df['std_end'] = narrowPeak_df['start'] + narrowPeak_df['peak'] + 250
+    summit_std_str = summit_std_df[['chrom', 'std_start', 'std_end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']].to_csv(sep='\t', index=False, header=False)
+    summit_bed = pybedtools.BedTool(summit_std_str, from_string=True)
+
+    blacklist_bed = pybedtools.BedTool(blacklist_bed)
+    filtered_bed = summit_bed.subtract(blacklist_bed)
+
+    chrom_size_bed = pybedtools.BedTool(chrom_size_bed)
+    valid_bed = filtered_bed.intersect(chrom_size_bed, wa=True, u=True, f=1.0)
+    num_peaks_initial = len(narrowPeak_df)
+    num_peaks_after_blacklist = len(filtered_bed.to_dataframe())
+    num_peaks_after_valid = len(valid_bed.to_dataframe())
+
+    print(f"Number of peaks (initial): {num_peaks_initial}")
+    print(f"Number of peaks (after blacklist filtering): {num_peaks_after_blacklist}")
+    print(f"Number of peaks (after validity check): {num_peaks_after_valid}")
+
+    assert num_peaks_after_blacklist <= num_peaks_initial, "Blacklist filtering increased the number of peaks!"
+    assert num_peaks_after_valid <= num_peaks_after_blacklist, "Validity check increased the number of peaks!"
+
+    return valid_bed
+
+def it_unique_peaks(bed):
+    # Convert to DataFrame and sort
+    bed_df = bed.to_dataframe(names=['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak'])
+    sorted_df = bed_df.sort_values('pValue', ascending=False)
+
+    # Convert to list of tuples
+    peaks_list = list(sorted_df.itertuples(index=False, name=None))
+
+    # Initialize variables for interval tree processing
+    remaining_peaks = []
+    interval_trees = {}
+
+    # Process each peak
+    for peak in peaks_list:
+        chrom, start, end, *rest = peak
+        if chrom not in interval_trees:
+            interval_trees[chrom] = IntervalTree()
+
+        overlapping = interval_trees[chrom][start:end]
+        if not overlapping:
+            interval_trees[chrom].addi(start, end, peak)
+            remaining_peaks.append(peak)
+
+    # Create a DataFrame from the non-overlapping peaks
+    column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']
+    final_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
+
+  # Report and check final number of peaks
+    final_num_peaks = len(final_peaks_df)
+    print(f"Number of unique peaks (final): {final_num_peaks}")
+
+    # Convert the final DataFrame to a BedTool object
+    final_peaks_bedtool = pybedtools.BedTool.from_dataframe(final_peaks_df)
+
+    # Use intersect to find overlaps (with itself), with a minimum overlap of 1bp
+    overlaps = final_peaks_bedtool.intersect(final_peaks_bedtool, u=True, f=1.0)
+
+    # Assert that there are no overlaps by comparing the counts
+    assert len(overlaps) == len(final_peaks_df), "There are overlapping peaks in the final set!"
+
+    return final_peaks_df
+
+# ---   Main Guard   --- #
+# ---------------------- #
+
+if __name__ == "__main__":
+    main()
 #+end_src
 
-**** TODO MultiQC
+#+begin_src R
+#!/usr/bin/env Rscript
+
+# ---   Setup   --- #
+# ----------------- #
+
+## ---   Load Packages   --- ##
+## ------------------------- ##
+
+library(GenomicRanges)
+library(optparse)
+library(tidyverse)
+
+## ---   Load Inputs   --- ##
+## ----------------------- ##
+
+option_list <- list(
+  make_option(c("--blacklist_bed"),
+              type = "character",
+              default = "~/cards/ref/mm10_blklist.bed.gz"),
+  make_option(c("--chrom_bed"),
+              type = "character",
+              default = "~/cards/ref/mm10_chrom.bed"),
+  make_option(c("--macs2_narrowPeak"),
+              type = "character",
+              default = "~/cards/analysis/atac/peaks/lib051_mm10_filt_peaks.narrowPeak")
+)
+
+opts <- parse_args(OptionParser(option_list = option_list))
+
+list_of_options <- names(opts)
+for (opt_name in list_of_options) {
+  assign(opt_name, opts[[opt_name]], envir = .GlobalEnv)
+}
+
+blklist = read_tsv(blacklist_bed,
+                   col_names = c("chrom", "start", "end"))
+
+chrs = read_tsv(chrom_bed,
+                col_names = c("chr", "start", "end"))
+
+in_peaks <- read_tsv(macs2_narrowPeak,
+                    col_names = c("chrom",
+                                  "chromStart",
+                                  "chromEnd",
+                                  "name",
+                                  "score",
+                                  "strand",
+                                  "signalValue",
+                                  "pValue",
+                                  "qValue",
+                                  "peak"))
+
+adj_peaks <- in_peaks %>%
+  mutate(new_start = chromStart + peak - 250,
+         new_end = chromStart + peak + 250) %>%
+  left_join(chrs, by = c("chrom" = "chr")) %>%
+  filter(new_end < end) %>%
+  filter(new_start > 0) %>%
+  select(-start, -end)
+
+gr_blklist <- GRanges(seqnames = blklist$chrom,
+                        ranges = IRanges(start = blklist$start, end = blklist$end))
+
+gr_adj <- GRanges(seqnames = adj_peaks$chrom,
+                  ranges = IRanges(start = adj_peaks$chromStart, end = adj_peaks$chromEnd))
+
+# Find overlaps
+overlaps <- findOverlaps(gr_adj, gr_blklist)
+
+# Filter out peaks that overlap with the blacklist
+filt_peaks <- adj_peaks[-queryHits(overlaps), ] %>% arrange(pValue)
+
+
+gr_filt <- GRanges(seqnames = filt_peaks$chrom,
+                  ranges = IRanges(start = filt_peaks$chromStart, end = filt_peaks$chromEnd))
+
+
+overlaps = findOverlaps(gr_filt, gr_filt, type = "within")
+
+overlaps_filtered <- overlaps[queryHits(overlaps) != subjectHits(overlaps)]
+
+overlaps_filtered
+
+test = gr_filt[queryHits(overlaps_filtered)]
+
+test
+
+
+
+# Convert to GRanges object
+gr_peaks <- GRanges(seqnames = final_peaks$chrom,
+                           ranges = IRanges(start = final_peaks$new_start, end = final_peaks$new_end))
+
+# Convert the peaks to GRanges
+overlap_hits <- findOverlaps(gr_peaks)
+
+# Filter out self-overlaps
+real_overlaps <- overlap_hits[queryHits(overlap_hits) != subjectHits(overlap_hits)]
+
+# Get unique indices of overlapping peaks
+overlapping_peaks <- unique(c(queryHits(real_overlaps), subjectHits(real_overlaps)))
+
+
+
+
+# Find overlaps
+# Find overlaps, excluding self-overlaps
+overlap_hits <- findOverlaps(gr_peaks, ignoreSelf = TRUE, ignoreRedundant = TRUE)
+overlapping_peaks <- unique(c(queryHits(overlap_hits), subjectHits(overlap_hits)))
+
+overlap_hits <- findOverlaps(gr_peaks)
+overlapping_peaks <- unique(c(queryHits(overlap_hits), subjectHits(overlap_hits)))
+
+# Filter to only overlapping peaks and sort by significance
+overlapping_sorted <- final_peaks[overlapping_peaks, ] %>%
+  arrange(pValue)
+
+# Convert to GRanges for processing
+gr_overlapping_sorted <- GRanges(seqnames = overlapping_sorted$chrom,
+                                 ranges = IRanges(start = overlapping_sorted$new_start, end = overlapping_sorted$new_end))
+
+# Initialize an empty GRanges object for selected peaks
+selected_peaks <- GRanges()
+
+# Process only the overlapping peaks
+for (i in seq_along(gr_overlapping_sorted)) {
+  current_peak <- gr_overlapping_sorted[i]
+
+  if (length(findOverlaps(current_peak, selected_peaks)) == 0) {
+    selected_peaks <- c(selected_peaks, current_peak)
+  }
+}
+
+80
+# Extract indices of selected peaks
+selected_indices <- match(selected_peaks, gr_overlapping_sorted)
+
+# Get the final set of non-overlapping peaks
+final_overlapping_peaks <- overlapping_sorted[selected_indices, ]
+
+# Combine with non-overlapping peaks
+non_overlapping_peaks <- adj_peaks[-overlapping_peaks, ]
+final_peaks <- rbind(non_overlapping_peaks, final_overlapping_peaks) %>%
+  arrange(chrom, new_start)  # or arrange by your preferred order
+
+# Extract the indices of the selected peaks
+selected_indices <- match(selected_peaks, gr_sorted_peaks)
+
+# Get the final set of non-overlapping peaks from the original dataframe
+final_peaks2 <- final_peaks[selected_indices, ]
+final_peaks2
+
+#
+
+library(parallel)
+library(GenomicRanges)
+library(dplyr)
+
+# Assuming adj_peaks is your dataframe of adjusted peaks
+
+# Split data by chromosome
+peaks_by_chrom <- split(adj_peaks, adj_peaks$chrom)
+
+# Define the function to process each chromosome's data
+process_chromosome <- function(peaks) {
+  # Convert to GRanges object
+  gr_peaks <- GRanges(seqnames = peaks$chrom,
+                      ranges = IRanges(start = peaks$new_start, end = peaks$new_end))
+
+  # Sort peaks by significance
+  sorted_peaks <- peaks %>%
+    arrange(pValue)
+
+  # Initialize an empty GRanges object for selected peaks
+  selected_peaks <- GRanges()
+
+  # Iteratively select peaks
+  for (i in seq_along(sorted_peaks)) {
+    current_peak <- gr_peaks[i]
+
+    if (length(findOverlaps(current_peak, selected_peaks)) == 0) {
+      selected_peaks <- c(selected_peaks, current_peak)
+    }
+  }
+
+  # Extract indices of selected peaks
+  selected_indices <- match(selected_peaks, gr_peaks)
+
+  # Return the final set of non-overlapping peaks
+  sorted_peaks[selected_indices, ]
+}
+
+# Detect the number of available cores
+num_cores <- detectCores()
+
+# Use parallel processing
+cl <- makeCluster(num_cores)
+clusterExport(cl, list("process_chromosome", "adj_peaks"))
+
+# Apply the function in parallel
+final_peaks_list <- parLapply(cl, peaks_by_chrom, process_chromosome)
+
+# Stop the cluster
+stopCluster(cl)
+
+# Combine the results
+final_peaks <- bind_rows(final_peaks_list)
+#+end_src
+
+**** MultiQC
 #+begin_src snakemake
 rule atac_multiqc:
     input:
-        f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{processing}}_{{read}}_fastqc.zip",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 processing = atac_libs_map[wildcards.atac_group]['fastq_processing'],
+                                 read = ['R1','R2']),
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_{{stats}}.txt",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 build = atac_libs_map[wildcards.atac_group]['build'],
+                                 processing = atac_libs_map[wildcards.atac_group]['bam_processing'],
+                                 stats = ['samstats','flagstat']),
     output:
-        f"{atac_qc_dir}/atac_multiqc/atac_multiqc.html",
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_atac_multiqc.html",
     params:
-        outdir = f"{atac_qc_dir}/atac_multiqc",
-        out_name = "atac_multiqc",
+        outdir = f"{atac_qc_dir}/{{atac_group}}",
+        out_name = f"{{atac_group}}_atac_multiqc",
     shell:
-	"""
-	multiqc $input \
-	--force \
-	-- outdir {params.outdir} \
-	--filename {params.out_name}
-	"""
+        """
+        multiqc {input} \
+        --force \
+        --outdir {params.outdir} \
+        --filename {params.out_name}.html
+        """
+
 #+end_src
 
 
+
+**** Aggregate read and alignment level QC
+#+begin_src R
+#!/usr/bin/env Rscript
+
+# ---   Setup   --- #
+# ----------------- #
+
+## ---   Load Packages   --- ##
+## ------------------------- ##
+
+library(optparse)
+
+## ---   Load Inputs   --- ##
+## ----------------------- ##
+
+optparse
+
+#+end_src
+
+**** Aggregate samstats
+#+begin_src snakemake
+rule atac_agg_samstat:
+    input:
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_{{build}}_{{processing}}_samstats.txt",
+                                 library = atac_libs_map[wildcards.atac_group]['libs'],
+                                 build = atac_libs_map[wildcards.atac_group]['build'],
+                                 processing = atac_libs_map[wildcards.atac_group]['bam_processing']),
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/agg_samstats.tsv",
+    run:
+        import os
+        import re
+
+        data = []
+
+        # Loop over the input files
+        for filename in input:
+            # Extract the library ID from the filename
+            library_id = os.path.basename(filename).split("_")[0]
+
+            # Open the log file
+            with open(filename, "r") as f:
+                lines = f.readlines()
+
+                # Find the required lines using regular expressions
+                reads = duplicated = total = mapped = error = None
+                for line in lines:
+                    if re.match(r"SN\traw total sequences:", line):
+                        reads = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\treads duplicated:", line):
+                        duplicated = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\ttotal length:", line):
+                        total = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\tbases mapped \(cigar\):", line):
+                        mapped = int(re.search(r"\d+", line).group())
+                    elif re.match(r"SN\terror rate:", line):
+                        error = float(re.search(r"\d+\.\d+[eE][+-]\d+", line).group())
+
+                # Append the data to the list
+                data.append({
+                    "reads": reads,
+                    "duplicated": duplicated,
+                    "total": total,
+                    "mapped": mapped,
+                    "error": error,
+                    "library": library_id
+                })
+
+        # Write the data to a file
+        header = "total_reads\tduplicated_reads\ttotal_bases\tmapped_bases\terror_rate\tlibrary\n"
+        with open(output[0], "w") as f:
+            f.write(header)
+            for d in data:
+                f.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(d["reads"], d["duplicated"], d["total"], d["mapped"], d["error"], d["library"]))
+
+#+end_src
+**** Aggregate fastp
+#+begin_src snakemake
+rule atac_agg_fastp:
+    input:
+        lambda wildcards: expand(f"{atac_qc_dir}/{{library}}_atac_fastp.json",
+                                 library = atac_libs_map[wildcards.atac_group]['libs']),
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_agg_fastp.tsv",
+    run:
+        import json
+        import csv
+
+        # Define the output TSV file
+        tsv_file = output[0]
+
+        # Initialize a list to store the q30_rates and libraries
+        q30_rates = []
+        libraries = []
+
+        # Loop over each input file
+        for input_file in input:
+            # Load the JSON file
+            with open(input_file) as f:
+                data = json.load(f)
+
+                # Extract the q30_rate from the after_filtering section of the summary
+                q30_rate = data["summary"]["after_filtering"]["q30_rate"]
+
+                # Extract the library name from the input file name
+                library = input_file.split("/")[-1].split("_")[0]
+
+                # Append the q30_rate and library to the lists
+                q30_rates.append(q30_rate)
+                libraries.append(library)
+
+        # Write the q30_rates and libraries lists to the output TSV file
+        with open(tsv_file, "w", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")
+            writer.writerow(["library", "q30_rate"])
+            for library, q30_rate in zip(libraries, q30_rates):
+                writer.writerow([library, q30_rate])
+#+end_src
+**** Make a list of libraries that meet a QC standard
+#+begin_src snakemake
+rule atac_keep_libs:
+    input:
+        libs = libraries_full_rds,
+        samstats = lambda wildcards: f"{atac_qc_dir}/{wildcards.atac_group}/{wildcards.atac_group}_agg_samstats.tsv",
+    output:
+        f"{atac_qc_dir}/{{atac_group}}/{{atac_group}}_keep_libs.tsv",
+    params:
+        mil_reads = lambda wildcards: atac_libs_map[wildcards.atac_group][ds_milreads],
+        script = f"{atac_script_dir}/atac_keep_libs.R",
+    shell:
+        """
+        Rscript {params.script} \
+        --agg_samstats_tsv {input.samstats} \
+        --libraries_full_rds {input.libs} \
+        --mil_reads {params.mil_reads} \
+        --out_tsv {output}
+        """
+
+#+end_src
+
+#+begin_src R :tangle ./scripts/atac_keep_libs.R
+#!/usr/bin/env Rscript
+
+# ---   Setup   --- #
+# ----------------- #
+
+## ---   Load Packages   --- ##
+## ------------------------- ##
+
+library(optparse)
+# Load last
+library(tidyverse)
+
+## ---   Load Inputs   --- ##
+## ----------------------- ##
+
+option_list <- list(
+  make_option(c("--agg_samstats_tsv"),
+              type = "character",
+              default = "~/cards/analysis/atac/qc/human_filt/agg_samstats.tsv"),
+  make_option(c("--libraries_full_rds"),
+              type = "character",
+              default = "~/cards/data-model/lists/libraries_full.rds"),
+  make_option(c("--mil_reads"),
+              type = "numeric",
+              default = "9"),
+  make_option(c("--out_tsv"),
+              type = "character",
+              default = "~/cards/analysis/atac/qc/human_filt/keep.tsv")
+
+)
+
+opts <- parse_args(OptionParser(option_list = option_list))
+
+list_of_options <- names(opts)
+for (opt_name in list_of_options) {
+  assign(opt_name, opts[[opt_name]], envir = .GlobalEnv)
+}
+
+libraries_full <- readRDS(libraries_full_rds)
+samstats = read_tsv(agg_samstats_tsv)
+
+keep = samstats %>% left_join(libraries_full) %>%
+  mutate(adequate_reads = total_reads > (mil_reads * 1000000)) %>%
+  mutate(atac_qc = ifelse(adequate_reads == TRUE,
+                          "PASS", "FAIL")) %>%
+  select(library, atac_qc, adequate_reads)
+
+keep
+
+write_tsv(keep, file = out_tsv)
+#+end_src
 
 *** Workflow 2: Per-DCA model processing
-- parse the peak file by annotation and run the open genome script
-**** Downsample
-
-Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/
-
-#+begin_src snakemake
-rule downsample_bam:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_ds{{milreads}}_bam.log",
-    output:
-        ds = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam",
-        index = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam.bai",
-    params:
-        script = f"{atac_script_dir}/downsample_bam.sh",
-        threads = threads,
-        milreads = 9,
-    shell:
-        """
-        {params.script} \
-        {input} {params.milreads} {params.threads} {output.ds} &> {log}
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/downsample_bam.sh
-#!/bin/bash
-
-in_bam="${1}"
-milreads="${2}"
-threads="${3}"
-out_bam="${4}"
-
-reads=$(echo |awk -v var1=$milreads '{ print 1000000*var1 }')
-
-## Calculate the sampling factor based on the intended number of reads:
-
-FACTOR=$(samtools idxstats $in_bam | cut -f3 |awk -v COUNT=$reads 'BEGIN {total=0} {total += $1} END {print COUNT/total}')
-
-samtools view -s $FACTOR -b -@ $threads $in_bam > $out_bam
-
-samtools index -@ threads $out_bam
-
-#+end_src
-
+**** Writeup
+ cite:corces2018
 **** Open genome by chromosome and chromatin state
 #+begin_src snakemake
 rule chr_state_open_genome:
@@ -1019,6 +1481,76 @@ write_tsv(keep, file = keep_bed, col_names = FALSE)
 
 #+end_src
 
+**** Peak annotation
+:PROPERTIES:
+:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+:END:
+
+#+begin_src snakemake
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/peak_annotation.R
+#!/usr/bin/env Rscript
+
+#################################
+###   Macs2 Peak Annotation   ###
+#################################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+in_peak_bed = args[1]
+txdb = args[2]
+out_peak_bed = args[3]
+
+# Load required packages, data, and functions
+library(tidyverse)
+library(ChIPpeakAnno)
+library(rtracklayer)
+library(ChIPseeker)
+library(txdb, character.only = T)
+
+peaks = rtracklayer::import(in_peak_bed)
+anno = annotatePeak(peaks, TxDb = get(txdb))
+
+anno = as_tibble(anno)
+
+if (!"peak" %in% names(anno)) {
+  anno <- anno %>%
+    mutate(peak = end - start)
+}
+
+anno =
+  anno %>% mutate(simple = case_when(
+                    grepl("Promoter", annotation) ~ "promoter",
+                    grepl("Exon", annotation) ~ "exon",
+                    grepl("Intron", annotation) ~ "intron",
+                    grepl("3' UTR", annotation) ~ "utr3",
+                    grepl("5' UTR", annotation) ~ "utr5",
+                    grepl("Distal Intergenic", annotation) ~ "intergenic",
+                    grepl("Downstream", annotation) ~ "downstream",
+                    TRUE ~ annotation
+                  ))
+
+anno =
+  anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, everything())
+
+write_tsv(anno, out_peak_bed, col_names = F)
+
+#+end_src
 **** Make per-peak counts in BAMscale
 #+begin_src snakemake
 
@@ -1422,6 +1954,7 @@ ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
 #+end_src
 
 **** Ideas :ideas:
+- ?parse the peak file by annotation and run the open genome script
 - ideas- use [[https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=encode3RenChromHmm][hmm]]
 *** Workflow 3: Differential chromatin accessibility
 - https://academic.oup.com/nar/article/50/D1/D165/6446529?login=true
@@ -2159,6 +2692,92 @@ multiqc $input \
         --filename $out_name
 
 #+end_src
+**** Aggregate fastp
+#+begin_src snakemake
+rule atac_agg_fastp:
+    input:
+        expand(f"{qc_dir}/{{library}}_cfdna_wgs_fastp.json", library=CFDNA_WGS_LIBS),
+    output:
+        f"{qc_dir}/cfdna_wgs_fastp.tsv",
+    run:
+        import json
+        import csv
+
+        # Define the output TSV file
+        tsv_file = output[0]
+
+        # Initialize a list to store the q30_rates and libraries
+        q30_rates = []
+        libraries = []
+
+        # Loop over each input file
+        for input_file in input:
+            # Load the JSON file
+            with open(input_file) as f:
+                data = json.load(f)
+
+                # Extract the q30_rate from the after_filtering section of the summary
+                q30_rate = data["summary"]["after_filtering"]["q30_rate"]
+
+                # Extract the library name from the input file name
+                library = input_file.split("/")[-1].split("_")[0]
+
+                # Append the q30_rate and library to the lists
+                q30_rates.append(q30_rate)
+                libraries.append(library)
+
+        # Write the q30_rates and libraries lists to the output TSV file
+        with open(tsv_file, "w", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")
+            writer.writerow(["library", "q30_rate"])
+            for library, q30_rate in zip(libraries, q30_rates):
+                writer.writerow([library, q30_rate])
+#+end_src
+
+**** Downsample
+
+Downsampled reads are used to identify a peak feature set across an experiment. https://www.biostars.org/p/308976/
+
+#+begin_src snakemake
+rule downsample_bam:
+    input:
+        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_ds{{milreads}}_bam.log",
+    output:
+        ds = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam",
+        index = f"{atac_dir}/bams/{{library}}_{{build}}_ds{{milreads}}.bam.bai",
+    params:
+        script = f"{atac_script_dir}/downsample_bam.sh",
+        threads = threads,
+        milreads = 9,
+    shell:
+        """
+        {params.script} \
+        {input} {params.milreads} {params.threads} {output.ds} &> {log}
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/downsample_bam.sh
+#!/bin/bash
+
+in_bam="${1}"
+milreads="${2}"
+threads="${3}"
+out_bam="${4}"
+
+reads=$(echo |awk -v var1=$milreads '{ print 1000000*var1 }')
+
+## Calculate the sampling factor based on the intended number of reads:
+
+FACTOR=$(samtools idxstats $in_bam | cut -f3 |awk -v COUNT=$reads 'BEGIN {total=0} {total += $1} END {print COUNT/total}')
+
+samtools view -s $FACTOR -b -@ $threads $in_bam > $out_bam
+
+samtools index -@ threads $out_bam
+
+#+end_src
+
 *** Reference
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
@@ -2236,977 +2855,9 @@ rule all:
 #+end_src
 
 ** Development
-- https://genome.cshlp.org/content/22/9/1813.full
-*** RUV outputs
-***** Make RUV-adjusted counts
 
-#+begin_src snakemake
-rule atac_ruv:
-    input:
-#+end_src
-***** RUV-adjusted ATAC-seq counts
-#+begin_src snakemake
-rule atac_ruv:
-    input:
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        counts = lambda wildcards: f"{atac_dir}/{{[wildcards.experiment]['species']}}/dca/{{[wildcards.experiment]['species']}}_{{[wildcards.experiment]['build']}}.raw_coverages.tsv",
-        keep = lambda wildcards: f"{datamodel_dir}/lists/{{[wildcards.experiment]['species']}}_atac_simple.tsv",
-    log: f"{log_dir}/{{species}}_{{build}}_{ruv_k}_atac_ruv.log",
-    output:
-        f"{atac_dir}/{{species}}/dca/{{species}}_atac_k{{ruv_k}}_{{contrast}}.tsv",
-    params:
-        script = f"{cardiac_script_dir}/atac_ruv.R",
-    shell:
-        """
-        Rscript {params.script} {input} "{wildcards.contrast}" {output} > {log} 2>&1
-        """
-#+end_src
-
-***** RVU-adjusted ATAC-seq for human
-:PROPERTIES:
-:ID:       e774161f-4c1c-4640-8ace-f7b48c93f3aa
-:END:
-#+begin_src snakemake
-rule hs_rvu_atac:
-    input:
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        counts = f"{atac_dir}/human/dca/human_hg38.raw_coverages.tsv",
-        keep = f"{datamodel_dir}/lists/human_atac_simple.tsv",
-    log: f"{log_dir}/hs_rvu_k{{rvu_k}}_atac.log",
-    output:
-        f"{atac_dir}/human/dca/human_atac_k{{rvu_k}}_ir1w_sham1w.tsv",
-        f"{atac_dir}/human/dca/human_atac_k{{rvu_k}}_ir2w_sham2w.tsv",
-    params:
-        script = f"{cardiac_script_dir}/hs_rvu_atac.R",
-        rvu_k = "{rvu_k}"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output} {params.rvu_k} > {log} 2>&1
-        """
-#+end_src
-#+begin_src R :tangle ./scripts/hs_rvu_atac.R
-#!/usr/bin/env Rscript
-
-##############################
-###   Human Dca With Rvu   ###
-##############################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-libraries_full_rds = args[1]
-counts_tsv = args[2]
-keep_tsv = args[3]
-ir1w_sham1w_tsv = args[4]
-ir2w_sham2w_tsv = args[5]
-rvu_k = args[6]
-
-# Load required packages, data, and functions
-library(RUVSeq)
-library(tidyverse)
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-# Setup data objects
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-mat = mat[, colnames(mat) %in% keep$library]
-(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(cohort) %>% droplevels())
-set = newSeqExpressionSet(mat,
-                          phenoData = data.frame(group, row.names = colnames(mat)))
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
-
-# Perform DCA by EdgeR on adjusted gene expression
-if (rvu_k != 0) {
-  modcounts = normCounts(adjust)
-} else {
-  modcounts = mat
-}
-
-
-design = model.matrix(~ 0 + group)
-dge = DGEList(counts = modcounts)
-dge = calcNormFactors(dge)
-dge = estimateGLMCommonDisp(dge, design)
-dge = estimateGLMTrendedDisp(dge, design)
-dge = estimateGLMTagwiseDisp(dge, design)
-fit = glmFit(dge, design)
-
-name_mapping= data.frame(newname = c("logfc", "logcpm", "lr", "pval", "qval"),
-                 oldname = c("logFC", "logCPM", "LR", "PValue", "FDR"))
-
-# Generate specific comparisons
-ir1w_sham1w_cont = makeContrasts(groupir1w - groupsham1w, levels = colnames(design))
-ir1w_sham1w_lrt = glmLRT(fit, contrast = ir1w_sham1w_cont)
-ir1w_sham1w = data.frame(topTags(ir1w_sham1w_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
-  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
-  write_tsv(ir1w_sham1w_tsv)
-
-ir2w_sham2w_cont = makeContrasts(groupir2w - groupsham2w, levels = colnames(design))
-ir2w_sham2w_lrt = glmLRT(fit, contrast = ir2w_sham2w_cont)
-ir2w_sham2w = data.frame(topTags(ir2w_sham2w_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
-  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
-  write_tsv(ir2w_sham2w_tsv)
-#+end_src
-
-#+caption: label:fig_human_ruv_cor_ir1w_sham1w
-[[file:/mnt/ris/jschwarz/Active/cardiac-radiobiology/results/human/atac/qc/rvu_spearman/human_ir1w_sham1w.pdf]]
-
-#+caption: label:fig_human_ruv_cor_ir2w_sham2w
-[[file:/mnt/ris/jschwarz/Active/cardiac-radiobiology/results/human/atac/qc/rvu_spearman/human_ir2w_sham2w.pdf]]
-
-***** RVU-adjusted ATAC-seq for mouse
-
-Performs RUVseq adjustment of open chromatin region raw counts. Factor k defines
-#+begin_src snakemake
-rule ms_rvu_atac:
-    input:
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        counts = f"{atac_dir}/mouse/dca/mouse_mm10.raw_coverages.tsv",
-        keep = f"{atac_dir}/mouse/qc/filtered_mouse_atac_simple.tsv",
-    log: f"{log_dir}/ms_rvu_k{{rvu_k}}_atac.log",
-    output:
-        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir2d_sham.tsv",
-        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir6w_sham.tsv",
-        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir6w_ir2d.tsv",
-    params:
-        script = f"{cardiac_script_dir}/ms_rvu_atac.R",
-        rvu_k = "{rvu_k}"
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        {output} {params.rvu_k} > {log} 2>&1
-        """
-#+end_src
-#+begin_src R :tangle ./scripts/ms_rvu_atac.R
-#!/usr/bin/env Rscript
-
-##############################
-###   Mouse Dca With Rvu   ###
-##############################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-libraries_full_rds = args[1]
-counts_tsv = args[2]
-keep_tsv = args[3]
-ir2d_sham_tsv = args[4]
-ir6w_sham_tsv = args[5]
-ir6w_ir2d_tsv = args[6]
-rvu_k = args[7]
-
-# Load required packages, data, and functions
-library(RUVSeq)
-library(tidyverse)
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-keep = read_tsv(keep_tsv)
-
-# Setup data objects
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-mat = mat[, colnames(mat) %in% keep$library]
-(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(cohort) %>% droplevels())
-set = newSeqExpressionSet(mat,
-                          phenoData = data.frame(group, row.names = colnames(mat)))
-
-print("Setup complete")
-
-# Perform RUV adjustment by k unwanted factors
-design <- model.matrix(~0+group, data = pData(set))
-y <- DGEList(counts = counts(set), group = group)
-y <- calcNormFactors(y, method = "upperquartile")
-#y <- calcNormFactors(y)
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
-
-print("\nModified counts created\n")
-
-# Perform DCA by EdgeR on adjusted gene expression
-if (rvu_k != 0) {
-  modcounts = normCounts(adjust)
-} else {
-  modcounts = mat
-}
-
-design = model.matrix(~ 0 + group)
-dge = DGEList(counts = modcounts)
-dge = calcNormFactors(dge)
-dge = estimateGLMCommonDisp(dge, design)
-dge = estimateGLMTrendedDisp(dge, design)
-dge = estimateGLMTagwiseDisp(dge, design)
-fit = glmFit(dge, design)
-
-name_mapping= data.frame(newname = c("logfc", "logcpm", "lr", "pval", "qval"),
-                 oldname = c("logFC", "logCPM", "LR", "PValue", "FDR"))
-
-print("\nDGE performed with modified counts\n")
-
-# Generate specific comparisons
-ir2d_sham_cont = makeContrasts(groupir2d - groupsham, levels = colnames(design))
-ir2d_sham_lrt = glmLRT(fit, contrast = ir2d_sham_cont)
-ir2d_sham = data.frame(topTags(ir2d_sham_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
-  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
-  write_tsv(ir2d_sham_tsv)
-
-ir6w_sham_cont = makeContrasts(groupir6w - groupsham, levels = colnames(design))
-ir6w_sham_lrt = glmLRT(fit, contrast = ir6w_sham_cont)
-ir6w_sham = data.frame(topTags(ir6w_sham_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
-  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
-  write_tsv(ir6w_sham_tsv)
-
-ir6w_ir2d_cont = makeContrasts(groupir6w - groupir2d, levels = colnames(design))
-ir6w_ir2d_lrt = glmLRT(fit, contrast = ir6w_ir2d_cont)
-ir6w_ir2d = data.frame(topTags(ir6w_ir2d_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
-  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
-  write_tsv(ir6w_ir2d_tsv)
-#+end_src
-***** RVU k selection Spearman
-#+begin_src snakemake
-rule atac_rvu_spearmans:
-    input:
-        dca=lambda wildcards: expand(f"{atac_dir}/{{species}}/dca/{{species}}_atac_k{{rvu_k}}_{wildcards.contrast}.tsv",
-                                     species=wildcards.species,
-                                     rvu_k=[0, 1, 2, 3, 4]),
-        libs=f"{datamodel_dir}/lists/libraries_full.rds",
-    log: f"{log_dir}/{{species}}_atac_rvu_{{contrast}}_spearmans.log",
-    output:
-        f"{results_dir}/{{species}}/atac/qc/rvu_spearman/{{species}}_{{contrast}}.rda",
-        f"{results_dir}/{{species}}/atac/qc/rvu_spearman/{{species}}_{{contrast}}.pdf"
-    params:
-        script=f"{cardiac_script_dir}/atac_rvu_spearman.R"
-    shell:
-        """
-        Rscript {params.script} \
-        "{input.dca}" {input.libs} \
-        {output} > {log} 2>&1
-        """
-
-#+end_src
-#+begin_src R :tangle ./scripts/atac_rvu_spearman.R
-dca_str="~/cards/analysis/atac/mouse/dca/ms_atac_k0_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k1_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k2_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k3_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k4_ir2d_sham.tsv"
-libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
-
-#!/usr/bin/env Rscript
-
-#############################
-###   Atac Rvu Spearman   ###
-#############################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-dca_str = args[1]
-libraries_full_rds = args[2]
-out_rda = args[3]
-out_pdf = args[4]
-
-# Load required packages, data, and functions
-library(tidyverse)
-
-# Setup data
-libraries_full = readRDS(libraries_full_rds)
-(dca_char = strsplit(dca_str, " ")[[1]])
-tibble_list = lapply(dca_char, read_tsv)
-(names(tibble_list) = substr(gsub("^.*atac_", "", dca_char), 1, 2))
-
-
-# Rename columns and merge tibbles
-merged <- reduce(names(tibble_list), function(result, suffix) {
-  tibble_i <- tibble_list[[suffix]]
-  colnames(tibble_i) <- ifelse(colnames(tibble_i) == "coordinate", "coordinate", paste0(suffix, "_", colnames(tibble_i)))
-
-  if (is.null(result)) {
-    return(tibble_i)
-  } else {
-    return(left_join(result, tibble_i, by = "coordinate"))
-  }
-}, .init = NULL)
-
-plot_merged <- function(merged) {
-  # Create a data frame to store the R² values and p-values
-  stats_values <- merged %>%
-    select(coordinate, ends_with("logfc")) %>%
-    pivot_longer(cols = !c("coordinate", "k0_logfc"), names_to = "rvu_k", values_to = "logfc") %>%
-    mutate(dif = abs(k0_logfc - logfc)) %>% group_by(rvu_k) %>%
-    summarize(r2 = cor(k0_logfc, logfc)^2, p_value_diff = wilcox.test(k0_logfc, logfc)$p.value)
-  stats_values
-
-  exceeds <- merged %>% select(coordinate, ends_with("qval")) %>%
-    pivot_longer(cols = !coordinate, names_to = "rvu_k", values_to = "qval")  %>%
-    mutate(qsig = ifelse(qval < 0.05, "yes", "no")) %>%
-    group_by(rvu_k) %>%
-    summarize(qsum = sum(qsig == "yes")) %>%
-    mutate(rvu_k = paste0(substr(rvu_k, 1, 2), "_logfc")) %>%
-    full_join(stats_values) %>%
-    filter(rvu_k != "k0_logfc")
-
-  plot <- merged %>%
-    select(coordinate, ends_with("logfc")) %>%
-    pivot_longer(cols = !c("coordinate", "k0_logfc"), names_to = "rvu_k", values_to = "logfc") %>%
-    mutate(dif = abs(k0_logfc - logfc)) %>% group_by(rvu_k) %>%
-    mutate(sd2 = abs(mean(dif, na.rm = T)) + 3 * abs(sd(dif, na.rm = T))) %>%
-    filter(dif > sd2) %>%
-    ggplot(., aes(x = k0_logfc, y = logfc)) + geom_point() +
-    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "blue") +
-    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0("R² = ", round(r2, 3))),
-              hjust = 0, nudge_x = -1, vjust = 2, size = 4) +
-    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0("p(diff) = ", format.pval(p_value_diff, digits = 3))),
-              hjust = 0, nudge_x = -1, vjust = 4, size = 4) +
-    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0(qsum, " regions with FDR < 0.05")),
-              hjust = 0, nudge_x = -1, vjust = 6, size = 4) +
-    facet_wrap(~rvu_k) +     theme(text = element_text(size = 14), plot.margin = margin(1, 1, 1, 1, "cm"))
-
-
-  return(plot)
-}
-
-plot = plot_merged(merged)
-
-save(merged, plot, file = out_rda)
-
-ggsave(plot, file = out_pdf)
-
-#+end_src
-
-
-*** Track visualization
-#+begin_src R
-library(rtracklayer)
-library(Gviz)
-library(GenomicRanges)
-data(cpgIslands)
-
-atrack <- AnnotationTrack(cpgIslands, name = "CpG")
-
-plotTracks(atrack)
-
-gtrack = GenomeAxisTrack()
-
-plotTracks(list(gtrack, atrack))
-
-(gen<-genome(cpgIslands))
-
-(chr <- as.character(unique(seqnames(cpgIslands))))
-
-itrack <- IdeogramTrack(genome = gen, chromosome = chr)
-
-plotTracks(list(itrack, gtrack, atrack))
-
-data(geneModels)
-
-grtrack = GeneRegionTrack(geneModels, genome = gen, chromosome = chr, name = "Gene Model")
-
-plotTracks(list(itrack, gtrack, grtrack))
-
-#Use from and to arguments to zoom
-plotTracks(list(itrack, gtrack, atrack, grtrack),
-           from = 26700000, to = 26750000)
-# Use extend.left and extend.right to zoom
-#those arguments are relative to the currently displayed ranges,
-#and can be used to quickly extend the view on one or both ends of the plot.
-plotTracks(list(itrack, gtrack, atrack, grtrack),
-           extend.left = 0.5, extend.right = 1000000)
-# to drop the bounding borders of the exons and
-# to have a nice plot
-plotTracks(list(itrack, gtrack, atrack, grtrack),
-           extend.left = 0.5, extend.right = 1000000, col = NULL)
-
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
-
-library(BSgenome.Hsapiens.UCSC.hg19)
-
-strack <- SequenceTrack(Hsapiens, chromosome = chr)
-plotTracks(list(itrack, gtrack, atrack, grtrack,
-                strack), from = 26591822, to = 26591852, cex = 0.8)
-
-#For demonstration purposes we can create a simple DataTrack object from
-#randomly sampled data.
-set.seed(255)
-lim <- c(26700000, 26750000)
-coords <- sort(c(lim[1], sample(seq(from = lim[1],
-                                    to = lim[2]), 99), lim[2]))
-dat <- runif(100, min = -10, max = 10)
-head(dat)
-
-dtrack <- DataTrack(data = dat, start = coords[-length(coords)],
-                    end = coords[-1], chromosome = chr, genome = gen,
-                    name = "Uniform")
-##Plot data track
-plotTracks(list(itrack, gtrack, atrack, grtrack,
-                dtrack), from = lim[1], to = lim[2])
-
-#Change plot type to histogram
-plotTracks(list(itrack, gtrack, atrack, grtrack,dtrack),
-           from = lim[1], to = lim[2], type = "histogram")
-
-data(twoGroups)
-head(twoGroups)
-
-dTrack <- DataTrack(twoGroups, name = "asdf")
-plotTracks(dTrack)
-
-plotTracks(DataTrack(twoGroups, name = "p"), type="p")
-#lines plot
-plotTracks(DataTrack(twoGroups, name = "l"), type="l")
-#line and dot plot
-test =plotTracks(DataTrack(twoGroups, name = "b"), type="b")
-#lines plot of average
-
-class(test)
-
-plotTracks(DataTrack(twoGroups, name = "a"), type="a", groups = rep(c("control","treated"),each = 3))
-
-#histogram lines
-plotTracks(DataTrack(twoGroups, name = "h"), type="h")
-#histogram histogram (bar width equal to range with)
-plotTracks(DataTrack(twoGroups, name = "histogram"), type="histogram")
-#'polygon-type' plot relative to a baseline
-plotTracks(DataTrack(twoGroups, name = "polygon"), type="polygon")
-#box and whisker plot
-plotTracks(DataTrack(twoGroups, name = "boxplot"), type="boxplot")
-#false color image of the individual values
-
-alTrack <- AlignmentsTrack(system.file(package = "Gviz", "extdata",
-                                       "gapped.bam"), isPaired = TRUE)
-
-alTrack
-
-class(alTrack)
-
-afrom=2960000
-ato=3160000
-
-plotTracks(alTrack, from = afrom, to = ato, chromosome = "chr12")
-
-# Load necessary packages
-library(rtracklayer)
-library(GenomicRanges)
-
-# Import the bed file with rtracklayer
-bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib116_mm10_ds9_peaks.broadPeak")
-
-testbam = "~/cards/analysis/atac/mouse/bams/lib116_mm10_ds9.bam"
-mappedReads <- idxstatsBam(testbam)
-(TotalMapped <- sum(mappedReads[, "mapped"]))
-
-#forBigWig <- coverage(testbam, weight = (10^6)/TotalMapped)
-forBigWig <- coverage(testbam)
-
-export.bw(forBigWig, con = "/tmp/test.bw")
-
-
-bw_data <- import(con = "/tmp/test.bw")
-
-dt <- DataTrack(range = bw_data, name = "My Data")
-
-# Plot the track
-plotTracks(dt)
-
-
-# Print the GRanges object
-print(bw_data)
-
-
-
-plotTracks(DataTrack(forBigWig, name = "p"), type="l")
-
-
-# Load necessary packages
-
-library(Gviz)
-library(GenomicRanges)
-
-# Import the bigWig file with rtracklayer
-bw_data <- import(con = "/tmp/test.bw")
-
-# Create a GRanges object for the desired region
-region <- GRanges("chr2", IRanges(start = 137081456, end = 137116644))
-
-# Subset the data
-subset_data <- subsetByOverlaps(bw_data, region)
-
-# Create a DataTrack
-plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue"))
-
-library(grid)
-library(ggplotify)
-library(Gviz)
-
-set.seed(123)
-gr <- GRanges("chr1", IRanges(1:100, width=1),
-              score=rnorm(100))
-dTrack <- DataTrack(gr, type=c("a", "p"))
-aTrack <- GenomeAxisTrack(add35=TRUE, add53=TRUE, littleTicks=TRUE)
-# plotTracks(list(aTrack,dTrack),from=1,to=100)
-
-
-p1 <- as.grob(~plotTracks(list(aTrack,dTrack),from=1,to=100))
-p1 # gTree
-
-p2 <- as.grob(~plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")))
-
-library(cowplot)
-plot_grid(p1, p2)
-
-grid.newpage()
-grid.draw(p1, p2)
-
-# Import the bed file with rtracklayer
-bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib117_mm10_ds9_peaks.broadPeak")
-
-testbam = "~/cards/analysis/atac/mouse/bams/lib119_mm10_ds9.bam"
-mappedReads <- idxstatsBam(testbam)
-(TotalMapped <- sum(mappedReads[, "mapped"]))
-
-
-ir_data <- import(con = "/tmp/test.bw")
-sham_data= import(con = "/tmp/test_sham.bw")
-
-# Create a GRanges object for the desired region
-region <- GRanges("chr3", IRanges(start = from, end = to))
-
-# Subset the data
-subset_ir <- subsetByOverlaps(ir_data, region)
-subset_sham <- subsetByOverlaps(sham_data, region)
-
-# Create a DataTrack
-sham = DataTrack(range = subset_sham, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
-
-# Create a DataTrack
-ir = DataTrack(range = subset_ir, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
-
-
-plotTracks(list(sham, ir, knownGenes))
-
-test = AlignmentsTrack("~/cards/analysis/atac/mouse/bams/lib051_mm10_ds9.bam", isPaired = T)
-
-library(biomaRt)
-options(ucscChromosomeNames=FALSE)
-
-library(biomaRt)
-
-mart <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")  # Mouse genes
-gene <- "Jag1"
-
-# Fetch the gene start and end
-gene_info <- getBM(attributes = c('chromosome_name', 'start_position', 'end_position'),
-                   filters = 'external_gene_name',
-                   values = gene,
-                   mart = mart)
-
-# Use the gene start and end to plot
-knownGene <- UcscTrack(
-  genome = "mm10",
-  chromosome = paste0("chr", gene_info$chromosome_name[1]),  # assuming it is located on the first chromosome listed
-  track = "knownGene",
-  from = gene_info$start_position[1],  # assuming the gene is located at the first start_position listed
-  to = gene_info$end_position[1],  # assuming the gene is located at the first end_position listed
-  trackType = "GeneRegionTrack",
-  rstarts = "exonStarts",
-  rends = "exonEnds",
-  gene = "name",
-  symbol = "name"
-)
-
-plotTracks(knownGene)
-
-from <-137046267
-to <- 137151833
-knownGenes <- UcscTrack(genome = "mm9", chromosome = "chr2",
-                        track = "knownGene", from = from, to = to,
-                        trackType = "GeneRegionTrack",
-                        rstarts = "exonStarts", rends = "exonEnds",
-                        gene = "name", symbol = "name")
-plotTracks(knownGenes)
-
-
-from <- 137046267
-to <- 137151833
-knownGenes <- UcscTrack(genome = "mm10", chromosome = "chr3",
-                        table = "knownGene", from = from, to = to,
-                        trackType = "GeneRegionTrack",
-                        rstarts = "exonStarts", rends = "exonEnds",
-                        gene = "name", symbol = "name",
-                        transcript = "name", strand = "strand",
-                        fill = "#8282d2", name = "UCSC Genes")
-#+end_src
-*** Region and locus-based enrichment
-- [[id:12393aa3-d318-4ba6-8183-6e3a175d3ba4][Region or locus-based enrichment analysis]]
-*** Fraction of reads in peaks (FRiP)
-:PROPERTIES:
-:ID:       6f4cf12b-bc4c-4063-823f-7d4fcf9b0579
-:END:
-#+begin_src snakemake
-rule frip_mouse:
-    input:
-        bam = expand(f"{atac_dir}/mouse/bams/{{library}}_mm10_filt.bam", library = MOUSE_ATAC_LIBS),
-        peak = expand(f"{atac_dir}/mouse/peaks/{{library}}_mm10_filt_multi_peaks.narrowPeak", library = MOUSE_ATAC_LIBS),
-    log: f"{log_dir}/mouse_frip.log",
-    output: tsv = f"{atac_dir}/mouse/qc/mouse_frip.tsv",
-    params:
-        script = f"{atac_script_dir}/frip.sh",
-    shell:
-        """
-        {params.script} '{input.bam}' {output.tsv} &> {log}
-        """
-#+end_src
-#+begin_src bash :tangle ./scripts/frip.sh
-#!/usr/bin/env bash
-
-input_str="${1}"
-output="${2}"
-
-#echo "library	reads	frip" > $output
-
-IFS=' ' read -r -a array <<< "$input_str"
-
-# Define a function to process each file
-process_file() {
-    file="$1"
-    library=$(echo $(basename $file) | sed 's/_.*$//g')
-    peaks=sed 's|/bams/lib[0-9]\{3\}_mm10_ds9.bam|/peaks/&_multi_peaks.narrowPeak|' filename
-    col1=$(bedtools intersect -a $file -b /mnt/ris/jschwarz/Active/cardiac-radiobiology/analysis/atac/${species}/peaks/${library}_${build}_ds9_multi_peaks.narrowPeak -wa -f 0.2 -r | wc -l)
-    col2=$(cat $file | wc -l)
-    frip=$(awk 'BEGIN {print '${col1}'/'${col2}' }')
-    echo "$library	$col2	$frip"
-}
-
-# Export the function to make it available to parallel
-export -f process_file
-
-# Run the loop in parallel using parallel command
-parallel -j 4 process_file ::: "${array[@]}" > "$output"
-
-sed -i '1i\library\tpeaks\tfrip' $output
-
-#+end_src
-- Reference
-  - [[https://docs.google.com/document/d/1f0Cm4vRyDQDu0bMehHD7P7KOMxTOP-HiNoIvL1VcBt8/edit][ENCODE]]
-  - [[id:a55b6586-9f45-4f0c-9280-15b996a689f4][ATAC-seq FRiP results]]
-*** MACS2 narrow peak calling
-#+begin_src snakemake
-rule macs2_narrow:
-    input:
-        f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_macs2_narrow.log",
-    output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_peaks.narrowPeak",
-    params:
-        gsize = lambda wildcards: build_map[wildcards.build]['gsize'],
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
-        outdir = f"{atac_dir}/peaks",
-        script = f"{atac_script_dir}/macs2_narrow.sh",
-    shell:
-        """
-        name=$(basename -s _filt.bam {input})
-        {params.script} \
-        {input} \
-        $name \
-        {params.gsize} \
-        {params.outdir} &> {log}
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/macs2_narrow.sh
-#!/usr/bin/env bash
-set -o errexit   # abort on nonzero exitstatus
-set -o nounset   # abort on unbound variable
-set -o pipefail  # don't hide errors within pipes
-
-inbam=$1
-name=$2
-gsize=$3
-outdir=$4
-
-macs2 callpeak --treatment $inbam \
-      --bdg \
-      --call-summits \
-      --extsize 150 \
-      --format BAMPE \
-      --gsize $gsize \
-      --keep-dup all \
-      --name ${name} \
-      --nolambda \
-      --outdir $outdir \
-      -p 0.01 \
-      --shift -75 \
-      --SPMR \
-      --nomodel
-#+end_src
-*** Aggregate
-**** INPROCESS Aggregate samstats
-#+begin_src snakemake
-rule agg_samstat:
-    input:
-        lambda wildcards: expand(f"{atac_dir}/{wildcards.species}/qc/{{library}}_filt_samstats.txt", library=get_libraries(wildcards.species)),
-    output:
-        f"{atac_dir}/{{species}}/qc/{{species}}_atac_samstats.tsv",
-    run:
-        import os
-        import re
-
-        data = []
-
-        # Loop over the input files
-        for filename in input:
-            # Extract the library ID from the filename
-            library_id = os.path.basename(filename).split("_")[0]
-
-            # Open the log file
-            with open(filename, "r") as f:
-                lines = f.readlines()
-
-                # Find the required lines using regular expressions
-                reads = duplicated = total = mapped = error = None
-                for line in lines:
-                    if re.match(r"SN\traw total sequences:", line):
-                        reads = int(re.search(r"\d+", line).group())
-                    elif re.match(r"SN\treads duplicated:", line):
-                        duplicated = int(re.search(r"\d+", line).group())
-                    elif re.match(r"SN\ttotal length:", line):
-                        total = int(re.search(r"\d+", line).group())
-                    elif re.match(r"SN\tbases mapped \(cigar\):", line):
-                        mapped = int(re.search(r"\d+", line).group())
-                    elif re.match(r"SN\terror rate:", line):
-                        error = float(re.search(r"\d+\.\d+[eE][+-]\d+", line).group())
-
-                # Append the data to the list
-                data.append({
-                    "reads": reads,
-                    "duplicated": duplicated,
-                    "total": total,
-                    "mapped": mapped,
-                    "error": error,
-                    "library": library_id
-                })
-
-        # Write the data to a file
-        header = "total_reads\tduplicated_reads\ttotal_bases\tmapped_bases\terror_rate\tlibrary\n"
-        with open(output[0], "w") as f:
-            f.write(header)
-            for d in data:
-                f.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(d["reads"], d["duplicated"], d["total"], d["mapped"], d["error"], d["library"]))
-
-#+end_src
-
-**** WAITING Tabular summary
-
-NEXT ADD SAMSTATS
-
-Per-species ATAC-seq library QC tabular results
-#+begin_src snakemake
-rule atac_qc_table:
-    input:
-        f"{atac_dir}/{{species}}/qc/{{species}}_corces_qc.tsv",
-        f"{atac_dir}/{{species}}/qc/{{species}}_frip.tsv",
-        f"{atac_dir}/{{species}}/qc/{{species}}_atac_samstats.tsv",
-    log: f"{log_dir}/{{species}}_atac_qc_table.log",
-    output: f"{atac_dir}/{{species}}/qc/{{species}}_atac_qc.tsv",
-    params:
-        script = f"{atac_script_dir}/atac_qc_table.R",
-#+end_src
-#+begin_src R
-frip_tsv = "~/cards/analysis/atac/mouse/qc/mouse_mm10_frip.tsv"
-corces_tsv = "~/cards/analysis/atac/mouse/qc/mouse_corces_qc.tsv"
-samstats_tsv = "~/cards/analysis/atac/mouse/qc/mouse_atac_samstats.tsv"
-libs_tsv = "~/cards/data-model/lists/atac_logic.tsv"
-species_var = "mouse"
-
-library(tidyverse)
-frip = read_tsv(frip_tsv)
-libs = read_tsv(libs_tsv)
-samstast = read_tsv(samstat_tsv)
-corces = read_tsv(corces_tsv)
-
-libs %>% filter(species == species_var) %>% left_join(frip, by = "library") %>% left_join(corces, by = "library")
-
-#+end_src
-**** [[id:f0124001-2d9f-47a3-a55a-7004bc5db0ee][Peak annotation]]
-**** Insert-size distribution
-- Snakemake
-  #+begin_src snakemake
-checkpoint insert_size:
-    input: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam", library = raw_atac_libs),
-    log: f"{log_dir}/{{species}}_{{build}}_insert_size.log",
-    output:
-        tsv = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.tsv",
-        plot = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.pdf",
-    params:
-        peak_cut = atac_peak_cut,
-        script = f"{atac_script_dir}/insert_size.R",
-    shell:
-        """
-        Rscript {params.script} \
-        "{input}" \
-        {output.tsv} \
-        {output.plot} \
-        {params.peak_cut} > {log} 2>&1
-        """
-#+end_src
-- Rscript
-  #+begin_src R :tangle ./scripts/insert_size.R
-args = commandArgs(trailingOnly = TRUE)
-bam_list_str = args[1]
-peak_ratio_tsv = args[2]
-peak_ratio_plot = args[3]
-peak_cut = args[4]
-
-library(GenomicAlignments)
-library(tidyverse)
-
-bam_list = unlist(strsplit(bam_list_str, " "))
-names(bam_list) = substr(gsub("^.*lib","lib", bam_list), 1, 6)
-
-tally_lengths = function(in_bam){
-  # Make a tibble with counts of fragment lengths
-  gal = readGAlignments(in_bam,
-                        param=ScanBamParam(what=c("isize")))
-  tib = mcols(gal) %>%
-    as_tibble() %>%
-    mutate(frag_len = abs(isize)) %>%
-    group_by(frag_len) %>%
-    tally()
-  return(tib)
-}
-
-change_column_name <- function(x, aList) {
-  # For each per-library tibble, change column to library ID
-  dat <- aList[[x]]
-  names(dat)[2] <- x
-  return(dat)
-}
-
-pre_frag_len_list = lapply(bam_list, tally_lengths)
-frag_len_list = lapply(names(pre_frag_len_list), change_column_name, pre_frag_len_list)
-
-frags =
-  # Make a complete list of fragment sizes, 1-1000
-  data.frame(frag_len = 1:1000) %>%
-  as_tibble()
-frags
-
-frag_len_tib =
-  frag_len_list %>% purrr::reduce(full_join, by = "frag_len") %>%
-  full_join(frags, by = "frag_len") %>%
-  arrange(frag_len) %>%
-   replace(is.na(.), 0) %>%
-   mutate(frag_len_fct = ifelse(frag_len > 1000, "other", frag_len)) %>%
-  select(!frag_len) %>%
-  pivot_longer(!frag_len_fct, names_to = "library", values_to = "count") %>%
-  group_by(frag_len_fct, library) %>%
-  summarize(count = sum(count)) %>%
-  mutate(frag_len_fct = as.numeric(frag_len_fct)) %>%
-  arrange(frag_len_fct)
-
-cut = frag_len_tib %>%
-  mutate(mono_cut = ifelse(frag_len_fct < 146, "open", "mono")) %>%
-  group_by(library,mono_cut) %>%
-  summarize(high = max(count)) %>%
-  pivot_wider(names_from = mono_cut, values_from = high) %>%
-  mutate(peak_ratio = open / mono) %>%
-  select(library, open, mono, peak_ratio)
-
-cut %>% write_tsv(file = peak_ratio_tsv)
-
-plot = frag_len_tib %>%
-  left_join(cut, by = "library") %>%
-  mutate(peak_ratio_mod = ifelse(peak_ratio < peak_cut, NA, peak_ratio)) %>%
-  ggplot(., aes(x=frag_len_fct, y = count)) +
-  geom_line(aes(color = peak_ratio_mod)) +
-  facet_wrap(vars(library)) +
-  xlab("Fragment Length") + ylab("Count") +
-  geom_hline(aes(yintercept = mono)) +
-  scale_color_continuous(name = "Ratio of open to mononucleosomal peaks", na.value = "red") +
-  theme(legend.position = "bottom")
-
-ggsave(plot, file = peak_ratio_plot)
-
-
-#+end_src
-*** Open genome by chromosome
-#+begin_src snakemake
-
-rule chr_open_genome:
-    input:
-        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-                                 library=atac_map[wildcards.atac_set]['libs'],
-                                 build=atac_map[wildcards.atac_set]['build'],
-                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
-                                 peaktype=atac_map[wildcards.atac_set]['peaktype'])
-    log: f"{log_dir}/{{atac_set}}_open_genome.log",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/open_chrom.txt"
-    params:
-        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
-        qval_cut=5,
-        threads=4,
-        script=f"{atac_script_dir}/chr_open_genome.sh",
-    shell:
-        """
-        {params.script} \
-        "{input}" \
-        {params.genome_bed} \
-        {params.qval_cut} \
-        {params.threads} \
-        {output}
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/chr_open_genome.sh
-#!/usr/bin/env bash
-
-peaks_str="${1}"
-ref_bed="${2}"
-qval_cut="${3}"
-threads="${4}"
-out_tsv="${5}"
-
-
-process_file() {
-    file="$1"
-    base=$(basename $file)
-    ref_bed="${2}"
-    qval_cut="${3}"
-    cat "$file" |
-        awk -v cut="$qval_cut" '$9 > cut' |
-        sort-bed - |
-        bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
-        awk -v base="$base" '{print $0 "\t" base}'
-
-}
-
-export -f process_file
-
-parallel -j "$threads" process_file {} "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
-
-#+end_src
-
-- https://www.biostars.org/p/219099/
-*** TODO build out a sample map for the atac raw libs
 ** Ideas
+- https://genome.cshlp.org/content/22/9/1813.full
 - chromatin information enrichment - narrowpeak is used as for https://www.nature.com/articles/s41467-021-21534-4
 # naive consensus peaks by markov chain
 library(BSgenome.Hsapiens.UCSC.hg19)
@@ -15604,6 +15255,868 @@ make_naive = function(sample_sheet,in_peaks_bed,atac_macs2_dir,out_peaks_bed){
 
 make_naive(sample_sheet_tsv, in_peaks_bed, atac_macs2_dir, out_peaks_bed)
 #+end_src
+*** Open genome by chromosome
+#+begin_src snakemake
+
+rule chr_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype'])
+    log: f"{log_dir}/{{atac_set}}_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        qval_cut=5,
+        threads=4,
+        script=f"{atac_script_dir}/chr_open_genome.sh",
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {params.qval_cut} \
+        {params.threads} \
+        {output}
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/chr_open_genome.sh
+#!/usr/bin/env bash
+
+peaks_str="${1}"
+ref_bed="${2}"
+qval_cut="${3}"
+threads="${4}"
+out_tsv="${5}"
+
+
+process_file() {
+    file="$1"
+    base=$(basename $file)
+    ref_bed="${2}"
+    qval_cut="${3}"
+    cat "$file" |
+        awk -v cut="$qval_cut" '$9 > cut' |
+        sort-bed - |
+        bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+        awk -v base="$base" '{print $0 "\t" base}'
+
+}
+
+export -f process_file
+
+parallel -j "$threads" process_file {} "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
+
+#+end_src
+
+- https://www.biostars.org/p/219099/
+
+*** Tabular summary
+
+NEXT ADD SAMSTATS
+
+Per-species ATAC-seq library QC tabular results
+#+begin_src snakemake
+rule atac_qc_table:
+    input:
+        f"{atac_dir}/{{species}}/qc/{{species}}_corces_qc.tsv",
+        f"{atac_dir}/{{species}}/qc/{{species}}_frip.tsv",
+        f"{atac_dir}/{{species}}/qc/{{species}}_atac_samstats.tsv",
+    log: f"{log_dir}/{{species}}_atac_qc_table.log",
+    output: f"{atac_dir}/{{species}}/qc/{{species}}_atac_qc.tsv",
+    params:
+        script = f"{atac_script_dir}/atac_qc_table.R",
+#+end_src
+#+begin_src R
+frip_tsv = "~/cards/analysis/atac/mouse/qc/mouse_mm10_frip.tsv"
+corces_tsv = "~/cards/analysis/atac/mouse/qc/mouse_corces_qc.tsv"
+samstats_tsv = "~/cards/analysis/atac/mouse/qc/mouse_atac_samstats.tsv"
+libs_tsv = "~/cards/data-model/lists/atac_logic.tsv"
+species_var = "mouse"
+
+library(tidyverse)
+frip = read_tsv(frip_tsv)
+libs = read_tsv(libs_tsv)
+samstast = read_tsv(samstat_tsv)
+corces = read_tsv(corces_tsv)
+
+libs %>% filter(species == species_var) %>% left_join(frip, by = "library") %>% left_join(corces, by = "library")
+
+#+end_src
+*** Insert-size distribution
+- Snakemake
+  #+begin_src snakemake
+checkpoint insert_size:
+    input: expand(f"{atac_dir}/{{species}}/bams/{{library}}_{{build}}_filt.bam", library = raw_atac_libs),
+    log: f"{log_dir}/{{species}}_{{build}}_insert_size.log",
+    output:
+        tsv = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.tsv",
+        plot = f"{atac_qc_dir}/{{species}}_{{build}}_insert_sizes.pdf",
+    params:
+        peak_cut = atac_peak_cut,
+        script = f"{atac_script_dir}/insert_size.R",
+    shell:
+        """
+        Rscript {params.script} \
+        "{input}" \
+        {output.tsv} \
+        {output.plot} \
+        {params.peak_cut} > {log} 2>&1
+        """
+#+end_src
+- Rscript
+  #+begin_src R :tangle ./scripts/insert_size.R
+args = commandArgs(trailingOnly = TRUE)
+bam_list_str = args[1]
+peak_ratio_tsv = args[2]
+peak_ratio_plot = args[3]
+peak_cut = args[4]
+
+library(GenomicAlignments)
+library(tidyverse)
+
+bam_list = unlist(strsplit(bam_list_str, " "))
+names(bam_list) = substr(gsub("^.*lib","lib", bam_list), 1, 6)
+
+tally_lengths = function(in_bam){
+  # Make a tibble with counts of fragment lengths
+  gal = readGAlignments(in_bam,
+                        param=ScanBamParam(what=c("isize")))
+  tib = mcols(gal) %>%
+    as_tibble() %>%
+    mutate(frag_len = abs(isize)) %>%
+    group_by(frag_len) %>%
+    tally()
+  return(tib)
+}
+
+change_column_name <- function(x, aList) {
+  # For each per-library tibble, change column to library ID
+  dat <- aList[[x]]
+  names(dat)[2] <- x
+  return(dat)
+}
+
+pre_frag_len_list = lapply(bam_list, tally_lengths)
+frag_len_list = lapply(names(pre_frag_len_list), change_column_name, pre_frag_len_list)
+
+frags =
+  # Make a complete list of fragment sizes, 1-1000
+  data.frame(frag_len = 1:1000) %>%
+  as_tibble()
+frags
+
+frag_len_tib =
+  frag_len_list %>% purrr::reduce(full_join, by = "frag_len") %>%
+  full_join(frags, by = "frag_len") %>%
+  arrange(frag_len) %>%
+   replace(is.na(.), 0) %>%
+   mutate(frag_len_fct = ifelse(frag_len > 1000, "other", frag_len)) %>%
+  select(!frag_len) %>%
+  pivot_longer(!frag_len_fct, names_to = "library", values_to = "count") %>%
+  group_by(frag_len_fct, library) %>%
+  summarize(count = sum(count)) %>%
+  mutate(frag_len_fct = as.numeric(frag_len_fct)) %>%
+  arrange(frag_len_fct)
+
+cut = frag_len_tib %>%
+  mutate(mono_cut = ifelse(frag_len_fct < 146, "open", "mono")) %>%
+  group_by(library,mono_cut) %>%
+  summarize(high = max(count)) %>%
+  pivot_wider(names_from = mono_cut, values_from = high) %>%
+  mutate(peak_ratio = open / mono) %>%
+  select(library, open, mono, peak_ratio)
+
+cut %>% write_tsv(file = peak_ratio_tsv)
+
+plot = frag_len_tib %>%
+  left_join(cut, by = "library") %>%
+  mutate(peak_ratio_mod = ifelse(peak_ratio < peak_cut, NA, peak_ratio)) %>%
+  ggplot(., aes(x=frag_len_fct, y = count)) +
+  geom_line(aes(color = peak_ratio_mod)) +
+  facet_wrap(vars(library)) +
+  xlab("Fragment Length") + ylab("Count") +
+  geom_hline(aes(yintercept = mono)) +
+  scale_color_continuous(name = "Ratio of open to mononucleosomal peaks", na.value = "red") +
+  theme(legend.position = "bottom")
+
+ggsave(plot, file = peak_ratio_plot)
+
+
+#+end_src
+*** Fraction of reads in peaks (FRiP)
+:PROPERTIES:
+:ID:       6f4cf12b-bc4c-4063-823f-7d4fcf9b0579
+:END:
+#+begin_src snakemake
+rule frip_mouse:
+    input:
+        bam = expand(f"{atac_dir}/mouse/bams/{{library}}_mm10_filt.bam", library = MOUSE_ATAC_LIBS),
+        peak = expand(f"{atac_dir}/mouse/peaks/{{library}}_mm10_filt_multi_peaks.narrowPeak", library = MOUSE_ATAC_LIBS),
+    log: f"{log_dir}/mouse_frip.log",
+    output: tsv = f"{atac_dir}/mouse/qc/mouse_frip.tsv",
+    params:
+        script = f"{atac_script_dir}/frip.sh",
+    shell:
+        """
+        {params.script} '{input.bam}' {output.tsv} &> {log}
+        """
+#+end_src
+#+begin_src bash :tangle ./scripts/frip.sh
+#!/usr/bin/env bash
+
+input_str="${1}"
+output="${2}"
+
+#echo "library	reads	frip" > $output
+
+IFS=' ' read -r -a array <<< "$input_str"
+
+# Define a function to process each file
+process_file() {
+    file="$1"
+    library=$(echo $(basename $file) | sed 's/_.*$//g')
+    peaks=sed 's|/bams/lib[0-9]\{3\}_mm10_ds9.bam|/peaks/&_multi_peaks.narrowPeak|' filename
+    col1=$(bedtools intersect -a $file -b /mnt/ris/jschwarz/Active/cardiac-radiobiology/analysis/atac/${species}/peaks/${library}_${build}_ds9_multi_peaks.narrowPeak -wa -f 0.2 -r | wc -l)
+    col2=$(cat $file | wc -l)
+    frip=$(awk 'BEGIN {print '${col1}'/'${col2}' }')
+    echo "$library	$col2	$frip"
+}
+
+# Export the function to make it available to parallel
+export -f process_file
+
+# Run the loop in parallel using parallel command
+parallel -j 4 process_file ::: "${array[@]}" > "$output"
+
+sed -i '1i\library\tpeaks\tfrip' $output
+
+#+end_src
+- Reference
+  - [[https://docs.google.com/document/d/1f0Cm4vRyDQDu0bMehHD7P7KOMxTOP-HiNoIvL1VcBt8/edit][ENCODE]]
+  - [[id:a55b6586-9f45-4f0c-9280-15b996a689f4][ATAC-seq FRiP results]]
+
+*** Region and locus-based enrichment
+- [[id:12393aa3-d318-4ba6-8183-6e3a175d3ba4][Region or locus-based enrichment analysis]]
+*** Track visualization
+#+begin_src R
+library(rtracklayer)
+library(Gviz)
+library(GenomicRanges)
+data(cpgIslands)
+
+atrack <- AnnotationTrack(cpgIslands, name = "CpG")
+
+plotTracks(atrack)
+
+gtrack = GenomeAxisTrack()
+
+plotTracks(list(gtrack, atrack))
+
+(gen<-genome(cpgIslands))
+
+(chr <- as.character(unique(seqnames(cpgIslands))))
+
+itrack <- IdeogramTrack(genome = gen, chromosome = chr)
+
+plotTracks(list(itrack, gtrack, atrack))
+
+data(geneModels)
+
+grtrack = GeneRegionTrack(geneModels, genome = gen, chromosome = chr, name = "Gene Model")
+
+plotTracks(list(itrack, gtrack, grtrack))
+
+#Use from and to arguments to zoom
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           from = 26700000, to = 26750000)
+# Use extend.left and extend.right to zoom
+#those arguments are relative to the currently displayed ranges,
+#and can be used to quickly extend the view on one or both ends of the plot.
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           extend.left = 0.5, extend.right = 1000000)
+# to drop the bounding borders of the exons and
+# to have a nice plot
+plotTracks(list(itrack, gtrack, atrack, grtrack),
+           extend.left = 0.5, extend.right = 1000000, col = NULL)
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
+
+library(BSgenome.Hsapiens.UCSC.hg19)
+
+strack <- SequenceTrack(Hsapiens, chromosome = chr)
+plotTracks(list(itrack, gtrack, atrack, grtrack,
+                strack), from = 26591822, to = 26591852, cex = 0.8)
+
+#For demonstration purposes we can create a simple DataTrack object from
+#randomly sampled data.
+set.seed(255)
+lim <- c(26700000, 26750000)
+coords <- sort(c(lim[1], sample(seq(from = lim[1],
+                                    to = lim[2]), 99), lim[2]))
+dat <- runif(100, min = -10, max = 10)
+head(dat)
+
+dtrack <- DataTrack(data = dat, start = coords[-length(coords)],
+                    end = coords[-1], chromosome = chr, genome = gen,
+                    name = "Uniform")
+##Plot data track
+plotTracks(list(itrack, gtrack, atrack, grtrack,
+                dtrack), from = lim[1], to = lim[2])
+
+#Change plot type to histogram
+plotTracks(list(itrack, gtrack, atrack, grtrack,dtrack),
+           from = lim[1], to = lim[2], type = "histogram")
+
+data(twoGroups)
+head(twoGroups)
+
+dTrack <- DataTrack(twoGroups, name = "asdf")
+plotTracks(dTrack)
+
+plotTracks(DataTrack(twoGroups, name = "p"), type="p")
+#lines plot
+plotTracks(DataTrack(twoGroups, name = "l"), type="l")
+#line and dot plot
+test =plotTracks(DataTrack(twoGroups, name = "b"), type="b")
+#lines plot of average
+
+class(test)
+
+plotTracks(DataTrack(twoGroups, name = "a"), type="a", groups = rep(c("control","treated"),each = 3))
+
+#histogram lines
+plotTracks(DataTrack(twoGroups, name = "h"), type="h")
+#histogram histogram (bar width equal to range with)
+plotTracks(DataTrack(twoGroups, name = "histogram"), type="histogram")
+#'polygon-type' plot relative to a baseline
+plotTracks(DataTrack(twoGroups, name = "polygon"), type="polygon")
+#box and whisker plot
+plotTracks(DataTrack(twoGroups, name = "boxplot"), type="boxplot")
+#false color image of the individual values
+
+alTrack <- AlignmentsTrack(system.file(package = "Gviz", "extdata",
+                                       "gapped.bam"), isPaired = TRUE)
+
+alTrack
+
+class(alTrack)
+
+afrom=2960000
+ato=3160000
+
+plotTracks(alTrack, from = afrom, to = ato, chromosome = "chr12")
+
+# Load necessary packages
+library(rtracklayer)
+library(GenomicRanges)
+
+# Import the bed file with rtracklayer
+bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib116_mm10_ds9_peaks.broadPeak")
+
+testbam = "~/cards/analysis/atac/mouse/bams/lib116_mm10_ds9.bam"
+mappedReads <- idxstatsBam(testbam)
+(TotalMapped <- sum(mappedReads[, "mapped"]))
+
+#forBigWig <- coverage(testbam, weight = (10^6)/TotalMapped)
+forBigWig <- coverage(testbam)
+
+export.bw(forBigWig, con = "/tmp/test.bw")
+
+
+bw_data <- import(con = "/tmp/test.bw")
+
+dt <- DataTrack(range = bw_data, name = "My Data")
+
+# Plot the track
+plotTracks(dt)
+
+
+# Print the GRanges object
+print(bw_data)
+
+
+
+plotTracks(DataTrack(forBigWig, name = "p"), type="l")
+
+
+# Load necessary packages
+
+library(Gviz)
+library(GenomicRanges)
+
+# Import the bigWig file with rtracklayer
+bw_data <- import(con = "/tmp/test.bw")
+
+# Create a GRanges object for the desired region
+region <- GRanges("chr2", IRanges(start = 137081456, end = 137116644))
+
+# Subset the data
+subset_data <- subsetByOverlaps(bw_data, region)
+
+# Create a DataTrack
+plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue"))
+
+library(grid)
+library(ggplotify)
+library(Gviz)
+
+set.seed(123)
+gr <- GRanges("chr1", IRanges(1:100, width=1),
+              score=rnorm(100))
+dTrack <- DataTrack(gr, type=c("a", "p"))
+aTrack <- GenomeAxisTrack(add35=TRUE, add53=TRUE, littleTicks=TRUE)
+# plotTracks(list(aTrack,dTrack),from=1,to=100)
+
+
+p1 <- as.grob(~plotTracks(list(aTrack,dTrack),from=1,to=100))
+p1 # gTree
+
+p2 <- as.grob(~plotTracks(DataTrack(range = subset_data, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")))
+
+library(cowplot)
+plot_grid(p1, p2)
+
+grid.newpage()
+grid.draw(p1, p2)
+
+# Import the bed file with rtracklayer
+bed_data <- import.bed("~/cards/analysis/atac/mouse/peaks/lib117_mm10_ds9_peaks.broadPeak")
+
+testbam = "~/cards/analysis/atac/mouse/bams/lib119_mm10_ds9.bam"
+mappedReads <- idxstatsBam(testbam)
+(TotalMapped <- sum(mappedReads[, "mapped"]))
+
+
+ir_data <- import(con = "/tmp/test.bw")
+sham_data= import(con = "/tmp/test_sham.bw")
+
+# Create a GRanges object for the desired region
+region <- GRanges("chr3", IRanges(start = from, end = to))
+
+# Subset the data
+subset_ir <- subsetByOverlaps(ir_data, region)
+subset_sham <- subsetByOverlaps(sham_data, region)
+
+# Create a DataTrack
+sham = DataTrack(range = subset_sham, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
+
+# Create a DataTrack
+ir = DataTrack(range = subset_ir, name = "My Data", type = "hist", genome = "mm10", window = -1, fill.histogram = "darkblue", col.histogram = "darkblue")
+
+
+plotTracks(list(sham, ir, knownGenes))
+
+test = AlignmentsTrack("~/cards/analysis/atac/mouse/bams/lib051_mm10_ds9.bam", isPaired = T)
+
+library(biomaRt)
+options(ucscChromosomeNames=FALSE)
+
+library(biomaRt)
+
+mart <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")  # Mouse genes
+gene <- "Jag1"
+
+# Fetch the gene start and end
+gene_info <- getBM(attributes = c('chromosome_name', 'start_position', 'end_position'),
+                   filters = 'external_gene_name',
+                   values = gene,
+                   mart = mart)
+
+# Use the gene start and end to plot
+knownGene <- UcscTrack(
+  genome = "mm10",
+  chromosome = paste0("chr", gene_info$chromosome_name[1]),  # assuming it is located on the first chromosome listed
+  track = "knownGene",
+  from = gene_info$start_position[1],  # assuming the gene is located at the first start_position listed
+  to = gene_info$end_position[1],  # assuming the gene is located at the first end_position listed
+  trackType = "GeneRegionTrack",
+  rstarts = "exonStarts",
+  rends = "exonEnds",
+  gene = "name",
+  symbol = "name"
+)
+
+plotTracks(knownGene)
+
+from <-137046267
+to <- 137151833
+knownGenes <- UcscTrack(genome = "mm9", chromosome = "chr2",
+                        track = "knownGene", from = from, to = to,
+                        trackType = "GeneRegionTrack",
+                        rstarts = "exonStarts", rends = "exonEnds",
+                        gene = "name", symbol = "name")
+plotTracks(knownGenes)
+
+
+from <- 137046267
+to <- 137151833
+knownGenes <- UcscTrack(genome = "mm10", chromosome = "chr3",
+                        table = "knownGene", from = from, to = to,
+                        trackType = "GeneRegionTrack",
+                        rstarts = "exonStarts", rends = "exonEnds",
+                        gene = "name", symbol = "name",
+                        transcript = "name", strand = "strand",
+                        fill = "#8282d2", name = "UCSC Genes")
+#+end_src
+*** RUV outputs
+***** Make RUV-adjusted counts
+
+#+begin_src snakemake
+rule atac_ruv:
+    input:
+#+end_src
+***** RUV-adjusted ATAC-seq counts
+#+begin_src snakemake
+rule atac_ruv:
+    input:
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        counts = lambda wildcards: f"{atac_dir}/{{[wildcards.experiment]['species']}}/dca/{{[wildcards.experiment]['species']}}_{{[wildcards.experiment]['build']}}.raw_coverages.tsv",
+        keep = lambda wildcards: f"{datamodel_dir}/lists/{{[wildcards.experiment]['species']}}_atac_simple.tsv",
+    log: f"{log_dir}/{{species}}_{{build}}_{ruv_k}_atac_ruv.log",
+    output:
+        f"{atac_dir}/{{species}}/dca/{{species}}_atac_k{{ruv_k}}_{{contrast}}.tsv",
+    params:
+        script = f"{cardiac_script_dir}/atac_ruv.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{wildcards.contrast}" {output} > {log} 2>&1
+        """
+#+end_src
+
+***** RVU-adjusted ATAC-seq for human
+:PROPERTIES:
+:ID:       e774161f-4c1c-4640-8ace-f7b48c93f3aa
+:END:
+#+begin_src snakemake
+rule hs_rvu_atac:
+    input:
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        counts = f"{atac_dir}/human/dca/human_hg38.raw_coverages.tsv",
+        keep = f"{datamodel_dir}/lists/human_atac_simple.tsv",
+    log: f"{log_dir}/hs_rvu_k{{rvu_k}}_atac.log",
+    output:
+        f"{atac_dir}/human/dca/human_atac_k{{rvu_k}}_ir1w_sham1w.tsv",
+        f"{atac_dir}/human/dca/human_atac_k{{rvu_k}}_ir2w_sham2w.tsv",
+    params:
+        script = f"{cardiac_script_dir}/hs_rvu_atac.R",
+        rvu_k = "{rvu_k}"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output} {params.rvu_k} > {log} 2>&1
+        """
+#+end_src
+#+begin_src R :tangle ./scripts/hs_rvu_atac.R
+#!/usr/bin/env Rscript
+
+##############################
+###   Human Dca With Rvu   ###
+##############################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+libraries_full_rds = args[1]
+counts_tsv = args[2]
+keep_tsv = args[3]
+ir1w_sham1w_tsv = args[4]
+ir2w_sham2w_tsv = args[5]
+rvu_k = args[6]
+
+# Load required packages, data, and functions
+library(RUVSeq)
+library(tidyverse)
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+# Setup data objects
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+mat = mat[, colnames(mat) %in% keep$library]
+(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(cohort) %>% droplevels())
+set = newSeqExpressionSet(mat,
+                          phenoData = data.frame(group, row.names = colnames(mat)))
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
+
+# Perform DCA by EdgeR on adjusted gene expression
+if (rvu_k != 0) {
+  modcounts = normCounts(adjust)
+} else {
+  modcounts = mat
+}
+
+
+design = model.matrix(~ 0 + group)
+dge = DGEList(counts = modcounts)
+dge = calcNormFactors(dge)
+dge = estimateGLMCommonDisp(dge, design)
+dge = estimateGLMTrendedDisp(dge, design)
+dge = estimateGLMTagwiseDisp(dge, design)
+fit = glmFit(dge, design)
+
+name_mapping= data.frame(newname = c("logfc", "logcpm", "lr", "pval", "qval"),
+                 oldname = c("logFC", "logCPM", "LR", "PValue", "FDR"))
+
+# Generate specific comparisons
+ir1w_sham1w_cont = makeContrasts(groupir1w - groupsham1w, levels = colnames(design))
+ir1w_sham1w_lrt = glmLRT(fit, contrast = ir1w_sham1w_cont)
+ir1w_sham1w = data.frame(topTags(ir1w_sham1w_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
+  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
+  write_tsv(ir1w_sham1w_tsv)
+
+ir2w_sham2w_cont = makeContrasts(groupir2w - groupsham2w, levels = colnames(design))
+ir2w_sham2w_lrt = glmLRT(fit, contrast = ir2w_sham2w_cont)
+ir2w_sham2w = data.frame(topTags(ir2w_sham2w_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
+  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
+  write_tsv(ir2w_sham2w_tsv)
+#+end_src
+
+#+caption: label:fig_human_ruv_cor_ir1w_sham1w
+[[file:/mnt/ris/jschwarz/Active/cardiac-radiobiology/results/human/atac/qc/rvu_spearman/human_ir1w_sham1w.pdf]]
+
+#+caption: label:fig_human_ruv_cor_ir2w_sham2w
+[[file:/mnt/ris/jschwarz/Active/cardiac-radiobiology/results/human/atac/qc/rvu_spearman/human_ir2w_sham2w.pdf]]
+
+***** RVU-adjusted ATAC-seq for mouse
+
+Performs RUVseq adjustment of open chromatin region raw counts. Factor k defines
+#+begin_src snakemake
+rule ms_rvu_atac:
+    input:
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+        counts = f"{atac_dir}/mouse/dca/mouse_mm10.raw_coverages.tsv",
+        keep = f"{atac_dir}/mouse/qc/filtered_mouse_atac_simple.tsv",
+    log: f"{log_dir}/ms_rvu_k{{rvu_k}}_atac.log",
+    output:
+        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir2d_sham.tsv",
+        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir6w_sham.tsv",
+        f"{atac_dir}/mouse/dca/mouse_atac_k{{rvu_k}}_ir6w_ir2d.tsv",
+    params:
+        script = f"{cardiac_script_dir}/ms_rvu_atac.R",
+        rvu_k = "{rvu_k}"
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        {output} {params.rvu_k} > {log} 2>&1
+        """
+#+end_src
+#+begin_src R :tangle ./scripts/ms_rvu_atac.R
+#!/usr/bin/env Rscript
+
+##############################
+###   Mouse Dca With Rvu   ###
+##############################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+libraries_full_rds = args[1]
+counts_tsv = args[2]
+keep_tsv = args[3]
+ir2d_sham_tsv = args[4]
+ir6w_sham_tsv = args[5]
+ir6w_ir2d_tsv = args[6]
+rvu_k = args[7]
+
+# Load required packages, data, and functions
+library(RUVSeq)
+library(tidyverse)
+libraries_full = readRDS(libraries_full_rds)
+counts = read_tsv(counts_tsv)
+keep = read_tsv(keep_tsv)
+
+# Setup data objects
+mat = as.matrix(counts[,-1])
+row.names(mat) = counts$coordinate
+colnames(mat) = substr(colnames(mat),1,6)
+mat = mat[, colnames(mat) %in% keep$library]
+(group = data.frame(library = colnames(mat)) %>% left_join(libraries_full) %>% pull(cohort) %>% droplevels())
+set = newSeqExpressionSet(mat,
+                          phenoData = data.frame(group, row.names = colnames(mat)))
+
+print("Setup complete")
+
+# Perform RUV adjustment by k unwanted factors
+design <- model.matrix(~0+group, data = pData(set))
+y <- DGEList(counts = counts(set), group = group)
+y <- calcNormFactors(y, method = "upperquartile")
+#y <- calcNormFactors(y)
+y <- estimateGLMCommonDisp(y, design)
+y <- estimateGLMTagwiseDisp(y, design)
+fit <- glmFit(y, design)
+dev <- residuals(fit, type="deviance")
+peaks = row.names(dev)
+adjust <- RUVr(set, peaks, k = as.numeric(rvu_k), dev)
+
+print("\nModified counts created\n")
+
+# Perform DCA by EdgeR on adjusted gene expression
+if (rvu_k != 0) {
+  modcounts = normCounts(adjust)
+} else {
+  modcounts = mat
+}
+
+design = model.matrix(~ 0 + group)
+dge = DGEList(counts = modcounts)
+dge = calcNormFactors(dge)
+dge = estimateGLMCommonDisp(dge, design)
+dge = estimateGLMTrendedDisp(dge, design)
+dge = estimateGLMTagwiseDisp(dge, design)
+fit = glmFit(dge, design)
+
+name_mapping= data.frame(newname = c("logfc", "logcpm", "lr", "pval", "qval"),
+                 oldname = c("logFC", "logCPM", "LR", "PValue", "FDR"))
+
+print("\nDGE performed with modified counts\n")
+
+# Generate specific comparisons
+ir2d_sham_cont = makeContrasts(groupir2d - groupsham, levels = colnames(design))
+ir2d_sham_lrt = glmLRT(fit, contrast = ir2d_sham_cont)
+ir2d_sham = data.frame(topTags(ir2d_sham_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
+  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
+  write_tsv(ir2d_sham_tsv)
+
+ir6w_sham_cont = makeContrasts(groupir6w - groupsham, levels = colnames(design))
+ir6w_sham_lrt = glmLRT(fit, contrast = ir6w_sham_cont)
+ir6w_sham = data.frame(topTags(ir6w_sham_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
+  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
+  write_tsv(ir6w_sham_tsv)
+
+ir6w_ir2d_cont = makeContrasts(groupir6w - groupir2d, levels = colnames(design))
+ir6w_ir2d_lrt = glmLRT(fit, contrast = ir6w_ir2d_cont)
+ir6w_ir2d = data.frame(topTags(ir6w_ir2d_lrt, n = nrow(dge))$table) %>% rownames_to_column(var = "coordinate") %>% as_tibble() %>%
+  rename(!!!setNames(as.list(name_mapping$oldname), name_mapping$newname)) %>%
+  write_tsv(ir6w_ir2d_tsv)
+#+end_src
+***** RVU k selection Spearman
+#+begin_src snakemake
+rule atac_rvu_spearmans:
+    input:
+        dca=lambda wildcards: expand(f"{atac_dir}/{{species}}/dca/{{species}}_atac_k{{rvu_k}}_{wildcards.contrast}.tsv",
+                                     species=wildcards.species,
+                                     rvu_k=[0, 1, 2, 3, 4]),
+        libs=f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{species}}_atac_rvu_{{contrast}}_spearmans.log",
+    output:
+        f"{results_dir}/{{species}}/atac/qc/rvu_spearman/{{species}}_{{contrast}}.rda",
+        f"{results_dir}/{{species}}/atac/qc/rvu_spearman/{{species}}_{{contrast}}.pdf"
+    params:
+        script=f"{cardiac_script_dir}/atac_rvu_spearman.R"
+    shell:
+        """
+        Rscript {params.script} \
+        "{input.dca}" {input.libs} \
+        {output} > {log} 2>&1
+        """
+
+#+end_src
+#+begin_src R :tangle ./scripts/atac_rvu_spearman.R
+dca_str="~/cards/analysis/atac/mouse/dca/ms_atac_k0_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k1_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k2_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k3_ir2d_sham.tsv ~/cards/analysis/atac/mouse/dca/ms_atac_k4_ir2d_sham.tsv"
+libraries_full_rds="~/cards/data-model/lists/libraries_full.rds"
+
+#!/usr/bin/env Rscript
+
+#############################
+###   Atac Rvu Spearman   ###
+#############################
+
+# Command line arguements
+args = commandArgs(trailingOnly = TRUE)
+dca_str = args[1]
+libraries_full_rds = args[2]
+out_rda = args[3]
+out_pdf = args[4]
+
+# Load required packages, data, and functions
+library(tidyverse)
+
+# Setup data
+libraries_full = readRDS(libraries_full_rds)
+(dca_char = strsplit(dca_str, " ")[[1]])
+tibble_list = lapply(dca_char, read_tsv)
+(names(tibble_list) = substr(gsub("^.*atac_", "", dca_char), 1, 2))
+
+
+# Rename columns and merge tibbles
+merged <- reduce(names(tibble_list), function(result, suffix) {
+  tibble_i <- tibble_list[[suffix]]
+  colnames(tibble_i) <- ifelse(colnames(tibble_i) == "coordinate", "coordinate", paste0(suffix, "_", colnames(tibble_i)))
+
+  if (is.null(result)) {
+    return(tibble_i)
+  } else {
+    return(left_join(result, tibble_i, by = "coordinate"))
+  }
+}, .init = NULL)
+
+plot_merged <- function(merged) {
+  # Create a data frame to store the R² values and p-values
+  stats_values <- merged %>%
+    select(coordinate, ends_with("logfc")) %>%
+    pivot_longer(cols = !c("coordinate", "k0_logfc"), names_to = "rvu_k", values_to = "logfc") %>%
+    mutate(dif = abs(k0_logfc - logfc)) %>% group_by(rvu_k) %>%
+    summarize(r2 = cor(k0_logfc, logfc)^2, p_value_diff = wilcox.test(k0_logfc, logfc)$p.value)
+  stats_values
+
+  exceeds <- merged %>% select(coordinate, ends_with("qval")) %>%
+    pivot_longer(cols = !coordinate, names_to = "rvu_k", values_to = "qval")  %>%
+    mutate(qsig = ifelse(qval < 0.05, "yes", "no")) %>%
+    group_by(rvu_k) %>%
+    summarize(qsum = sum(qsig == "yes")) %>%
+    mutate(rvu_k = paste0(substr(rvu_k, 1, 2), "_logfc")) %>%
+    full_join(stats_values) %>%
+    filter(rvu_k != "k0_logfc")
+
+  plot <- merged %>%
+    select(coordinate, ends_with("logfc")) %>%
+    pivot_longer(cols = !c("coordinate", "k0_logfc"), names_to = "rvu_k", values_to = "logfc") %>%
+    mutate(dif = abs(k0_logfc - logfc)) %>% group_by(rvu_k) %>%
+    mutate(sd2 = abs(mean(dif, na.rm = T)) + 3 * abs(sd(dif, na.rm = T))) %>%
+    filter(dif > sd2) %>%
+    ggplot(., aes(x = k0_logfc, y = logfc)) + geom_point() +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "blue") +
+    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0("R² = ", round(r2, 3))),
+              hjust = 0, nudge_x = -1, vjust = 2, size = 4) +
+    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0("p(diff) = ", format.pval(p_value_diff, digits = 3))),
+              hjust = 0, nudge_x = -1, vjust = 4, size = 4) +
+    geom_text(data = exceeds, aes(x = -Inf, y = Inf, label = paste0(qsum, " regions with FDR < 0.05")),
+              hjust = 0, nudge_x = -1, vjust = 6, size = 4) +
+    facet_wrap(~rvu_k) +     theme(text = element_text(size = 14), plot.margin = margin(1, 1, 1, 1, "cm"))
+
+
+  return(plot)
+}
+
+plot = plot_merged(merged)
+
+save(merged, plot, file = out_rda)
+
+ggsave(plot, file = out_pdf)
+
+#+end_src
+
+
 ** README
 [[file:resources/int_test.png]]
 *** Prerequisites to run repository local integration testing
