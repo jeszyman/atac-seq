@@ -40,7 +40,13 @@ dependencies:
   # - bioconductor-rgreat # Peak set enrichment #
   # - bioconductor-ruvseq
   # - bioconductor-soggi
-  # - bowtie2
-  # - homer
-  # - macs2
-  # - r-msigdbr
+  - homer
+  - macs2
+  - r-msigdbr
+  - bioconductor-csaw
+  - bioconductor-rgreat
+  - bioconductor-ggbio
+  - bioconductor-atacseqqc
+  - bioconductor-chippeakanno
+  - bioconductor-chipseeker
+  - bioconductor-clusterprofiler

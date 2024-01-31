@@ -51,11 +51,16 @@ dependencies:
   # - bioconductor-rgreat # Peak set enrichment #
   # - bioconductor-ruvseq
   # - bioconductor-soggi
-  # - bowtie2
-  # - homer
-  # - macs2
-  # - r-msigdbr
-
+  - homer
+  - macs2
+  - r-msigdbr
+  - bioconductor-csaw
+  - bioconductor-rgreat
+  - bioconductor-ggbio
+  - bioconductor-atacseqqc
+  - bioconductor-chippeakanno
+  - bioconductor-chipseeker
+  - bioconductor-clusterprofiler
 
 #+end_src
 
@@ -625,7 +630,7 @@ macs2 callpeak --treatment $inbam \
       --nomodel
 
 #+end_src
-**** TODO Standardize peak calls
+**** Standardize peak calls
 
 #+begin_src snakemake
 rule atac_std_peaks:
@@ -694,9 +699,13 @@ def main():
     # Standardize and filter peaks
     valid_bed = peak_std_and_filt(narrowPeak_df, args.blacklist_bed, args.chrom_size_bed)
 
-    # Process to ensure unique peaks
-    final_peaks_df = it_unique_peaks(valid_bed)
+    # Iteratively remove peaks by significance
+    sig_iter_filt_df = it_unique_peaks(valid_bed)
 
+    # Create normalized score per million
+    final_peaks_df = add_score_per_mill(sig_iter_filt_df)
+
+    # Write output
     final_peaks_df.to_csv(args.out_narrowPeak, index=False, sep='\t', header=False)
 
 
@@ -755,22 +764,32 @@ def it_unique_peaks(bed):
 
     # Create a DataFrame from the non-overlapping peaks
     column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']
-    final_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
+    sig_filt_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
 
   # Report and check final number of peaks
-    final_num_peaks = len(final_peaks_df)
+    final_num_peaks = len(sig_filt_peaks_df)
     print(f"Number of unique peaks (final): {final_num_peaks}")
 
     # Convert the final DataFrame to a BedTool object
-    final_peaks_bedtool = pybedtools.BedTool.from_dataframe(final_peaks_df)
+    sig_filt_peaks_bedtool = pybedtools.BedTool.from_dataframe(sig_filt_peaks_df)
 
     # Use intersect to find overlaps (with itself), with a minimum overlap of 1bp
-    overlaps = final_peaks_bedtool.intersect(final_peaks_bedtool, u=True, f=1.0)
+    overlaps = sig_filt_peaks_bedtool.intersect(sig_filt_peaks_bedtool, u=True, f=1.0)
 
     # Assert that there are no overlaps by comparing the counts
-    assert len(overlaps) == len(final_peaks_df), "There are overlapping peaks in the final set!"
+    assert len(overlaps) == len(sig_filt_peaks_df), "There are overlapping peaks in the final set!"
 
-    return final_peaks_df
+    return sig_filt_peaks_df
+
+def add_score_per_mill(macs2_df):
+
+    total_score = macs2_df['score'].sum()
+
+    # Calculate score per million for each row
+    macs2_df['spm'] = (macs2_df['score'] / total_score) * 1e6
+
+    return macs2_df
+
 
 # ---   Main Guard   --- #
 # ---------------------- #
@@ -1384,6 +1403,166 @@ rule peak_filtering:
         {output.keep} > {log} 2>&1
         """
 #+end_src
+
+#+begin_src python
+#!/usr/bin/env python3
+"""
+Merge and filter MACS2 peaks according to Corces et al., 2018 (https://doi.org/10.1126/science.aav1898)
+"""
+
+# ---   Setup   --- #
+# ----------------- #
+
+## ---   Load Packages   --- ##
+## ------------------------- ##
+
+import argparse
+import pandas as pd
+
+# ---   Load Inputs   --- #
+# ----------------------- #
+
+parser = argparse.ArgumentParser(description="Description of your script")
+parser.add_argument("--your_option", type=str, default="", help="Description of option")
+
+args = parser.parse_args()
+
+# ---   Main   --- #
+# ---------------- #
+
+def main():
+    # Load inputs
+    # Merge peaks
+    # Iteratively filter by score per million
+    # Identify reproducible peaks
+
+    return nada
+
+peak_list = ['/tmp/test1.narrowPeak', '/tmp/test2.narrowPeak']
+dfs = [pd.read_csv(file, sep='\t', header=None) for file in peak_list]
+
+merged = merge_peaks(dfs)
+reduced = iterative_score_filter(merged)
+
+# ---   Functions   --- #
+# --------------------- #
+
+def merge_peaks(peak_list):
+
+    merged_df = pd.concat(dfs, ignore_index=True)
+
+    return merged_df
+
+from intervaltree import IntervalTree
+import pandas as pd
+
+def iterative_score_filter(merged_df):
+    merged_df.columns = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak', 'spm']
+    sorted_df = merged_df.sort_values('spm', ascending=False)
+
+    interval_trees = {}
+    for _, row in sorted_df.iterrows():
+        chrom, start, end, spm = row['chrom'], row['start'], row['end'], row['spm']
+        if chrom not in interval_trees:
+            interval_trees[chrom] = IntervalTree()
+        overlaps = interval_trees[chrom][start:end]
+        if not overlaps:
+            interval_trees[chrom].addi(start, end, row)
+        else:
+            # Keep only the peak with the highest spm in case of overlaps
+            max_overlap_spm = max([interval.data['spm'] for interval in overlaps])
+            if spm > max_overlap_spm:
+                # Remove existing overlapping intervals
+                for interval in overlaps:
+                    interval_trees[chrom].discard(interval)
+                # Add new interval
+                interval_trees[chrom].addi(start, end, row)
+
+    # Extract non-overlapping peaks from interval trees
+    non_overlapping_peaks = []
+    for tree in interval_trees.values():
+        for interval in tree:
+            non_overlapping_peaks.append(interval.data)
+
+    # Creating DataFrame from non-overlapping peaks
+    non_overlapping_df = pd.DataFrame(non_overlapping_peaks)
+
+    return non_overlapping_df
+
+# Use the function with your DataFrame
+filtered_peaks_df = iterative_score_filter(merged)
+
+def id_reproductible_peaks(sig_filt_peaks_df, ):
+
+    """
+        # Identify reproducible peaks <DOC STRING>
+
+    """
+
+
+
+
+
+To identify reproducible peaks from this merged peak set, the individual “sample peak sets” were
+overlapped with the merged peak set. Peaks from the merged peak set that were observed in at
+least two samples with a score per million value >=5 were labeled as reproducible. Lastly, we
+removed any peaks that spanned a genomic region containing “N” nucleotides and any peaks
+mapping to the Y chromosome. This resulted in a set of high quality, reproducible, fixed-width
+peaks for each cancer type (105,585 mean, 32,888 sd) that we refer to as a “cancer type-specific
+peak set”.
+
+def it_unique_peaks(bed):
+    # Convert to DataFrame and sort
+    bed_df = bed.to_dataframe(names=['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak'])
+    sorted_df = bed_df.sort_values('pValue', ascending=False)
+
+    # Convert to list of tuples
+    peaks_list = list(sorted_df.itertuples(index=False, name=None))
+
+    # Initialize variables for interval tree processing
+    remaining_peaks = []
+    interval_trees = {}
+
+    # Process each peak
+    for peak in peaks_list:
+        chrom, start, end, *rest = peak
+        if chrom not in interval_trees:
+            interval_trees[chrom] = IntervalTree()
+
+        overlapping = interval_trees[chrom][start:end]
+        if not overlapping:
+            interval_trees[chrom].addi(start, end, peak)
+            remaining_peaks.append(peak)
+
+    # Create a DataFrame from the non-overlapping peaks
+    column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']
+    sig_filt_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
+
+  # Report and check final number of peaks
+    final_num_peaks = len(sig_filt_peaks_df)
+    print(f"Number of unique peaks (final): {final_num_peaks}")
+
+    # Convert the final DataFrame to a BedTool object
+    sig_filt_peaks_bedtool = pybedtools.BedTool.from_dataframe(sig_filt_peaks_df)
+
+    # Use intersect to find overlaps (with itself), with a minimum overlap of 1bp
+    overlaps = sig_filt_peaks_bedtool.intersect(sig_filt_peaks_bedtool, u=True, f=1.0)
+
+    # Assert that there are no overlaps by comparing the counts
+    assert len(overlaps) == len(sig_filt_peaks_df), "There are overlapping peaks in the final set!"
+
+    return sig_filt_peaks_df
+
+
+# --- Functions --- #
+# ... (define your functions here)
+
+# Main Script
+if __name__ == "__main__":
+    # ... (main script execution)
+
+#+end_src
+
 
 #+begin_src R :tangle ./scripts/peak_filtering.R
 #!/usr/bin/env Rscript

@@ -43,9 +43,13 @@ def main():
     # Standardize and filter peaks
     valid_bed = peak_std_and_filt(narrowPeak_df, args.blacklist_bed, args.chrom_size_bed)
 
-    # Process to ensure unique peaks
-    final_peaks_df = it_unique_peaks(valid_bed)
+    # Iteratively remove peaks by significance
+    sig_iter_filt_df = it_unique_peaks(valid_bed)
 
+    # Create normalized score per million
+    final_peaks_df = add_score_per_mill(sig_iter_filt_df)
+
+    # Write output
     final_peaks_df.to_csv(args.out_narrowPeak, index=False, sep='\t', header=False)
 
 
@@ -104,22 +108,32 @@ def it_unique_peaks(bed):
 
     # Create a DataFrame from the non-overlapping peaks
     column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak']
-    final_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
+    sig_filt_peaks_df = pd.DataFrame(remaining_peaks, columns=column_names)
 
   # Report and check final number of peaks
-    final_num_peaks = len(final_peaks_df)
+    final_num_peaks = len(sig_filt_peaks_df)
     print(f"Number of unique peaks (final): {final_num_peaks}")
 
     # Convert the final DataFrame to a BedTool object
-    final_peaks_bedtool = pybedtools.BedTool.from_dataframe(final_peaks_df)
+    sig_filt_peaks_bedtool = pybedtools.BedTool.from_dataframe(sig_filt_peaks_df)
 
     # Use intersect to find overlaps (with itself), with a minimum overlap of 1bp
-    overlaps = final_peaks_bedtool.intersect(final_peaks_bedtool, u=True, f=1.0)
+    overlaps = sig_filt_peaks_bedtool.intersect(sig_filt_peaks_bedtool, u=True, f=1.0)
 
     # Assert that there are no overlaps by comparing the counts
-    assert len(overlaps) == len(final_peaks_df), "There are overlapping peaks in the final set!"
+    assert len(overlaps) == len(sig_filt_peaks_df), "There are overlapping peaks in the final set!"
 
-    return final_peaks_df
+    return sig_filt_peaks_df
+
+def add_score_per_mill(macs2_df):
+
+    total_score = macs2_df['score'].sum()
+
+    # Calculate score per million for each row
+    macs2_df['spm'] = (macs2_df['score'] / total_score) * 1e6
+
+    return macs2_df
+
 
 # ---   Main Guard   --- #
 # ---------------------- #
