@@ -130,7 +130,7 @@ def add_score_per_mill(macs2_df):
     total_score = macs2_df['score'].sum()
 
     # Calculate score per million for each row
-    macs2_df['spm'] = (macs2_df['score'] / total_score) * 1e6
+    macs2_df['spm'] = (macs2_df['score'] / (total_score / 1e6))
 
     return macs2_df
 

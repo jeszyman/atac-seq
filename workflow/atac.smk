@@ -221,6 +221,12 @@ rule macs2:
         {params.outdir} &> {log}
         """
 
+
+# :PROPERTIES:
+# :ID:       957607ff-67e8-48b5-b26a-112b21e564e2
+# :END:
+
+
 rule atac_std_peaks:
     input:
         narrowPeak = f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak",
@@ -376,6 +382,43 @@ rule atac_keep_libs:
         --out_tsv {output}
         """
 
+rule make_dca_design:
+    input: libraries_full_rds,
+    log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
+    output: f"{atac_dir}/models/unadjusted/{{atac_set}}/design.rds",
+    params:
+        formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
+        libs = lambda wildcards: atac_models_map[wildcards.atac_set]['libs'],
+        script = f"{atac_script_dir}/make_dca_design.R",
+    shell:
+        """
+        Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
+        {output} \
+        > {log} 2>&1
+        """
+
+rule corces_group_peak_filter:
+    input:
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
+                                         library = atac_models_map[wildcards.atac_set]['libs'],
+                                         build = atac_models_map[wildcards.atac_set]['build'],
+                                         bam_set = atac_models_map[wildcards.atac_set]['bam_set']),
+    log: f"{log_dir}/{{atac_set}}_corces_group_peak_filter.log",
+    output:
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/corces_peaks_keep.bed",
+    params:
+        corces_count = lambda wildcards: atac_models_map[wildcards.atac_set]['corces_count'],
+        overlap = lambda wildcards: atac_models_map[wildcards.atac_set]['corces_overlap'],
+        script = f"{atac_script_dir}/corces_group_peak_filter.py",
+    shell:
+        """
+        python {params.script} \
+        --count {params.corces_count} \
+        --out_peakset {output} \
+        --overlap {params.overlap} \
+        --peak_list {input.peaks} > {log} 2>&1
+        """
+
 rule chr_state_open_genome:
     input:
         lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
@@ -400,43 +443,6 @@ rule chr_state_open_genome:
         {wildcards.qval} \
         {params.threads} \
         {output} > {log} 2>&1
-        """
-
-rule make_dca_design:
-    input: libraries_full_rds,
-    log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
-    output: f"{atac_dir}/models/{{atac_set}}/design.rds",
-    params:
-        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
-        libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
-        script = f"{atac_script_dir}/make_dca_design.R",
-    shell:
-        """
-        Rscript {params.script} {input} "{params.formula}" "{params.libs}" \
-        {output} \
-        > {log} 2>&1
-        """
-
-rule corces_group_peak_filter:
-    input:
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
-                                         library = atac_map[wildcards.atac_set]['libs'],
-                                         build = atac_map[wildcards.atac_set]['build'],
-                                         bam_set = atac_map[wildcards.atac_set]['bam_set']),
-    log: f"{log_dir}/{{atac_set}}_corces_group_peak_filter.log",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
-    params:
-        corces_count = lambda wildcards: atac_map[wildcards.atac_set]['corces_count'],
-        overlap = lambda wildcards: atac_map[wildcards.atac_set]['corces_overlap'],
-        script = f"{atac_script_dir}/corces_group_peak_filter.py",
-    shell:
-        """
-        python {params.script} \
-        --corces_count {params.count} \
-        --out_peakset {output} \
-        --overlap {params.overlap} \
-        --peak_list {input.peaks} > {log} 2>&1
         """
 
 

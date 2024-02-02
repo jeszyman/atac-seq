@@ -192,6 +192,12 @@ Necessary initial directory structure within your declared "data_dir":
 :header-args:snakemake: :tangle ./workflow/atac.smk
 :END:
 *** Writeup
+:PROPERTIES:
+:ID:       419aae08-2db5-4ab0-8951-7dcff4d48fcc
+:CUSTOM_ID: 419aae08-2db5-4ab0-8951-7dcff4d48fcc
+:END:
+ATAC-seq reads were processed using pipelines in the repository https://github.com/jeszyman/atac-seq.
+
 *** Preamble
 #+begin_src snakemake
 #########1#########2#########3#########4#########5#########6#########7#########8
@@ -207,13 +213,14 @@ Necessary initial directory structure within your declared "data_dir":
 # -------------------------------------------------------- #
 #+end_src
 **** Writeup
-ATAC-seq sequencing libraries were processed using the pipelines in  https://github.com/jeszyman/atac-seq.
+:PROPERTIES:
+:ID:       b0816013-f51e-404d-971a-44311340181a
+:CUSTOM_ID:       b0816013-f51e-404d-971a-44311340181a
+:END:
 
-ATAC-seq reads were adapter and quality-trimmed using fastp. Reads were aligned with bowtie2 with parameters as in cite:corces2018 (maxins 2000 very-sensitive). PCR duplicates were removed from aligned reads using samtools. Peak calling on deduplicated reads was performed with MACS2.
+ATAC-seq read alignment, peak calling, and peak filtering followed the method in Corces /et al/., 2018 cite:corces2018. ATAC-seq reads were adapter and quality-trimmed using fastp [[cite:chen2018fastp]]. Reads were aligned with bowtie2 [[cite:&langmead2012]] with parameters as (maxins 2000 very-sensitive). PCR duplicates were removed from aligned reads using samtools [[cite:&li2011samtools]]. Peak calling on deduplicated reads was performed with MACS2 [[cite:&zhang2021macs2]] (--call-summits --extsize 150 --keep-dup all --nolamba -p 0.01 --shift 75 --SPMR --nomodel). For comparisons between libraries, each library's peaks were standardized as follows: peak length was redefined as 250 base pairs upstream and downsteam of the original peak summit. Re-defined peaks were then removed if they extended beyond chromosome length, or if they had any overlap with blacklisted regions as defined by Amemiya /et al/., 2019 [[cite:&amemiya2019]]. Peaks of each library overlapping each other were removed iteratively by selecting the peak with the most significant p-value. Finally, the remaining, non-overlapping standardized peaks were assigned a normalized significance score, score per million, defined as the -log10 p-value of each peak divided by the sum of all -log10 p-values in the library divided by 1 million.
 
 
-
-Peaks
 **** Fastq processing with fastp                                   :smk_rule:
 - Fastp
   - Removes tail 1 nucleotide
@@ -631,6 +638,9 @@ macs2 callpeak --treatment $inbam \
 
 #+end_src
 **** Standardize peak calls
+:PROPERTIES:
+:ID:       957607ff-67e8-48b5-b26a-112b21e564e2
+:END:
 
 #+begin_src snakemake
 rule atac_std_peaks:
@@ -786,7 +796,7 @@ def add_score_per_mill(macs2_df):
     total_score = macs2_df['score'].sum()
 
     # Calculate score per million for each row
-    macs2_df['spm'] = (macs2_df['score'] / total_score) * 1e6
+    macs2_df['spm'] = (macs2_df['score'] / (total_score / 1e6))
 
     return macs2_df
 
@@ -1233,84 +1243,20 @@ write_tsv(keep, file = out_tsv)
 
 *** Workflow 2: Per-DCA model processing
 **** Writeup
- cite:corces2018
-**** Open genome by chromosome and chromatin state
-#+begin_src snakemake
-rule chr_state_open_genome:
-    input:
-        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-                                 library=atac_map[wildcards.atac_set]['libs'],
-                                 build=atac_map[wildcards.atac_set]['build'],
-                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
-                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
-    log:
-        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
-    params:
-        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
-        script = f"{atac_script_dir}/chr_state_open_genome.sh",
-        threads = 4
-    shell:
-        """
-        {params.script} \
-        "{input}" \
-        {params.genome_bed} \
-        {wildcards.state} \
-        {wildcards.qval} \
-        {params.threads} \
-        {output} > {log} 2>&1
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/chr_state_open_genome.sh
-#!/usr/bin/env bash
-peaks_str="${1}"
-ref_bed="${2}"
-state="${3}"
-qval_cut="${4}"
-threads="${5}"
-out_tsv="${6}"
-
-process_file() {
-    file="$1"
-    base=$(basename $file)
-    state="${2}"
-    ref_bed="${3}"
-    qval_cut="${4}"
-
-    # Check if the state is "all"; if not, apply state filtering
-    if [ "$state" = "all" ]; then
-        cat "$file" |
-            awk -v cut="$qval_cut" '$8 > cut' |
-            sort-bed - |
-            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
-            awk -v base="$base" '{print $0 "\t" base}'
-    else
-        cat "$file" |
-            awk -v state="$state" '$10 == state' |
-            awk -v cut="$qval_cut" '$8 > cut' |
-            sort-bed - |
-            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
-            awk -v base="$base" '{print $0 "\t" base}'
-    fi
-}
-
-export -f process_file
-
-parallel -j "$threads" process_file {} "$state" "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
-
-#+end_src
-
+:PROPERTIES:
+:ID:       16f0fd39-8963-41a6-a903-72de4f9f44f0
+:CUSTOM_ID:       16f0fd39-8963-41a6-a903-72de4f9f44f0
+:END:
+To compare differential chromatin accessibility across groups, we again followed the method outlined in Corces /et al/., 2018 cite:corces2018. Standardized peaks from all libraries in the comparison were merged.  As for individual libaries, the merged peak set was then iteratively filterd to removed overlapping peaks, here selecting the peak with the highest score per million. Non-overlapping peaks were then retained only with their score per million was >= 5 in >= 2 samples. Counts of each of these final, high-confidence peaks were then made for the orignal alignments using BAMscale [[cite:&pongor2020bamscale]]. Count-level quality control included principal component analysis. Batch correction was performed in ComBat-seq [[cite:&zhang2020combat]]. Differential chromatin accessibility was determined in EdgeR using glmQLFTest for individual cohort contrasts. Peak sets were annotated with ChIPseeker [[cite:&yu2015chip]].
 **** Create an experimental design
 #+begin_src snakemake
 rule make_dca_design:
     input: libraries_full_rds,
     log: f"{log_dir}/{{atac_set}}_make_dca_design.log",
-    output: f"{atac_dir}/models/{{atac_set}}/design.rds",
+    output: f"{atac_dir}/models/unadjusted/{{atac_set}}/design.rds",
     params:
-        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
-        libs = lambda wildcards: atac_map[wildcards.atac_set]['libs'],
+        formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
+        libs = lambda wildcards: atac_models_map[wildcards.atac_set]['libs'],
         script = f"{atac_script_dir}/make_dca_design.R",
     shell:
         """
@@ -1374,20 +1320,20 @@ saveRDS(object = design,
 rule corces_group_peak_filter:
     input:
         peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
-                                         library = atac_map[wildcards.atac_set]['libs'],
-                                         build = atac_map[wildcards.atac_set]['build'],
-                                         bam_set = atac_map[wildcards.atac_set]['bam_set']),
+                                         library = atac_models_map[wildcards.atac_set]['libs'],
+                                         build = atac_models_map[wildcards.atac_set]['build'],
+                                         bam_set = atac_models_map[wildcards.atac_set]['bam_set']),
     log: f"{log_dir}/{{atac_set}}_corces_group_peak_filter.log",
     output:
-        f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/corces_peaks_keep.bed",
     params:
-        corces_count = lambda wildcards: atac_map[wildcards.atac_set]['corces_count'],
-        overlap = lambda wildcards: atac_map[wildcards.atac_set]['corces_overlap'],
+        corces_count = lambda wildcards: atac_models_map[wildcards.atac_set]['corces_count'],
+        overlap = lambda wildcards: atac_models_map[wildcards.atac_set]['corces_overlap'],
         script = f"{atac_script_dir}/corces_group_peak_filter.py",
     shell:
         """
         python {params.script} \
-        --corces_count {params.count} \
+        --count {params.corces_count} \
         --out_peakset {output} \
         --overlap {params.overlap} \
         --peak_list {input.peaks} > {log} 2>&1
@@ -1698,6 +1644,74 @@ keep_libs =
 keep = max %>% filter(library %in% keep_libs) %>% write_tsv(keep_bed, col_names = F)
 
 write_tsv(keep, file = keep_bed, col_names = FALSE)
+
+#+end_src
+
+**** Open genome by chromosome and chromatin state
+#+begin_src snakemake
+rule chr_state_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
+    log:
+        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        script = f"{atac_script_dir}/chr_state_open_genome.sh",
+        threads = 4
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {wildcards.state} \
+        {wildcards.qval} \
+        {params.threads} \
+        {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/chr_state_open_genome.sh
+#!/usr/bin/env bash
+peaks_str="${1}"
+ref_bed="${2}"
+state="${3}"
+qval_cut="${4}"
+threads="${5}"
+out_tsv="${6}"
+
+process_file() {
+    file="$1"
+    base=$(basename $file)
+    state="${2}"
+    ref_bed="${3}"
+    qval_cut="${4}"
+
+    # Check if the state is "all"; if not, apply state filtering
+    if [ "$state" = "all" ]; then
+        cat "$file" |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    else
+        cat "$file" |
+            awk -v state="$state" '$10 == state' |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    fi
+}
+
+export -f process_file
+
+parallel -j "$threads" process_file {} "$state" "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
 
 #+end_src
 
