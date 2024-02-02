@@ -1647,6 +1647,72 @@ write_tsv(keep, file = keep_bed, col_names = FALSE)
 
 #+end_src
 
+**** Make per-peak counts in BAMscale
+#+begin_src snakemake
+
+#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+
+rule bamscale:
+    input:
+        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+                                        build = atac_models_map[wildcards.atac_set]['build'],
+                                        library = atac_models_map[wildcards.atac_set]['libs']),
+        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
+                                        build = atac_models_map[wildcards.atac_set]['build'],
+                                        library = atac_models_map[wildcards.atac_set]['libs']),
+        bed= f"{atac_dir}/models/unadjusted/{{atac_set}}/corces_peaks_keep.bed",
+    log: f"{log_dir}/{{atac_set}}_bamscale.log",
+    params:
+        out_dir = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale",
+        tmp_dir = f"/tmp/{{atac_set}}",
+        script = f"{atac_script_dir}/bamscale.sh",
+    output:
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+    shell:
+        """
+        {params.script} \
+        "{input.bams}" \
+        "{input.bais}" \
+        {input.bed} \
+        {params.tmp_dir} \
+        {wildcards.atac_set} \
+        {params.out_dir} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src bash :tangle ./scripts/bamscale.sh
+#!/usr/bin/env bash
+
+bams="${1}"
+bais="${2}"
+bed="${3}"
+tmp_dir="${4}"
+atac_set="${5}"
+out_dir="${6}"
+
+rm -rf $tmp_dir
+mkdir -p $tmp_dir
+
+echo $bams $bais | tr ' ' '\n' | parallel --max-args 1 cp {} $tmp_dir
+
+# set the directory containing the input BAM files
+bam_dir=$tmp_dir
+# get a list of BAM files in the directory
+bam_files=($(ls "$bam_dir"/*.bam))
+# build the BAMscale command with the --bam flags
+bams=""
+for bam in "${bam_files[@]}"
+do
+bams+="--bam $bam "
+done
+
+BAMscale cov --bed $bed --outdir $out_dir --threads 16 $bams
+rm -rf $tmp_dir
+
+
+#+end_src
+
 **** Open genome by chromosome and chromatin state
 #+begin_src snakemake
 rule chr_state_open_genome:
@@ -1785,72 +1851,6 @@ anno =
 write_tsv(anno, out_peak_bed, col_names = F)
 
 #+end_src
-**** Make per-peak counts in BAMscale
-#+begin_src snakemake
-
-#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
-
-rule bamscale:
-    input:
-        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
-                                        build = atac_map[wildcards.atac_set]['build'],
-                                        library = atac_map[wildcards.atac_set]['libs']),
-        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
-                                        build = atac_map[wildcards.atac_set]['build'],
-                                        library = atac_map[wildcards.atac_set]['libs']),
-        bed= f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
-    log: f"{log_dir}/{{atac_set}}_bamscale.log",
-    params:
-        out_dir = f"{atac_dir}/models/{{atac_set}}/bamscale",
-        tmp_dir = f"/tmp/{{atac_set}}",
-        script = f"{atac_script_dir}/bamscale.sh",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/bamscale/FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-    shell:
-        """
-        {params.script} \
-        "{input.bams}" \
-        "{input.bais}" \
-        {input.bed} \
-        {params.tmp_dir} \
-        {wildcards.atac_set} \
-        {params.out_dir} > {log} 2>&1
-        """
-#+end_src
-
-#+begin_src bash :tangle ./scripts/bamscale.sh
-#!/usr/bin/env bash
-
-bams="${1}"
-bais="${2}"
-bed="${3}"
-tmp_dir="${4}"
-atac_set="${5}"
-out_dir="${6}"
-
-rm -rf $tmp_dir
-mkdir -p $tmp_dir
-
-echo $bams $bais | tr ' ' '\n' | parallel --max-args 1 cp {} $tmp_dir
-
-# set the directory containing the input BAM files
-bam_dir=$tmp_dir
-# get a list of BAM files in the directory
-bam_files=($(ls "$bam_dir"/*.bam))
-# build the BAMscale command with the --bam flags
-bams=""
-for bam in "${bam_files[@]}"
-do
-bams+="--bam $bam "
-done
-
-BAMscale cov --bed $bed --outdir $out_dir --threads 16 $bams
-rm -rf $tmp_dir
-
-
-#+end_src
-
 **** Fit
 
 #+begin_src snakemake

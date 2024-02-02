@@ -419,6 +419,36 @@ rule corces_group_peak_filter:
         --peak_list {input.peaks} > {log} 2>&1
         """
 
+#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
+
+rule bamscale:
+    input:
+        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
+                                        build = atac_models_map[wildcards.atac_set]['build'],
+                                        library = atac_models_map[wildcards.atac_set]['libs']),
+        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
+                                        build = atac_models_map[wildcards.atac_set]['build'],
+                                        library = atac_models_map[wildcards.atac_set]['libs']),
+        bed= f"{atac_dir}/models/unadjusted/{{atac_set}}/corces_peaks_keep.bed",
+    log: f"{log_dir}/{{atac_set}}_bamscale.log",
+    params:
+        out_dir = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale",
+        tmp_dir = f"/tmp/{{atac_set}}",
+        script = f"{atac_script_dir}/bamscale.sh",
+    output:
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/FPKM_normalized_coverages.tsv",
+        f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+    shell:
+        """
+        {params.script} \
+        "{input.bams}" \
+        "{input.bais}" \
+        {input.bed} \
+        {params.tmp_dir} \
+        {wildcards.atac_set} \
+        {params.out_dir} > {log} 2>&1
+        """
+
 rule chr_state_open_genome:
     input:
         lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
@@ -464,36 +494,6 @@ rule peak_annotation:
     shell:
         """
         Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
-        """
-
-#bed = lambda wildcards: f"{atac_dir}/{{atac_set}}/{{atac_set}}_union.bed",
-
-rule bamscale:
-    input:
-        bams = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam",
-                                        build = atac_map[wildcards.atac_set]['build'],
-                                        library = atac_map[wildcards.atac_set]['libs']),
-        bais = lambda wildcards: expand(f"{atac_dir}/bams/{{library}}_{{build}}_filt.bam.bai",
-                                        build = atac_map[wildcards.atac_set]['build'],
-                                        library = atac_map[wildcards.atac_set]['libs']),
-        bed= f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
-    log: f"{log_dir}/{{atac_set}}_bamscale.log",
-    params:
-        out_dir = f"{atac_dir}/models/{{atac_set}}/bamscale",
-        tmp_dir = f"/tmp/{{atac_set}}",
-        script = f"{atac_script_dir}/bamscale.sh",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/bamscale/FPKM_normalized_coverages.tsv",
-        f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-    shell:
-        """
-        {params.script} \
-        "{input.bams}" \
-        "{input.bais}" \
-        {input.bed} \
-        {params.tmp_dir} \
-        {wildcards.atac_set} \
-        {params.out_dir} > {log} 2>&1
         """
 
 rule atac_edger_fit:
