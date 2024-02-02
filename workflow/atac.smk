@@ -417,36 +417,26 @@ rule make_dca_design:
         > {log} 2>&1
         """
 
-rule peak_filtering:
+rule corces_group_peak_filter:
     input:
-        chrs = lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['species']}_peak_chrs.txt",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_anno.bed",
+        peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
                                          library = atac_map[wildcards.atac_set]['libs'],
                                          build = atac_map[wildcards.atac_set]['build'],
                                          bam_set = atac_map[wildcards.atac_set]['bam_set']),
-    log: f"{log_dir}/{{atac_set}}_peak_filtering.log",
+    log: f"{log_dir}/{{atac_set}}_corces_group_peak_filter.log",
     output:
-        all = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_all.bed"),
-        clust = temp(f"{atac_dir}/models/{{atac_set}}/corces_peaks_clust.bed"),
-        keep = f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
+        f"{atac_dir}/models/{{atac_set}}/corces_peaks_keep.bed",
     params:
-        corces_min = lambda wildcards: atac_map[wildcards.atac_set]['corces_min'],
-        lib_peaks_min = lambda wildcards: atac_map[wildcards.atac_set]['lib_peaks_min'],
-        out_dir = f"{atac_dir}/models/{{atac_set}}/",
-        script = f"{atac_script_dir}/peak_filtering.R",
+        corces_count = lambda wildcards: atac_map[wildcards.atac_set]['corces_count'],
+        overlap = lambda wildcards: atac_map[wildcards.atac_set]['corces_overlap'],
+        script = f"{atac_script_dir}/corces_group_peak_filter.py",
     shell:
         """
-        mkdir -p {params.out_dir} &&
-        Rscript {params.script} \
-        {input.chrs} \
-        {input.libs} \
-        "{input.peaks}" \
-        {params.corces_min} \
-        {output.all} \
-        {output.clust} \
-        {params.lib_peaks_min} \
-        {output.keep} > {log} 2>&1
+        python {params.script} \
+        --corces_count {params.count} \
+        --out_peakset {output} \
+        --overlap {params.overlap} \
+        --peak_list {input.peaks} > {log} 2>&1
         """
 
 
