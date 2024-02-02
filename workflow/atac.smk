@@ -449,6 +449,26 @@ rule bamscale:
         {params.out_dir} > {log} 2>&1
         """
 
+rule atac_pca:
+    input:
+        counts = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+    log:
+        f"{log_dir}/{{atac_set}}_atac_pca.log",
+    output:
+        png = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.png",
+        svg = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.svg",
+    params:
+        formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
+        script = f"{atac_script_dir}/atac_pca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        "{params.formula}" \
+        {output} > {log} 2>&1
+        """
+
 rule chr_state_open_genome:
     input:
         lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
@@ -511,26 +531,6 @@ rule atac_edger_fit:
     shell:
         """
         Rscript {params.script} {input} {output} > {log} 2>&1
-        """
-
-rule atac_pca:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-    log:
-        f"{log_dir}/{{atac_set}}_atac_pca.log",
-    output:
-        png = f"{atac_dir}/models/{{atac_set}}/pca.png",
-        svg = f"{atac_dir}/models/{{atac_set}}/pca.svg",
-    params:
-        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
-        script = f"{atac_script_dir}/atac_pca.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        "{params.formula}" \
-        {output} > {log} 2>&1
         """
 
 rule atac_combat_rna_batch_correction:
