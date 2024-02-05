@@ -9,8 +9,8 @@ args = commandArgs(trailingOnly = TRUE)
 counts_tsv = args[1]
 libraries_full_rds = args[2]
 formula = args[3]
-out_png = args[4]
-out_svg = args[5]
+out_rds = args[4]
+out_pdf = args[5]
 
 
 # Load required packages, data, and functions
@@ -43,10 +43,16 @@ pca <- prcomp(t(logcpm))
 (pve_pc1 = round(100*summary(pca)$importance[2,1]))
 (pve_pc2 = round(100*summary(pca)$importance[2,2]))
 
+# Update libraries_full to include factors for coloring and shaping
+libraries_full$ColorFactor = libraries_full[[factor_vec[[1]]]]
+if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
+  libraries_full$ShapeFactor = libraries_full[[factor_vec[[2]]]]
+}
+
 plot = as.data.frame(pca$x) %>%
   rownames_to_column(var = "library") %>%
   left_join(libraries_full, by = "library") %>%
-  ggplot(., aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
+  ggplot(., aes(x = PC1, y = PC2, color = ColorFactor, label = library)) +
   geom_point(size = 4) +
   geom_text_repel() +
   scale_color_discrete(name = factor_vec[[1]]) +
@@ -56,9 +62,9 @@ plot = as.data.frame(pca$x) %>%
 
 if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
   plot = plot +
-    aes(shape = get(factor_vec[[2]])) +
+    aes(shape = ShapeFactor) +
     scale_shape_discrete(name = factor_vec[[2]])
 }
 
-ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
-ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
+ggsave(filename = out_pdf, plot = plot, device = "pdf", width = 8, height = 6)
+saveRDS(file = out_rds, plot)

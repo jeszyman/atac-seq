@@ -456,8 +456,8 @@ rule atac_pca:
     log:
         f"{log_dir}/{{atac_set}}_atac_pca.log",
     output:
-        png = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.png",
-        svg = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.svg",
+        rds = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.rds",
+        pdf = f"{atac_dir}/models/unadjusted/{{atac_set}}/pca.pdf",
     params:
         formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
         script = f"{atac_script_dir}/atac_pca.R",
@@ -467,6 +467,30 @@ rule atac_pca:
         {input} \
         "{params.formula}" \
         {output} > {log} 2>&1
+        """
+
+rule atac_combat_batch_correction:
+    input:
+        counts = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/unadjusted/{{atac_set}}/design.rds",
+        libraries_full = f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{atac_set}}_atac_combat_batch_correction.log",
+    output:
+        f"{atac_dir}/models/combat/{{atac_set}}/dge_adjusted.rds",
+    params:
+        batch_var = lambda wildcards: atac_models_map[wildcards.atac_set]['batch_var'],
+        covars = lambda wildcards: atac_models_map[wildcards.atac_set]['cohort'],
+        out_dir = f"{atac_dir}/models/combat/{{atac_set}}",
+        script = f"{atac_script_dir}/atac_combat_batch_correction.R",
+    shell:
+        """
+        Rscript {params.script} \
+        --batch_var "{params.batch_var}" \
+        --counts_tsv {input.counts} \
+        --covars "{params.covars}" \
+        --design_rds {input.design} \
+        --libraries_full_rds {input.libraries_full} \
+        --out_dir {params.out_dir} > {log} 2>&1
         """
 
 rule chr_state_open_genome:
