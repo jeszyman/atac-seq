@@ -2002,7 +2002,7 @@ for (name in names(out)) {
 }
 #+end_src
 
-**** Open genome by chromosome and chromatin state
+**** TODO Open genome by chromosome and chromatin state
 #+begin_src snakemake
 rule chr_state_open_genome:
     input:
