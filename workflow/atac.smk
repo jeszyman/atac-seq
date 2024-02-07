@@ -397,6 +397,60 @@ rule make_dca_design:
         > {log} 2>&1
         """
 
+
+# :PROPERTIES:
+# :ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+# :END:
+
+
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} \
+        --in_peak_bed {input} \
+        --out_anno_bed {output} \
+        --txdb "{params.txdb}" \
+        > {log} 2>&1
+        """
+
+
+# Filters MACS2 peaks by Corces normalized score per million and then sums total open genome from filtered peaks.
+
+rule atac_global_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
+    log:
+        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        script = f"{atac_script_dir}/chr_state_open_genome.sh",
+        threads = 4
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {wildcards.state} \
+        {wildcards.qval} \
+        {params.threads} \
+        {output} > {log} 2>&1
+        """
+
 rule corces_group_peak_filter:
     input:
         peaks = lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.narrowPeak_std",
@@ -493,51 +547,32 @@ rule atac_combat_batch_correction:
         --out_dir {params.out_dir} > {log} 2>&1
         """
 
-rule chr_state_open_genome:
+
+
+# - BAMscale counts adjusted with RUVseq per [[cite:&gontarz2020]]
+
+
+rule atac_ruv_batch_correction:
     input:
-        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-                                 library=atac_map[wildcards.atac_set]['libs'],
-                                 build=atac_map[wildcards.atac_set]['build'],
-                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
-                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
-    log:
-        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+        counts = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/unadjusted/{{atac_set}}/design.rds",
+        libraries_full = f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{atac_set}}_atac_ruv_batch_correction.log",
     output:
-        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+        f"{atac_dir}/models/ruv/{{atac_set}}/dge_ruv2.rds",
     params:
-        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
-        script = f"{atac_script_dir}/chr_state_open_genome.sh",
-        threads = 4
+        formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
+        out_dir = f"{atac_dir}/models/ruv/{{atac_set}}",
+        script = f"{atac_script_dir}/atac_ruv.R",
     shell:
         """
-        {params.script} \
-        "{input}" \
-        {params.genome_bed} \
-        {wildcards.state} \
-        {wildcards.qval} \
-        {params.threads} \
-        {output} > {log} 2>&1
-        """
-
-
-# :PROPERTIES:
-# :ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-# :END:
-
-
-rule peak_annotation:
-    input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
-    output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
-    params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
-    shell:
-        """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        Rscript {params.script} \
+        --counts_tsv {input.counts} \
+        --design_rds {input.design} \
+        --formula "{params.formula}" \
+        --libraries_full_rds {input.libraries_full} \
+        --out_dir {params.out_dir} \
+        >& {log}
         """
 
 rule atac_edger_fit:
@@ -555,60 +590,6 @@ rule atac_edger_fit:
     shell:
         """
         Rscript {params.script} {input} {output} > {log} 2>&1
-        """
-
-rule atac_combat_rna_batch_correction:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_atac_combat_rna_batch_correction.log",
-    output:  f"{atac_dir}/models/combat/{{atac_set}}/edger_dge.rds",
-    params: script = f"{atac_script_dir}/atac_combat_rna_batch_correction.R",
-    shell:
-        """
-        Rscript {params.script} {input} {output} > {log} 2>&1
-        """
-
-
-
-# BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
-
-
-rule atac_ruv:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
-    output:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
-    params:
-        ruv_k = lambda wildcards: wildcards.ruv_k,
-        script = f"{atac_script_dir}/atac_ruv.R",
-    shell:
-        """
-        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
-        """
-
-rule atac_ruv_pca:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-    log:
-        f"{log_dir}/{{atac_set}}_atac_ruv_{{ruv_k}}_pca.log",
-    output:
-        png = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.png",
-        svg = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.svg",
-    params:
-        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
-        script = f"{atac_script_dir}/atac_ruv_pca.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        "{params.formula}" \
-        {output} > {log} 2>&1
         """
 
 
@@ -631,5 +612,25 @@ rule atac_edger_dca:
         {input.design} \
         {input.fit} \
         "{params.contrast_str}" \
+        {output} > {log} 2>&1
+        """
+
+rule atac_ruv_pca:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+    log:
+        f"{log_dir}/{{atac_set}}_atac_ruv_{{ruv_k}}_pca.log",
+    output:
+        png = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.png",
+        svg = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.svg",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        script = f"{atac_script_dir}/atac_ruv_pca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        "{params.formula}" \
         {output} > {log} 2>&1
         """

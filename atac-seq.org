@@ -1247,7 +1247,7 @@ write_tsv(keep, file = out_tsv)
 :ID:       16f0fd39-8963-41a6-a903-72de4f9f44f0
 :CUSTOM_ID:       16f0fd39-8963-41a6-a903-72de4f9f44f0
 :END:
-To compare differential chromatin accessibility across groups, we again followed the method outlined in Corces /et al/., 2018 cite:corces2018. Standardized peaks from all libraries in the comparison were merged.  As for individual libaries, the merged peak set was then iteratively filterd to removed overlapping peaks, here selecting the peak with the highest score per million. Non-overlapping peaks were then retained only with their score per million was >= 5 in >= 2 samples. Counts of each of these final, high-confidence peaks were then made for the orignal alignments using BAMscale [[cite:&pongor2020bamscale]]. Count-level quality control included principal component analysis. Batch correction was performed in ComBat-seq [[cite:&zhang2020combat]]. Differential chromatin accessibility was determined in EdgeR using glmQLFTest for individual cohort contrasts. Peak sets were annotated with ChIPseeker [[cite:&yu2015chip]].
+To compare differential chromatin accessibility across groups, we again followed the method outlined in Corces /et al/., 2018 cite:corces2018. Standardized peaks from all libraries in the comparison were merged.  As for individual libaries, the merged peak set was then iteratively filterd to removed overlapping peaks, here selecting the peak with the highest score per million. Non-overlapping peaks were then retained only with their score per million was >= 5 in >= 2 samples. Counts of each of these final, high-confidence peaks were then made for the orignal alignments using BAMscale [[cite:&pongor2020bamscale]]. Count-level quality control included principal component analysis. Differential chromatin accessibility was determined in EdgeR using glmQLFTest for individual cohort contrasts. Peak sets were annotated with ChIPseeker [[cite:&yu2015chip]].
 **** Create an experimental design
 #+begin_src snakemake
 rule make_dca_design:
@@ -1315,6 +1315,322 @@ rownames(design) = libs$library
 saveRDS(object = design,
         file = design_rds)
 #+end_src
+**** Peak annotation
+:PROPERTIES:
+:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
+:END:
+
+#+begin_src snakemake
+rule peak_annotation:
+    input:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
+    log:
+        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+    output:
+        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+    params:
+        script = f"{atac_script_dir}/peak_annotation.R",
+        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+    shell:
+        """
+        Rscript {params.script} \
+        --in_peak_bed {input} \
+        --out_anno_bed {output} \
+        --txdb "{params.txdb}" \
+        > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R :tangle ./scripts/peak_annotation.R
+#!/usr/bin/env Rscript
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+# Script to annotate MACS2 peak files with the ChIPseeker package. Accepts
+#  either broadPeak or narrowPeak files. Returns narrowPeak format (i.e. 10
+#  columns including a final peak column) followed by annotation columns from
+#  ChIPseeker. Annotation text is simplified for use subsequent computational
+#  processing.
+
+# ---   Load Packages   --- #
+# ------------------------- #
+
+packages <- c(
+  "ChIPseeker",
+  "optparse",
+  "rtracklayer",
+  "tidyverse")
+
+sapply(packages, require, character.only = TRUE, quietly = TRUE)
+
+
+# ---   Load Inputs   --- #
+# ----------------------- #
+
+option_list <- list(
+  make_option(c("--in_peak_bed"), type = "character"),
+  make_option(c("--out_anno_bed"), type = "character"),
+  make_option(c("--txdb"), type = "character")
+)
+
+opts <- parse_args(OptionParser(option_list = option_list))
+
+#opts$in_peak_bed = "~/cards/analysis/atac/peaks/lib223_hg38_ds9_peaks.broadPeak"
+#opts$out_anno_bed = "/tmp/thetest.bed"
+#opts$txdb = "TxDb.Hsapiens.UCSC.hg38.knownGene"
+
+# ---   Main   --- #
+# ---------------- #
+
+main = function(opts){
+
+  library(opts$txdb,character.only = TRUE)
+
+  # Annotate
+  annotated = annotate(opts$in_peak_bed, opts$txdb)
+
+  # Return a list of outputs
+  return(annotated)
+}
+
+# ---   Functions   --- #
+# --------------------- #
+
+annotate = function(in_peak_bed, txdb){
+  peaks = rtracklayer::import(in_peak_bed)
+  anno = annotatePeak(peaks, TxDb = get(txdb))
+  anno = as_tibble(anno)
+
+  if (!"peak" %in% names(anno)) {
+    anno <- anno %>%
+      mutate(peak = end - start)
+  }
+
+  anno =
+    anno %>% mutate(simple = case_when(
+                      grepl("Promoter", annotation) ~ "promoter",
+                      grepl("Exon", annotation) ~ "exon",
+                      grepl("Intron", annotation) ~ "intron",
+                      grepl("3' UTR", annotation) ~ "utr3",
+                      grepl("5' UTR", annotation) ~ "utr5",
+                      grepl("Distal Intergenic", annotation) ~ "intergenic",
+                      grepl("Downstream", annotation) ~ "downstream",
+                      TRUE ~ annotation
+                    ))
+
+  anno =
+    anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, simple, geneChr, geneStart, geneEnd, geneLength, geneStrand, geneId, transcriptId, distanceToTSS, simple)
+}
+
+# ---   Run   --- #
+# --------------- #
+
+out = main(opts)
+
+write_tsv(out,
+          file = opts$out_anno_bed,
+          col_names = F)
+#+end_src
+**** TODO Open genome by chromosome and chromatin state
+Filters MACS2 peaks by Corces normalized score per million and then sums total open genome from filtered peaks.
+#+begin_src snakemake
+rule atac_global_open_genome:
+    input:
+        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
+                                 library=atac_map[wildcards.atac_set]['libs'],
+                                 build=atac_map[wildcards.atac_set]['build'],
+                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
+                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
+    log:
+        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
+    output:
+        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
+    params:
+        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
+        script = f"{atac_script_dir}/chr_state_open_genome.sh",
+        threads = 4
+    shell:
+        """
+        {params.script} \
+        "{input}" \
+        {params.genome_bed} \
+        {wildcards.state} \
+        {wildcards.qval} \
+        {params.threads} \
+        {output} > {log} 2>&1
+        """
+#+end_src
+
+#+begin_src R
+#!/usr/bin/env Rscript
+
+# ---   Load Packages   --- #
+# ------------------------- #
+
+packages <- c("optparse", "tidyverse")
+sapply(packages, require, character.only = TRUE, quietly = TRUE)
+
+# ---   Load Inputs   --- #
+# ----------------------- #
+
+option_list <- list(
+  make_option(c("--<OPTION NAME>"), type = "character"),
+
+opts <- parse_args(OptionParser(option_list = option_list))
+
+inputs_list = function(opts){
+
+  return(list())
+}
+
+
+#f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+anno_peak_file_list = c("~/cards/analysis/atac/peaks/lib051_mm10_filt_peaks.narrowPeak_anno.bed",
+                        "~/cards/analysis/atac/peaks/lib051_mm10_filt_peaks.narrowPeak_anno.bed")
+
+#########1#########2#########3#########4#########5#########6#########7#########8
+
+column_names = c("chrom", "start", "end", "name", "score", "strand",
+                 "signalValue", "pValue", "qValue", "peak", "genomic_feature",
+                 "gene_chr", "gene_start", "gene_end", "gene_length", "gene_strand",
+                 "entrez_gene_id", "distance_tss")
+
+anno_peak_df_list = map(anno_peak_file_list, ~read_tsv(.x, col_names = column_names))
+
+q_filt = 10
+
+
+test = anno_peak_df_list[[1]] %>% filter(qValue > q_filt)
+
+anno_peak_df_list = lapply(anno_peak_file_list, read_tsv)
+
+anno_peak_df_list[[1]]
+
+# ---   Main   --- #
+# ---------------- #
+
+main = function(opts){
+
+  # Process inputs
+  inputs = inputs_list(opts)
+
+  # For each
+  # Return a list of outputs
+  return(list())
+}
+
+# ---   Functions   --- #
+# --------------------- #
+
+# ---   Run   --- #
+# --------------- #
+
+out = main(opts)
+
+for (name in names(out)) {
+  item <- out[[name]]
+  file_path <- file.path(opts$out_dir, paste0(name, ".rds"))
+  saveRDS(item, file_path)
+}
+
+#+end_src
+
+
+#+begin_src python
+#!/usr/bin/env python3
+"""
+Script to quantify total open genome in an ATAC-seq library
+"""
+
+# ---   Load Packages   --- #
+# ------------------------- #
+
+import argparse
+import pandas as pd
+import pybedtools
+
+# ---   Load Inputs   --- #
+# ----------------------- #
+
+def load_inputs():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--peak_file_list", nargs="+")
+
+    args = parser.parse_args()
+
+
+    column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak', 'genomic_feature','gene_chr', 'gene_start', 'gene_end', 'gene_length', 'gene_strand', 'entrez_gene_id', 'distance_tss']
+    
+    peak_df_list = [pd.read_csv(file, sep="\t", header=None, names=column_names) for file in args.peak_file_list]
+
+    return (args, peak_df_list)
+
+class Args:
+    pass
+
+args = Args()
+args.peak_file_list = ['~/cards/analysis/atac/peaks/lib051_mm10_filt_peaks.narrowPeak_anno.bed', '~/cards/analysis/atac/peaks/lib052_mm10_filt_peaks.narrowPeak_anno.bed']
+
+# Filter each DataFrame in peak_df_list for qValue > 5
+filtered_peak_df_list = [df[df['qValue'] > 5] for df in peak_df_list]
+
+
+
+# ---   Main   --- #
+# ---------------- #
+
+def main():
+    args = load
+
+# ---   Functions   --- #
+# --------------------- #
+
+# ---   Main Guard   --- #
+# ---------------------- #
+
+if __name__ == "__main__":
+    main()
+
+#+end_src
+
+#+begin_src bash :tangle ./scripts/chr_state_open_genome.sh
+#!/usr/bin/env bash
+peaks_str="${1}"
+ref_bed="${2}"
+state="${3}"
+qval_cut="${4}"
+threads="${5}"
+out_tsv="${6}"
+
+process_file() {
+    file="$1"
+    base=$(basename $file)
+    state="${2}"
+    ref_bed="${3}"
+    qval_cut="${4}"
+
+    # Check if the state is "all"; if not, apply state filtering
+    if [ "$state" = "all" ]; then
+        cat "$file" |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    else
+        cat "$file" |
+            awk -v state="$state" '$10 == state' |
+            awk -v cut="$qval_cut" '$8 > cut' |
+            sort-bed - |
+            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
+            awk -v base="$base" '{print $0 "\t" base}'
+    fi
+}
+
+export -f process_file
+
+parallel -j "$threads" process_file {} "$state" "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
+
+#+end_src
+
 **** Peak filtering
 #+begin_src snakemake
 rule corces_group_peak_filter:
@@ -2002,142 +2318,206 @@ for (name in names(out)) {
 }
 #+end_src
 
-**** TODO Open genome by chromosome and chromatin state
-#+begin_src snakemake
-rule chr_state_open_genome:
-    input:
-        lambda wildcards: expand(f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}_anno.bed",
-                                 library=atac_map[wildcards.atac_set]['libs'],
-                                 build=atac_map[wildcards.atac_set]['build'],
-                                 bam_set=atac_map[wildcards.atac_set]['bam_set'],
-                                 peaktype=atac_map[wildcards.atac_set]['peaktype']),
-    log:
-        f"{log_dir}/{{atac_set}}_{{state}}_{{qval}}_chr_state_open_genome.log",
-    output:
-        f"{atac_dir}/models/{{atac_set}}/open/{{state}}_q{{qval}}_open_chrom.txt"
-    params:
-        genome_bed=lambda wildcards: f"{ref_dir}/{atac_map[wildcards.atac_set]['build']}_sorted_autosomes.bed",
-        script = f"{atac_script_dir}/chr_state_open_genome.sh",
-        threads = 4
-    shell:
-        """
-        {params.script} \
-        "{input}" \
-        {params.genome_bed} \
-        {wildcards.state} \
-        {wildcards.qval} \
-        {params.threads} \
-        {output} > {log} 2>&1
-        """
-#+end_src
+**** Make RUV-adjusted ATAC-seq counts :smk_rule:
 
-#+begin_src bash :tangle ./scripts/chr_state_open_genome.sh
-#!/usr/bin/env bash
-peaks_str="${1}"
-ref_bed="${2}"
-state="${3}"
-qval_cut="${4}"
-threads="${5}"
-out_tsv="${6}"
-
-process_file() {
-    file="$1"
-    base=$(basename $file)
-    state="${2}"
-    ref_bed="${3}"
-    qval_cut="${4}"
-
-    # Check if the state is "all"; if not, apply state filtering
-    if [ "$state" = "all" ]; then
-        cat "$file" |
-            awk -v cut="$qval_cut" '$8 > cut' |
-            sort-bed - |
-            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
-            awk -v base="$base" '{print $0 "\t" base}'
-    else
-        cat "$file" |
-            awk -v state="$state" '$10 == state' |
-            awk -v cut="$qval_cut" '$8 > cut' |
-            sort-bed - |
-            bedmap --echo --bases-uniq --delim '\t' $ref_bed - |
-            awk -v base="$base" '{print $0 "\t" base}'
-    fi
-}
-
-export -f process_file
-
-parallel -j "$threads" process_file {} "$state" "$ref_bed" "$qval_cut" ::: $peaks_str > "$out_tsv"
-
-#+end_src
-
-**** Peak annotation
-:PROPERTIES:
-:ID:       f0124001-2d9f-47a3-a55a-7004bc5db0ee
-:END:
+- BAMscale counts adjusted with RUVseq per [[cite:&gontarz2020]]
 
 #+begin_src snakemake
-rule peak_annotation:
+rule atac_ruv_batch_correction:
     input:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak",
-    log:
-        f"{log_dir}/{{library}}_{{build}}_{{bam_set}}_{{peaktype}}_peak_annotation.log",
+        counts = f"{atac_dir}/models/unadjusted/{{atac_set}}/bamscale/raw_coverages.tsv",
+        design = f"{atac_dir}/models/unadjusted/{{atac_set}}/design.rds",
+        libraries_full = f"{datamodel_dir}/lists/libraries_full.rds",
+    log: f"{log_dir}/{{atac_set}}_atac_ruv_batch_correction.log",
     output:
-        f"{atac_dir}/peaks/{{library}}_{{build}}_{{bam_set}}_peaks.{{peaktype}}Peak_anno.bed",
+        f"{atac_dir}/models/ruv/{{atac_set}}/dge_ruv2.rds",
     params:
-        script = f"{atac_script_dir}/peak_annotation.R",
-        txdb = lambda wildcards: build_map[wildcards.build]['txdb'],
+        formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
+        out_dir = f"{atac_dir}/models/ruv/{{atac_set}}",
+        script = f"{atac_script_dir}/atac_ruv.R",
     shell:
         """
-        Rscript {params.script} {input} "{params.txdb}" {output} > {log} 2>&1
+        Rscript {params.script} \
+        --counts_tsv {input.counts} \
+        --design_rds {input.design} \
+        --formula "{params.formula}" \
+        --libraries_full_rds {input.libraries_full} \
+        --out_dir {params.out_dir} \
+        >& {log}
         """
 #+end_src
 
-#+begin_src R :tangle ./scripts/peak_annotation.R
+#+begin_src R :tangle ./scripts/atac_ruv.R
 #!/usr/bin/env Rscript
 
-#################################
-###   Macs2 Peak Annotation   ###
-#################################
+# ---   Load Packages   --- #
+# ------------------------- #
 
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-in_peak_bed = args[1]
-txdb = args[2]
-out_peak_bed = args[3]
+packages <- c("ggrepel", "optparse", "RUVSeq", "tidyverse")
+sapply(packages, require, character.only = TRUE, quietly = TRUE)
 
-# Load required packages, data, and functions
-library(tidyverse)
-library(ChIPpeakAnno)
-library(rtracklayer)
-library(ChIPseeker)
-library(txdb, character.only = T)
+# ---   Load Inputs   --- #
+# ----------------------- #
 
-peaks = rtracklayer::import(in_peak_bed)
-anno = annotatePeak(peaks, TxDb = get(txdb))
+option_list <- list(
+  make_option(c("--counts_tsv"), type = "character"),
+  make_option(c("--design_rds"), type = "character"),
+  make_option(c("--libraries_full_rds"), type = "character"),
+  make_option(c("--out_dir"), type = "character"),
+  make_option(c("--formula"), type = "character")
+  )
 
-anno = as_tibble(anno)
+opts <- parse_args(OptionParser(option_list = option_list))
 
-if (!"peak" %in% names(anno)) {
-  anno <- anno %>%
-    mutate(peak = end - start)
+## opts$counts_tsv = "/home/jeszyman/cards/analysis/atac/models/unadjusted/human_icell/bamscale/raw_coverages.tsv"
+## opts$design_rds = "/home/jeszyman/cards/analysis/atac/models/unadjusted/human_icell/design.rds"
+## opts$libraries_full_rds = "~/cards/data-model/lists/libraries_full.rds"
+## opts$ruv_k = 4
+## opts$out_dir = "/tmp/test"
+## opts$formula = "~ 0 + cohort"
+
+inputs_list = function(opts){
+  counts_raw = read_tsv(opts$counts_tsv)
+  design = readRDS(opts$design_rds)
+  formula = opts$formula
+  libraries_full = readRDS(opts$libraries_full_rds)
+  out_dir = opts$out_dir
+
+  split_formula <- strsplit(formula, " ")[[1]]
+  formula_vect <- split_formula[!split_formula %in% c("~", "0", "+")]
+
+  return(list(counts_raw = counts_raw,
+              design = design,
+              libraries_full = libraries_full,
+              formula_vect = formula_vect,
+              out_dir = out_dir))
+
 }
 
-anno =
-  anno %>% mutate(simple = case_when(
-                    grepl("Promoter", annotation) ~ "promoter",
-                    grepl("Exon", annotation) ~ "exon",
-                    grepl("Intron", annotation) ~ "intron",
-                    grepl("3' UTR", annotation) ~ "utr3",
-                    grepl("5' UTR", annotation) ~ "utr5",
-                    grepl("Distal Intergenic", annotation) ~ "intergenic",
-                    grepl("Downstream", annotation) ~ "downstream",
-                    TRUE ~ annotation
-                  ))
+# ---   Main   --- #
+# ---------------- #
 
-anno =
-  anno %>% dplyr::select(seqnames, start, end, width, strand, name, score, signalValue, pValue, qValue, peak, everything())
+main = function(opts){
+  # Process inputs
+  inputs = inputs_list(opts)
 
-write_tsv(anno, out_peak_bed, col_names = F)
+  # Adjust raw BAMscale counts using the provided ruv
+  adjusted_ruv2 = make_ruv_adjustment(inputs$counts_raw, inputs$design, 2)
+  adjusted_ruv3 = make_ruv_adjustment(inputs$counts_raw, inputs$design, 3)
+  adjusted_ruv4 = make_ruv_adjustment(inputs$counts_raw, inputs$design, 4)
+
+  # Perform edgeR normalization and DCA on the adjusted counts
+  edger_ruv2 = run_edger(adjusted_ruv2, inputs$design)
+  edger_ruv3 = run_edger(adjusted_ruv3, inputs$design)
+  edger_ruv4 = run_edger(adjusted_ruv4, inputs$design)
+
+  # Get PCA for comparison
+  pca_ruv2 = make_pca(edger_ruv2$logcpm, inputs$libraries_full, inputs$formula_vect)
+  pca_ruv3 = make_pca(edger_ruv3$logcpm, inputs$libraries_full, inputs$formula_vect)
+  pca_ruv4 = make_pca(edger_ruv4$logcpm, inputs$libraries_full, inputs$formula_vect)
+
+  return(list(dge_ruv2 = edger_ruv2$dge,
+              fit_ruv2 = edger_ruv2$fit,
+              logcpm_ruv2 = edger_ruv2$logcpm,
+              pca_ruv2 = pca_ruv2,
+              dge_ruv3 = edger_ruv3$dge,
+              fit_ruv3 = edger_ruv3$fit,
+              logcpm_ruv3 = edger_ruv3$logcpm,
+              pca_ruv3 = pca_ruv3,
+              dge_ruv4 = edger_ruv4$dge,
+              fit_ruv4 = edger_ruv4$fit,
+              logcpm_ruv4 = edger_ruv4$logcpm,
+              pca_ruv4 = pca_ruv4))
+}
+
+# ---   Functions   --- #
+# --------------------- #
+
+make_ruv_adjustment = function(counts, design, ruv_k){
+  mat = as.matrix(counts[-1,-1])
+  row.names(mat) = counts$coordinate[-1]
+  colnames(mat) = substr(colnames(mat),1,6)
+
+  model_df = as.data.frame(design)
+  model_df$'(Intercept)' <- NULL
+
+  mat <- mat[, rownames(model_df)]
+
+  set = newSeqExpressionSet(mat,
+                            phenoData = AnnotatedDataFrame(model_df))
+
+  dge <- DGEList(counts = counts(set))
+  y <- DGEList(counts = counts(set))
+  y <- calcNormFactors(y, method = "upperquartile")
+  y <- estimateGLMCommonDisp(y, design)
+  y <- estimateGLMTagwiseDisp(y, design)
+  fit <- glmFit(y, design)
+  dev <- residuals(fit, type="deviance")
+  peaks = row.names(dev)
+
+
+  adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
+  adjust_counts = normCounts(adjust)
+
+  colnames(adjust_counts) = row.names(model_df)
+
+  return(adjust_counts)
+}
+
+run_edger = function(counts_mat, design){
+
+  dge = DGEList(counts = counts_mat)
+  keep = filterByExpr(dge, design)
+  dge = dge[keep,]
+  dge = calcNormFactors(dge)
+  dge = estimateGLMCommonDisp(dge, design)
+  dge = estimateGLMTrendedDisp(dge, design)
+  dge = estimateGLMTagwiseDisp(dge, design)
+  fit = glmFit(dge, design)
+  logcpm <- edgeR::cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 2)
+
+   return(list(dge = dge, fit = fit, logcpm = logcpm))
+}
+
+make_pca <- function(logcpm, libraries_full, covars_int) {
+  pca <- prcomp(t(as.matrix(logcpm[,-1])))
+  pve_pc1 <- round(100 * summary(pca)$importance[2,1])
+  pve_pc2 <- round(100 * summary(pca)$importance[2,2])
+  pca_plot <- as.data.frame(pca$x) %>%
+    rownames_to_column(var = "library") %>%
+    left_join(libraries_full, by = "library") %>%
+    ggplot(aes(x = PC1, y = PC2, label = library, color = !!sym(covars_int[[1]]))) +
+    geom_point(size = 4) +
+    geom_text_repel() +
+    xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+    ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+    coord_fixed(ratio = 1)
+
+  return(pca_plot)
+}
+
+# ---   Run   --- #
+# --------------- #
+
+out = main(opts)
+
+for (name in names(out)) {
+  item <- out[[name]]
+  file_path <- file.path(opts$out_dir, paste0(name, ".rds"))
+  saveRDS(item, file_path)
+}
+
+pdf(paste0(opts$out_dir,"/pca_ruv2.pdf"), title = "RUV2 Adjusted PCA")
+print(out$pca_ruv2)
+dev.off()
+
+pdf(paste0(opts$out_dir,"/pca_ruv3.pdf"), title = "RUV3 Adjusted PCA")
+print(out$pca_ruv3)
+dev.off()
+
+pdf(paste0(opts$out_dir,"/pca_ruv4.pdf"), title = "RUV4 Adjusted PCA")
+print(out$pca_ruv4)
+dev.off()
 
 #+end_src
 **** Fit
@@ -2193,198 +2573,6 @@ fit = glmFit(dge, design)
 
 saveRDS(dge, dge_rds)
 saveRDS(fit, fit_rds)
-#+end_src
-
-**** Batch correction with ComBat-seq
-#+begin_src snakemake
-rule atac_combat_rna_batch_correction:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_atac_combat_rna_batch_correction.log",
-    output:  f"{atac_dir}/models/combat/{{atac_set}}/edger_dge.rds",
-    params: script = f"{atac_script_dir}/atac_combat_rna_batch_correction.R",
-    shell:
-        """
-        Rscript {params.script} {input} {output} > {log} 2>&1
-        """
-#+end_src
-
-**** Make RUV-adjusted ATAC-seq counts
-
-BAMscale counts are adjusted with RUVseq per [[cite:&gontarz2020]]
-
-#+begin_src snakemake
-rule atac_ruv:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/bamscale/raw_coverages.tsv",
-        datmod = f"{datamodel_dir}/lists/libraries_full.rds",
-        design = f"{atac_dir}/models/{{atac_set}}/design.rds",
-    log: f"{log_dir}/{{atac_set}}_ruvk{{ruv_k}}.log",
-    output:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        fit = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_fit.rds",
-    params:
-        ruv_k = lambda wildcards: wildcards.ruv_k,
-        script = f"{atac_script_dir}/atac_ruv.R",
-    shell:
-        """
-        Rscript {params.script} {input} {params.ruv_k} {output} >& {log}
-        """
-#+end_src
-
-#+begin_src R :tangle ./scripts/atac_ruv.R
-#!/usr/bin/env Rscript
-
-##############################
-###   Human Dca With Rvu   ###
-##############################
-
-# Command line arguements
-args = commandArgs(trailingOnly = TRUE)
-counts_tsv = args[1]
-libraries_full_rds = args[2]
-design_rds = args[3]
-ruv_k = args[4]
-ruv_counts_rds = args[5]
-fit_rds = args[6]
-
-# Load required packages, data, and functions
-library(RUVSeq)
-library(tidyverse)
-libraries_full = readRDS(libraries_full_rds)
-counts = read_tsv(counts_tsv)
-design = readRDS(design_rds)
-
-# Setup data objects
-mat = as.matrix(counts[,-1])
-row.names(mat) = counts$coordinate
-colnames(mat) = substr(colnames(mat),1,6)
-
-model_df = as.data.frame(design)
-model_df$'(Intercept)' <- NULL
-
-mat <- mat[, rownames(model_df)]
-
-set = newSeqExpressionSet(mat,
-                          phenoData = AnnotatedDataFrame(model_df))
-
-dge <- DGEList(counts = counts(set))
-y <- DGEList(counts = counts(set))
-y <- calcNormFactors(y, method = "upperquartile")
-y <- estimateGLMCommonDisp(y, design)
-y <- estimateGLMTagwiseDisp(y, design)
-fit <- glmFit(y, design)
-dev <- residuals(fit, type="deviance")
-peaks = row.names(dev)
-
-
-adjust <- RUVr(set, peaks, k = as.numeric(ruv_k), dev)
-adjust_counts = normCounts(adjust)
-
-colnames(adjust_counts) = row.names(model_df)
-
-saveRDS(adjust_counts, ruv_counts_rds)
-
-adjust_counts = adjust_counts + 1
-dge = DGEList(counts = adjust_counts)
-dge = calcNormFactors(dge)
-dge = estimateGLMCommonDisp(dge, design)
-dge = estimateGLMTrendedDisp(dge, design)
-dge = estimateGLMTagwiseDisp(dge, design)
-fit = glmFit(dge, design)
-
-saveRDS(fit, fit_rds)
-#+end_src
-**** PCA from RUV
-#+begin_src snakemake
-rule atac_ruv_pca:
-    input:
-        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
-        libs = f"{datamodel_dir}/lists/libraries_full.rds",
-    log:
-        f"{log_dir}/{{atac_set}}_atac_ruv_{{ruv_k}}_pca.log",
-    output:
-        png = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.png",
-        svg = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.svg",
-    params:
-        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
-        script = f"{atac_script_dir}/atac_ruv_pca.R",
-    shell:
-        """
-        Rscript {params.script} \
-        {input} \
-        "{params.formula}" \
-        {output} > {log} 2>&1
-        """
-#+end_src
-#+begin_src R :tangle ./scripts/atac_ruv_pca.R
-#!/usr/bin/env Rscript
-
-####################
-###   Atac Pca   ###
-####################
-
-# --- Setup --- #
-args = commandArgs(trailingOnly = TRUE)
-counts_rds = args[1]
-libraries_full_rds = args[2]
-formula = args[3]
-out_png = args[4]
-out_svg = args[5]
-
-
-# Load required packages, data, and functions
-library(edgeR)
-library(cowplot)
-library(tidyverse)
-library(ggrepel)
-
-libraries_full = readRDS(libraries_full_rds)
-counts = readRDS(counts_rds)
-
-libs = substr(colnames(counts), 1, 6)
-mat = as.matrix(counts)
-colnames(mat) = libs
-
-# Generate PCA geom keys from formula names
-factor_str = gsub("(~ 0 \\+)|\\s*\\*\\s*|\\s*\\+\\s*", " ", formula)
-factor_str = trimws(factor_str)
-
-factor_vec = strsplit(factor_str, " ")[[1]]
-factor_vec <- factor_vec[!grepl("~|:|\\+", factor_vec)]
-
-# Make logCPM
-dge <- DGEList(counts = mat)
-dge <- calcNormFactors(dge)
-logcpm <- cpm(dge, log = TRUE, prior.count = 2)
-
-# PCA
-pca <- prcomp(t(logcpm))
-(pve_pc1 = round(100*summary(pca)$importance[2,1]))
-(pve_pc2 = round(100*summary(pca)$importance[2,2]))
-
-tbl = as.data.frame(pca$x) %>%
-  rownames_to_column(var = "library") %>%
-  left_join(libraries_full, by = "library")
-
-plot =
-  ggplot(tbl, aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
-  geom_point(size = 4) +
-  geom_text_repel() +
-  scale_color_discrete(name = factor_vec[[1]]) +
-  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
-  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
-  coord_fixed(ratio = 1)
-
-if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
-  plot = plot +
-    aes(shape = get(factor_vec[[2]])) +
-    scale_shape_discrete(name = factor_vec[[2]])
-}
-
-ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
-ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
 #+end_src
 
 **** Ideas :ideas:
@@ -3216,6 +3404,97 @@ samtools index -@ threads $out_bam
 - [[id:22e31d06-f5df-427e-bd70-3a2ccd3f47ec][ATAC-seq]]
 - [[id:f600cd95-723e-4893-8b3f-0634d8905920][Chromatin accessibility profiling methods]]
 - cite:knaupp2017
+**** PCA from RUV
+#+begin_src snakemake
+rule atac_ruv_pca:
+    input:
+        counts = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_counts.rds",
+        libs = f"{datamodel_dir}/lists/libraries_full.rds",
+    log:
+        f"{log_dir}/{{atac_set}}_atac_ruv_{{ruv_k}}_pca.log",
+    output:
+        png = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.png",
+        svg = f"{atac_dir}/models/{{atac_set}}/ruv/ruv_{{ruv_k}}_pca.svg",
+    params:
+        formula = lambda wildcards: atac_map[wildcards.atac_set]['formula'],
+        script = f"{atac_script_dir}/atac_ruv_pca.R",
+    shell:
+        """
+        Rscript {params.script} \
+        {input} \
+        "{params.formula}" \
+        {output} > {log} 2>&1
+        """
+#+end_src
+#+begin_src R :tangle ./scripts/atac_ruv_pca.R
+#!/usr/bin/env Rscript
+
+####################
+###   Atac Pca   ###
+####################
+
+# --- Setup --- #
+args = commandArgs(trailingOnly = TRUE)
+counts_rds = args[1]
+libraries_full_rds = args[2]
+formula = args[3]
+out_png = args[4]
+out_svg = args[5]
+
+
+# Load required packages, data, and functions
+library(edgeR)
+library(cowplot)
+library(tidyverse)
+library(ggrepel)
+
+libraries_full = readRDS(libraries_full_rds)
+counts = readRDS(counts_rds)
+
+libs = substr(colnames(counts), 1, 6)
+mat = as.matrix(counts)
+colnames(mat) = libs
+
+# Generate PCA geom keys from formula names
+factor_str = gsub("(~ 0 \\+)|\\s*\\*\\s*|\\s*\\+\\s*", " ", formula)
+factor_str = trimws(factor_str)
+
+factor_vec = strsplit(factor_str, " ")[[1]]
+factor_vec <- factor_vec[!grepl("~|:|\\+", factor_vec)]
+
+# Make logCPM
+dge <- DGEList(counts = mat)
+dge <- calcNormFactors(dge)
+logcpm <- cpm(dge, log = TRUE, prior.count = 2)
+
+# PCA
+pca <- prcomp(t(logcpm))
+(pve_pc1 = round(100*summary(pca)$importance[2,1]))
+(pve_pc2 = round(100*summary(pca)$importance[2,2]))
+
+tbl = as.data.frame(pca$x) %>%
+  rownames_to_column(var = "library") %>%
+  left_join(libraries_full, by = "library")
+
+plot =
+  ggplot(tbl, aes(x = PC1, y = PC2, color = get(factor_vec[[1]]), label = library)) +
+  geom_point(size = 4) +
+  geom_text_repel() +
+  scale_color_discrete(name = factor_vec[[1]]) +
+  xlab(paste("PC1, ", pve_pc1, "% variance explained", sep ="")) +
+  ylab(paste("PC2, ", pve_pc2, "% variance explained", sep ="")) +
+  coord_fixed(ratio = 1)
+
+if (length(factor_vec) >= 2 && !is.null(factor_vec[[2]])) {
+  plot = plot +
+    aes(shape = get(factor_vec[[2]])) +
+    scale_shape_discrete(name = factor_vec[[2]])
+}
+
+ggsave(filename = out_png, plot = plot, device = "png", width = 8, height = 6)
+ggsave(filename = out_svg, plot = plot, device = "svg", width = 8, height = 6)
+#+end_src
+
 ** Integration testing
 *** [[file:workflow/int_test1.smk][Workflow 1]]                                                          :smk:
 :PROPERTIES:
@@ -15882,7 +16161,7 @@ ggsave(plot, file = peak_ratio_plot)
 
 
 #+end_src
-*** Fraction of reads in peaks (FRiP)
+*** TODO Fraction of reads in peaks (FRiP)
 :PROPERTIES:
 :ID:       6f4cf12b-bc4c-4063-823f-7d4fcf9b0579
 :END:
