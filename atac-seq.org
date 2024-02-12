@@ -1559,7 +1559,7 @@ def load_inputs():
 
 
     column_names = ['chrom', 'start', 'end', 'name', 'score', 'strand', 'signalValue', 'pValue', 'qValue', 'peak', 'genomic_feature','gene_chr', 'gene_start', 'gene_end', 'gene_length', 'gene_strand', 'entrez_gene_id', 'distance_tss']
-    
+
     peak_df_list = [pd.read_csv(file, sep="\t", header=None, names=column_names) for file in args.peak_file_list]
 
     return (args, peak_df_list)
