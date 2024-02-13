@@ -560,6 +560,8 @@ rule atac_ruv_batch_correction:
     log: f"{log_dir}/{{atac_set}}_atac_ruv_batch_correction.log",
     output:
         f"{atac_dir}/models/ruv/{{atac_set}}/dge_ruv2.rds",
+        f"{atac_dir}/models/ruv/{{atac_set}}/dge_ruv3.rds",
+        f"{atac_dir}/models/ruv/{{atac_set}}/dge_ruv4.rds",
     params:
         formula = lambda wildcards: atac_models_map[wildcards.atac_set]['formula'],
         out_dir = f"{atac_dir}/models/ruv/{{atac_set}}",
@@ -599,12 +601,12 @@ rule atac_edger_fit:
 
 rule atac_edger_dca:
     input:
-        design = lambda wildcards: dca_map[wildcards.contrast]['design'],
-        fit = lambda wildcards: dca_map[wildcards.contrast]['fit'],
+        design = lambda wildcards: atac_dca_map[wildcards.contrast]['design'],
+        fit = lambda wildcards: atac_dca_map[wildcards.contrast]['fit'],
     log: f"{log_dir}/{{contrast}}_atac_edger_dca.log",
     output: f"{atac_dir}/contrasts/{{contrast}}/{{contrast}}.tsv",
     params:
-        contrast_str = lambda wildcards: dca_map[wildcards.contrast]['contrast_str'],
+        contrast_str = lambda wildcards: atac_dca_map[wildcards.contrast]['contrast_str'],
         script = f"{atac_script_dir}/atac_edger_dca.R",
     shell:
         """
